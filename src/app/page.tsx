@@ -8,7 +8,7 @@ import { UploadCloud, FileText, PlayCircle, LayoutDashboard } from "lucide-react
 
 export default function Home() {
   const router = useRouter();
-  const { setSessionId, setQuestion } = useInterviewStore();
+  const { setSessionId, setQuestion ,setFirstQuestionAudio} = useInterviewStore();
 
   const [file, setFile] = useState<File | null>(null);
   const [jd, setJd] = useState("We need a Senior React Developer...");
@@ -23,17 +23,19 @@ export default function Home() {
     formData.append("jobDescription", jd);
 
     try {
-      // 1. Call Backend
       const res = await axios.post(
         "http://localhost:4000/api/init-interview",
         formData
       );
 
-      // 2. Save Data to Global Store
       setSessionId(res.data.sessionId);
       setQuestion(res.data.firstQuestion.question);
+      
+      // ✅ SAVE AUDIO IF IT EXISTS
+      if (res.data.audio) {
+        setFirstQuestionAudio(res.data.audio);
+      }
 
-      // 3. Go to Interview Page
       router.push("/interview");
     } catch (err: any) {
       alert("Error: " + (err.response?.data?.error || err.message));

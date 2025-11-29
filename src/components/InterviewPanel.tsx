@@ -3,14 +3,15 @@
 import { useEffect, useState, useRef } from "react";
 import { Mic, MicOff, BrainCircuit, CheckCircle } from "lucide-react";
 import { useVoiceActivity } from "../hooks/useVoiceActivity";
-import { useInterviewStore } from "../stores/useInterviewStore"
-import { useRouter } from "next/navigation"; // <--- 1. IMPORT ROUTER;
+import { useInterviewStore } from "../stores/useInterviewStore";
+import { useRouter } from "next/navigation"; 
 import axios from "axios";
 import { motion } from "framer-motion";
 
 export default function InterviewPanel() {
-  const router = useRouter(); // <--- 2. INITIALIZE ROUTER
-  const { sessionId, currentQuestion, setQuestion, setFeedback } = useInterviewStore();
+  const router = useRouter(); 
+  const { sessionId, currentQuestion, setQuestion, setFeedback,firstQuestionAudio,        // <--- GET AUDIO
+    setFirstQuestionAudio  } = useInterviewStore();
   
   const [isAIThinking, setIsAIThinking] = useState(false);
   const [hasSpoken, setHasSpoken] = useState(false);
@@ -19,6 +20,20 @@ export default function InterviewPanel() {
   const { isRecording, volume, getAudioBlob, resetRecorder, stopRecordingManual } = useVoiceActivity(isAIThinking);
   const prevRecordingState = useRef(false);
 
+  useEffect(() => {
+    if (firstQuestionAudio) {
+        console.log("🔊 Found startup audio. Playing...");
+        
+        // 1. Lock Interface (AI is Thinking/Speaking)
+        setIsAIThinking(true); 
+        
+        // 2. Play it
+        playAudio(firstQuestionAudio);
+        
+        // 3. Clear it from store so it doesn't play again on refresh
+        setFirstQuestionAudio(null);
+    }
+  }, []); // Empty dependency array = Runs once on mount
   // 1. Detect Speech for Button State
   useEffect(() => {
     if (isRecording) setHasSpoken(true);
@@ -26,7 +41,6 @@ export default function InterviewPanel() {
 
   // 2. Watch for AUTO-STOP (Silence) only
   useEffect(() => {
-    // Only trigger if we are NOT manually stopping (manual handled by click handler)
     if (!isAIThinking && prevRecordingState.current === true && isRecording === false) {
       console.log("🤖 Auto-Submitting due to silence...");
       handleSubmission();
@@ -34,8 +48,36 @@ export default function InterviewPanel() {
     prevRecordingState.current = isRecording;
   }, [isRecording]);
 
-  // 3. Unified Submission Logic
-  // Accepts an optional blob (from manual stop)
+  // 3. Play Deepgram Audio (MP3)
+  // This function locks the interface until audio finishes
+  const playAudio = (base64String: string) => {
+    try {
+      const audio = new Audio(`data:audio/mp3;base64,${base64String}`);
+      
+      // 🔒 MIC REMAINS LOCKED (isAIThinking is true)
+      
+      audio.onended = () => {
+        console.log("✅ Audio finished. Unlocking Mic.");
+        // 🔓 UNLOCK MIC NOW
+        resetRecorder();
+        setIsAIThinking(false);
+      };
+
+      audio.onerror = (e) => {
+        console.error("Audio playback error", e);
+        // Safety unlock if audio fails
+        resetRecorder();
+        setIsAIThinking(false);
+      };
+
+      audio.play();
+    } catch (e) {
+      console.error("Audio setup error", e);
+      setIsAIThinking(false);
+    }
+  };
+
+  // 4. Unified Submission Logic
   const handleSubmission = async (manualBlob?: Blob) => {
     const audioBlob = manualBlob || getAudioBlob();
     
@@ -56,23 +98,29 @@ export default function InterviewPanel() {
     try {
       const res = await axios.post("http://localhost:4000/api/submit-answer", formData);
       
-      const feedbackText = res.data.evaluation.feedback;
-      const nextQ = res.data.nextQuestion?.question;
-      const isDone = res.data.isFinished;
+      const { evaluation, nextQuestion, isFinished, audio } = res.data;
 
-      // 1. Show Feedback immediately
-      setFeedback(feedbackText); 
+      // Update UI Text
+      setFeedback(evaluation.feedback); 
 
-      // 2. Move to Next Question immediately (No Speaking)
-      if (!isDone) {
-          setQuestion(nextQ);
-      } else {
-        router.replace(`/dashboard/${sessionId}`); // <--- 3. REDIRECT TO DASHBOARD;
+      if (isFinished) {
+          // 🏁 FINISHED: Redirect to Dashboard Result
+          router.replace(`/dashboard/${sessionId}`);
+          return;
       }
-      
-      // 3. Unlock Mic immediately
-      resetRecorder();
-      setIsAIThinking(false);
+
+      setQuestion(nextQuestion?.question);
+
+      // 🔊 PLAY AUDIO IF AVAILABLE
+      if (audio) {
+          playAudio(audio); 
+          // Note: playAudio handles unlocking setIsAIThinking(false) when done
+      } else {
+          // Fallback if no audio: Unlock immediately
+          console.warn("No audio received from backend.");
+          resetRecorder();
+          setIsAIThinking(false);
+      }
 
     } catch (err) {
       console.error(err);
@@ -81,20 +129,13 @@ export default function InterviewPanel() {
     }
   };
 
-  // 4. Manual Button Handler (Async)
+  // 5. Manual Button Handler
   const handleManualStop = async () => {
-    // 🛑 Prevent double submission
     if (isAIThinking) return;
-
-    // 1. Force Stop & Get Blob
     const blob = await stopRecordingManual();
-    
-    // 2. Submit Immediately
     console.log("👤 Manual Submit Clicked");
     await handleSubmission(blob);
   };
-
-  
 
   return (
     <div className="flex flex-col items-center justify-center w-full max-w-4xl p-6">
