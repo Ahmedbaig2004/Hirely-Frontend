@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useInterviewStore } from "@/stores/useInterviewStore"; // Import store
-import { UploadCloud, FileText, PlayCircle } from "lucide-react"; // Icons
+import { UploadCloud, FileText, PlayCircle, LayoutDashboard } from "lucide-react"; // Icons
 
 export default function Home() {
   const router = useRouter();
@@ -45,14 +45,23 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-6">
       <div className="w-full max-w-lg rounded-xl bg-white p-8 shadow-xl border border-slate-100">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 flex items-center justify-center gap-2">
-            <PlayCircle className="text-blue-600" size={32} />
-            HIRELY AI
-          </h1>
-          <p className="text-slate-500 mt-2">
-            Upload your resume to start the mock interview.
-          </p>
+        <div className="flex justify-between items-start mb-8">
+          <div className="text-center flex-1">
+            <h1 className="text-3xl font-bold text-slate-900 flex items-center justify-center gap-2">
+              <PlayCircle className="text-blue-600" size={32} />
+              HIRELY AI
+            </h1>
+            <p className="text-slate-500 mt-2">
+              Upload your resume to start the mock interview.
+            </p>
+          </div>
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition text-slate-700 hover:text-slate-900 ml-4"
+          >
+            <LayoutDashboard size={18} />
+            Dashboard
+          </button>
         </div>
 
         {/* Job Description */}

@@ -3,11 +3,13 @@
 import { useEffect, useState, useRef } from "react";
 import { Mic, MicOff, BrainCircuit, CheckCircle } from "lucide-react";
 import { useVoiceActivity } from "../hooks/useVoiceActivity";
-import { useInterviewStore } from "../stores/useInterviewStore";
+import { useInterviewStore } from "../stores/useInterviewStore"
+import { useRouter } from "next/navigation"; // <--- 1. IMPORT ROUTER;
 import axios from "axios";
 import { motion } from "framer-motion";
 
 export default function InterviewPanel() {
+  const router = useRouter(); // <--- 2. INITIALIZE ROUTER
   const { sessionId, currentQuestion, setQuestion, setFeedback } = useInterviewStore();
   
   const [isAIThinking, setIsAIThinking] = useState(false);
@@ -65,7 +67,7 @@ export default function InterviewPanel() {
       if (!isDone) {
           setQuestion(nextQ);
       } else {
-          alert("Interview Finished!");
+        router.replace(`/dashboard/${sessionId}`); // <--- 3. REDIRECT TO DASHBOARD;
       }
       
       // 3. Unlock Mic immediately
