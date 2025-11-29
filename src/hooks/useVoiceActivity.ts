@@ -8,18 +8,17 @@ export const useVoiceActivity = (isAIThinking: boolean) => {
   const audioChunksRef = useRef<Blob[]>([]);
   const silenceTimer = useRef<NodeJS.Timeout | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-
-  // 1. REF TRACKING (Fixes the Stale Closure bug)
+  
+  // Ref to track state inside the loop
   const isAIThinkingRef = useRef(isAIThinking);
 
-  // Sync the Ref whenever the prop changes
   useEffect(() => {
     isAIThinkingRef.current = isAIThinking;
   }, [isAIThinking]);
 
   // ⚙️ CONFIG
   const SILENCE_DURATION = 3000;
-  const MIN_VOLUME = 15;
+  const MIN_VOLUME = 15; 
 
   const startListening = async () => {
     try {
@@ -47,17 +46,21 @@ export const useVoiceActivity = (isAIThinking: boolean) => {
         if (e.data.size > 0) audioChunksRef.current.push(e.data);
       };
 
+      // ✅ GLOBAL LISTENER: Always update UI state on stop
+      // We do not overwrite this in manual stop anymore.
+      mediaRecorder.onstop = () => {
+        setIsRecording(false);
+      };
+
       const checkVolume = () => {
-        // 2. USE REF HERE (Reads the LIVE value, not the old one)
         if (isAIThinkingRef.current) {
-          setVolume(0); // Zero out volume on UI
-          requestAnimationFrame(checkVolume);
-          return;
+           setVolume(0); 
+           requestAnimationFrame(checkVolume);
+           return;
         }
 
-        // Safety: Resume audio context if browser suspended it
-        if (audioContext.state === "suspended") {
-          audioContext.resume();
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
         }
 
         analyzer.getByteFrequencyData(dataArray);
@@ -68,14 +71,19 @@ export const useVoiceActivity = (isAIThinking: boolean) => {
         if (currentVol > MIN_VOLUME) {
           if (mediaRecorder.state === "inactive") {
             console.log("🎤 Started Recording...");
+            
+            // ✅ FIX 1: Always clear buffer before starting new recording
+            audioChunksRef.current = []; 
+            
             mediaRecorder.start();
             setIsRecording(true);
           }
+          
           if (silenceTimer.current) {
             clearTimeout(silenceTimer.current);
             silenceTimer.current = null;
           }
-        }
+        } 
         // B. SILENCE
         else if (mediaRecorder.state === "recording") {
           if (!silenceTimer.current) {
@@ -95,18 +103,37 @@ export const useVoiceActivity = (isAIThinking: boolean) => {
   };
 
   const stopAndReturnAudio = () => {
-    if (
-      mediaRecorderRef.current &&
-      mediaRecorderRef.current.state === "recording"
-    ) {
-      console.log("🛑 3s Silence -> Stopping.");
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      console.log("🛑 Silence Timer -> Stopping.");
       mediaRecorderRef.current.stop();
-      setIsRecording(false);
+      // setIsRecording(false) triggers automatically via onstop above
     }
     if (silenceTimer.current) {
       clearTimeout(silenceTimer.current);
       silenceTimer.current = null;
     }
+  };
+
+  // ✅ FIX 2: Use Event Listener instead of overwriting onstop
+  const stopRecordingManual = (): Promise<Blob> => {
+    return new Promise((resolve) => {
+        if (silenceTimer.current) {
+            clearTimeout(silenceTimer.current);
+            silenceTimer.current = null;
+        }
+
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+            // Add a one-time listener just for this specific stop event
+            mediaRecorderRef.current.addEventListener("stop", () => {
+                const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+                resolve(blob);
+            }, { once: true });
+
+            mediaRecorderRef.current.stop();
+        } else {
+            resolve(new Blob([], { type: "audio/webm" }));
+        }
+    });
   };
 
   const getAudioBlob = () => {
@@ -118,7 +145,7 @@ export const useVoiceActivity = (isAIThinking: boolean) => {
     setIsRecording(false);
   };
 
-  // Force stop if AI starts thinking (Safety Valve)
+  // Safety Valve
   useEffect(() => {
     if (isAIThinking) {
       if (silenceTimer.current) clearTimeout(silenceTimer.current);
@@ -136,5 +163,5 @@ export const useVoiceActivity = (isAIThinking: boolean) => {
     };
   }, []);
 
-  return { isRecording, volume, getAudioBlob, resetRecorder };
+  return { isRecording, volume, getAudioBlob, resetRecorder, stopRecordingManual };
 };
