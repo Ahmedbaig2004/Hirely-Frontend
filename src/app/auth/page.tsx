@@ -1,77 +1,262 @@
 "use client";
-import { useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
-import { useRouter } from 'next/navigation';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
+import { cn } from "@/lib/utils";
+import { IconBrandGithub, IconBrandGoogle, IconBrandLinkedin } from "@tabler/icons-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
 
 export default function AuthPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
 
-  const handleAuth = async () => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     setError(null);
-    let result;
-    
-    if (isLogin) {
-      result = await supabase.auth.signInWithPassword({ email, password });
-    } else {
-      result = await supabase.auth.signUp({ email, password });
+    setMsg(null);
+
+    // Client-side validation
+    if (!isLogin && password !== confirmPassword) {
+        setError("Passwords do not match");
+        return;
     }
 
-    if (result.error) {
-      setError(result.error.message);
-    } else {
-      // Success! Go to dashboard or home
-      router.push('/');
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        router.push("/");
+      } else {
+        const { error } = await supabase.auth.signUp({ email, password });
+        if (error) throw error;
+        setMsg("Account created! Check your email to confirm.");
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md border border-slate-200">
-        <h1 className="text-2xl font-bold mb-6 text-center text-slate-800">
-          {isLogin ? 'Welcome Back' : 'Create Account'}
-        </h1>
-        
-        {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">{error}</div>}
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-            <input 
-              className="w-full border border-slate-300 rounded-lg p-2 text-black"
-              type="email" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-            <input 
-              className="w-full border border-slate-300 rounded-lg p-2 text-black"
-              type="password" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-            />
-          </div>
-          
-          <button 
-            onClick={handleAuth}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            {isLogin ? 'Sign In' : 'Sign Up'}
-          </button>
-        </div>
-
-        <p className="text-center mt-4 text-sm text-slate-500">
-          {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <button onClick={() => setIsLogin(!isLogin)} className="text-blue-600 font-semibold underline">
-            {isLogin ? 'Sign Up' : 'Sign In'}
-          </button>
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <div className="max-w-md w-full mx-auto rounded-2xl p-8 shadow-xl border border-slate-200 bg-white">
+        <h2 className="font-bold text-xl text-slate-900">
+            Welcome to HIRELY
+        </h2>
+        <p className="text-slate-600 text-sm max-w-sm mt-2">
+            {isLogin ? "Login to access your dashboard" : "Create an account to start interviewing"}
         </p>
-      </div>
-    </main>
+
+        {error && (
+            <div className="mt-4 p-3 rounded bg-red-50 border border-red-100 text-red-600 text-sm">
+                {error}
+            </div>
+        )}
+        {msg && (
+            <div className="mt-4 p-3 rounded bg-green-50 border border-green-100 text-green-600 text-sm">
+                {msg}
+            </div>
+        )}
+
+        <form className="my-8" onSubmit={handleSubmit}>
+            
+            <LabelInputContainer className="mb-4">
+            <Label htmlFor="email">Email Address</Label>
+            <Input 
+                id="email" 
+                placeholder="projectmayhem@fc.com" 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+            />
+            </LabelInputContainer>
+            
+            <LabelInputContainer className="mb-4">
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
+                <Input 
+                    id="password" 
+                    placeholder="••••••••" 
+                    type={isVisible ? "text" : "password"} 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="pr-10"
+                />
+                <button
+                    type="button"
+                    onClick={() => setIsVisible(!isVisible)}
+                    className="absolute right-3 top-3 text-slate-500 hover:text-slate-700"
+                >
+                    {isVisible ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+            </div>
+            </LabelInputContainer>
+
+            {!isLogin && (
+                <LabelInputContainer className="mb-8">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input 
+                    id="confirmPassword" 
+                    placeholder="••••••••" 
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                />
+                </LabelInputContainer>
+            )}
+
+            <button
+            className="bg-slate-800 no-underline group cursor-pointer relative shadow-2xl shadow-zinc-900 rounded-full p-px text-sm font-semibold leading-6 text-white inline-block w-full disabled:opacity-70 disabled:cursor-not-allowed"
+            type="submit"
+            disabled={loading}
+            >
+            {loading ? (
+                <div className="relative flex space-x-2 items-center z-10 rounded-full bg-zinc-950 py-2.5 px-4 ring-1 ring-white/10 justify-center">
+                    <Loader2 className="animate-spin" size={18} />
+                    <span>Please wait</span>
+                </div>
+            ) : (
+                <>
+                    <span className="absolute inset-0 overflow-hidden rounded-full">
+                        <span className="absolute inset-0 rounded-full bg-[image:radial-gradient(75%_100%_at_50%_0%,rgba(56,189,248,0.6)_0%,rgba(56,189,248,0)_75%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                    </span>
+                    <div className="relative flex space-x-2 items-center z-10 rounded-full bg-zinc-950 py-2.5 px-4 ring-1 ring-white/10 justify-center">
+                        <span>{isLogin ? "Sign In" : "Sign Up"}</span>
+                        <svg
+                            fill="none"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            width="16"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path
+                                d="M10.75 8.75L14.25 12L10.75 15.25"
+                                stroke="currentColor"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="1.5"
+                            />
+                        </svg>
+                    </div>
+                    <span className="absolute -bottom-0 left-[1.125rem] h-px w-[calc(100%-2.25rem)] bg-gradient-to-r from-emerald-400/0 via-emerald-400/90 to-emerald-400/0 transition-opacity duration-500 group-hover:opacity-40" />
+                </>
+            )}
+            </button>
+
+            <div className="bg-gradient-to-r from-transparent via-slate-300 to-transparent my-8 h-[1px] w-full" />
+
+            <div className="flex flex-col space-y-4">
+            <button
+                className="relative group/btn flex space-x-2 items-center justify-start px-4 w-full text-slate-900 rounded-md h-10 font-medium shadow-sm bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors"
+                type="button"
+                onClick={() => alert("Github Auth coming soon!")}
+            >
+                <IconBrandGithub className="h-4 w-4 text-slate-800" />
+                <span className="text-slate-700 text-sm">
+                GitHub
+                </span>
+            </button>
+            <button
+                className="relative group/btn flex space-x-2 items-center justify-start px-4 w-full text-slate-900 rounded-md h-10 font-medium shadow-sm bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors"
+                type="button"
+                onClick={() => alert("Google Auth coming soon!")}
+            >
+                <IconBrandGoogle className="h-4 w-4 text-slate-800" />
+                <span className="text-slate-700 text-sm">
+                Google
+                </span>
+            </button>
+            <button
+                className="relative group/btn flex space-x-2 items-center justify-start px-4 w-full text-slate-900 rounded-md h-10 font-medium shadow-sm bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors"
+                type="button"
+                onClick={() => alert("LinkedIn Auth coming soon!")}
+            >
+                <IconBrandLinkedin className="h-4 w-4 text-slate-800" />
+                <span className="text-slate-700 text-sm">
+                LinkedIn
+                </span>
+            </button>
+            </div>
+
+            <p className="text-center mt-8 text-sm text-slate-600">
+                {isLogin ? "Don't have an account? " : "Already have an account? "}
+                <button onClick={() => setIsLogin(!isLogin)} className="text-slate-900 font-bold hover:underline">
+                    {isLogin ? 'Sign Up' : 'Sign In'}
+                </button>
+            </p>
+        </form>
+        </div>
+    </div>
   );
 }
+
+// --- HELPER COMPONENTS ---
+
+const BottomGradient = () => {
+  return (
+    <>
+      <span className="group-hover/btn:opacity-100 block transition duration-500 opacity-0 absolute h-px w-full -bottom-px inset-x-0 bg-gradient-to-r from-transparent via-cyan-500 to-transparent" />
+      <span className="group-hover/btn:opacity-100 blur-sm block transition duration-500 opacity-0 absolute h-px w-1/2 mx-auto -bottom-px inset-x-10 bg-gradient-to-r from-transparent via-indigo-500 to-transparent" />
+    </>
+  );
+};
+
+const LabelInputContainer = ({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <div className={cn("flex flex-col space-y-2 w-full", className)}>
+      {children}
+    </div>
+  );
+};
+
+const Label = React.forwardRef<HTMLLabelElement, React.LabelHTMLAttributes<HTMLLabelElement>>(
+    ({ className, ...props }, ref) => (
+    <label
+        ref={ref}
+        className={cn(
+        "text-sm font-medium text-slate-900 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+        className
+        )}
+        {...props}
+    />
+));
+Label.displayName = "Label";
+
+const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+  ({ className, type, ...props }, ref) => {
+    return (
+      <div className="relative w-full">
+        <input
+          type={type}
+          className={cn(
+            "flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200",
+            className
+          )}
+          ref={ref}
+          {...props}
+        />
+      </div>
+    );
+  }
+);
+Input.displayName = "Input";
