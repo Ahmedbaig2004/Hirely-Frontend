@@ -120,35 +120,35 @@ export const FileUpload = ({
                 </motion.div>
               ))}
               
-            {!files.length && (
-              <motion.div
-                layoutId="file-upload"
-                variants={mainVariant}
-                transition={{
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 20,
-                }}
-                // ✅ CHANGED: Height h-32 -> h-20 to make it shorter
-                className={cn(
-                  "relative group-hover/file:shadow-2xl z-40 bg-white dark:bg-neutral-900 flex items-center justify-center h-20 mt-2 w-full max-w-[8rem] mx-auto rounded-md",
-                  "shadow-[0px_10px_50px_rgba(0,0,0,0.1)]"
-                )}
-              >
-                {isDragActive ? (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-neutral-600 flex flex-col items-center"
-                  >
-                    Drop it
-                    <IconUpload className="h-4 w-4 text-neutral-600 dark:text-neutral-400" />
-                  </motion.p>
-                ) : (
-                  <IconUpload className="h-4 w-4 text-neutral-600 dark:text-neutral-300" />
-                )}
-              </motion.div>
-            )}
+              {!files.length && (
+  <motion.div
+    layoutId="file-upload"
+    variants={mainVariant}
+    transition={{
+      type: "spring",
+      stiffness: 300,
+      damping: 20,
+    }}
+    className={cn(
+      "relative group-hover/file:shadow-2xl z-40 bg-white dark:bg-neutral-900 flex items-center justify-center h-20 mt-2 w-full max-w-[8rem] mx-auto rounded-md",
+      "shadow-[0px_10px_50px_rgba(0,0,0,0.1)]",
+      "border border-slate-300 dark:border-slate-700" // <--- ADD THIS LINE HERE
+    )}
+  >
+    {isDragActive ? (
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="text-neutral-600 flex flex-col items-center"
+      >
+        Drop it
+        <IconUpload className="h-4 w-4 text-neutral-600 dark:text-neutral-400" />
+      </motion.p>
+    ) : (
+      <IconUpload className="h-4 w-4 text-neutral-600 dark:text-neutral-300" />
+    )}
+  </motion.div>
+)}
           </div>
         </div>
       </motion.div>

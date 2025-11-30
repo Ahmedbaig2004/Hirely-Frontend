@@ -5,7 +5,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { cn } from "@/lib/utils";
 import { IconBrandGithub, IconBrandGoogle, IconBrandLinkedin } from "@tabler/icons-react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
+import { motion } from "framer-motion"; // <--- 1. Import motion
+import { AuroraBackground } from "@/components/ui/aurora-background"; // <--- 2. Import Aurora
 
 export default function AuthPage() {
   const router = useRouter();
@@ -49,171 +50,174 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-        <div className="max-w-md w-full mx-auto rounded-2xl p-8 shadow-xl border border-slate-200 bg-white">
-        <h2 className="font-bold text-xl text-slate-900">
-            Welcome to HIRELY
-        </h2>
-        <p className="text-slate-600 text-sm max-w-sm mt-2">
-            {isLogin ? "Login to access your dashboard" : "Create an account to start interviewing"}
-        </p>
+    // 3. Wrap everything in AuroraBackground
+    <AuroraBackground>
+      <motion.div
+        initial={{ opacity: 0.0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{
+          delay: 0.3,
+          duration: 0.8,
+          ease: "easeInOut",
+        }}
+        className="relative flex flex-col gap-4 items-center justify-center px-4 w-full"
+      >
+        <div className="max-w-md w-full mx-auto rounded-2xl p-8 shadow-xl border border-slate-200 bg-white/90 backdrop-blur-sm">
+            <h2 className="font-bold text-xl text-slate-900">
+                Welcome to HIRELY
+            </h2>
+            <p className="text-slate-600 text-sm max-w-sm mt-2">
+                {isLogin ? "Login to access your dashboard" : "Create an account to start interviewing"}
+            </p>
 
-        {error && (
-            <div className="mt-4 p-3 rounded bg-red-50 border border-red-100 text-red-600 text-sm">
-                {error}
-            </div>
-        )}
-        {msg && (
-            <div className="mt-4 p-3 rounded bg-green-50 border border-green-100 text-green-600 text-sm">
-                {msg}
-            </div>
-        )}
+            {error && (
+                <div className="mt-4 p-3 rounded bg-red-50 border border-red-100 text-red-600 text-sm">
+                    {error}
+                </div>
+            )}
+            {msg && (
+                <div className="mt-4 p-3 rounded bg-green-50 border border-green-100 text-green-600 text-sm">
+                    {msg}
+                </div>
+            )}
 
-        <form className="my-8" onSubmit={handleSubmit}>
-            
-            <LabelInputContainer className="mb-4">
-            <Label htmlFor="email">Email Address</Label>
-            <Input 
-                id="email" 
-                placeholder="projectmayhem@fc.com" 
-                type="email" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-            />
-            </LabelInputContainer>
-            
-            <LabelInputContainer className="mb-4">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
+            <form className="my-8" onSubmit={handleSubmit}>
+                
+                <LabelInputContainer className="mb-4">
+                <Label htmlFor="email">Email Address</Label>
                 <Input 
-                    id="password" 
-                    placeholder="••••••••" 
-                    type={isVisible ? "text" : "password"} 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="pr-10"
-                />
-                <button
-                    type="button"
-                    onClick={() => setIsVisible(!isVisible)}
-                    className="absolute right-3 top-3 text-slate-500 hover:text-slate-700"
-                >
-                    {isVisible ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-            </div>
-            </LabelInputContainer>
-
-            {!isLogin && (
-                <LabelInputContainer className="mb-8">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input 
-                    id="confirmPassword" 
-                    placeholder="••••••••" 
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    id="email" 
+                    placeholder="you@example.com" 
+                    type="email" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                 />
                 </LabelInputContainer>
-            )}
-
-            <button
-            className="bg-slate-800 no-underline group cursor-pointer relative shadow-2xl shadow-zinc-900 rounded-full p-px text-sm font-semibold leading-6 text-white inline-block w-full disabled:opacity-70 disabled:cursor-not-allowed"
-            type="submit"
-            disabled={loading}
-            >
-            {loading ? (
-                <div className="relative flex space-x-2 items-center z-10 rounded-full bg-zinc-950 py-2.5 px-4 ring-1 ring-white/10 justify-center">
-                    <Loader2 className="animate-spin" size={18} />
-                    <span>Please wait</span>
+                
+                <LabelInputContainer className="mb-4">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                    <Input 
+                        id="password" 
+                        placeholder="••••••••" 
+                        type={isVisible ? "text" : "password"} 
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        className="pr-10"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setIsVisible(!isVisible)}
+                        className="absolute right-3 top-3 text-slate-500 hover:text-slate-700"
+                    >
+                        {isVisible ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                 </div>
-            ) : (
-                <>
-                    <span className="absolute inset-0 overflow-hidden rounded-full">
-                        <span className="absolute inset-0 rounded-full bg-[image:radial-gradient(75%_100%_at_50%_0%,rgba(56,189,248,0.6)_0%,rgba(56,189,248,0)_75%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                    </span>
-                    <div className="relative flex space-x-2 items-center z-10 rounded-full bg-zinc-950 py-2.5 px-4 ring-1 ring-white/10 justify-center">
-                        <span>{isLogin ? "Sign In" : "Sign Up"}</span>
-                        <svg
-                            fill="none"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            width="16"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <path
-                                d="M10.75 8.75L14.25 12L10.75 15.25"
-                                stroke="currentColor"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="1.5"
-                            />
-                        </svg>
+                </LabelInputContainer>
+
+                {!isLogin && (
+                    <LabelInputContainer className="mb-8">
+                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <Input 
+                        id="confirmPassword" 
+                        placeholder="••••••••" 
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                    />
+                    </LabelInputContainer>
+                )}
+
+                <button
+                className="bg-slate-900 hover:bg-slate-800 no-underline group cursor-pointer relative shadow-lg shadow-slate-900/20 rounded-full p-px text-sm font-semibold leading-6 text-white inline-block w-full disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+                type="submit"
+                disabled={loading}
+                >
+                {loading ? (
+                    <div className="relative flex space-x-2 items-center z-10 rounded-full bg-slate-950 py-2.5 px-4 ring-1 ring-white/10 justify-center">
+                        <Loader2 className="animate-spin" size={18} />
+                        <span>Please wait</span>
                     </div>
-                    <span className="absolute -bottom-0 left-[1.125rem] h-px w-[calc(100%-2.25rem)] bg-gradient-to-r from-emerald-400/0 via-emerald-400/90 to-emerald-400/0 transition-opacity duration-500 group-hover:opacity-40" />
-                </>
-            )}
-            </button>
-
-            <div className="bg-gradient-to-r from-transparent via-slate-300 to-transparent my-8 h-[1px] w-full" />
-
-            <div className="flex flex-col space-y-4">
-            <button
-                className="relative group/btn flex space-x-2 items-center justify-start px-4 w-full text-slate-900 rounded-md h-10 font-medium shadow-sm bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors"
-                type="button"
-                onClick={() => alert("Github Auth coming soon!")}
-            >
-                <IconBrandGithub className="h-4 w-4 text-slate-800" />
-                <span className="text-slate-700 text-sm">
-                GitHub
-                </span>
-            </button>
-            <button
-                className="relative group/btn flex space-x-2 items-center justify-start px-4 w-full text-slate-900 rounded-md h-10 font-medium shadow-sm bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors"
-                type="button"
-                onClick={() => alert("Google Auth coming soon!")}
-            >
-                <IconBrandGoogle className="h-4 w-4 text-slate-800" />
-                <span className="text-slate-700 text-sm">
-                Google
-                </span>
-            </button>
-            <button
-                className="relative group/btn flex space-x-2 items-center justify-start px-4 w-full text-slate-900 rounded-md h-10 font-medium shadow-sm bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors"
-                type="button"
-                onClick={() => alert("LinkedIn Auth coming soon!")}
-            >
-                <IconBrandLinkedin className="h-4 w-4 text-slate-800" />
-                <span className="text-slate-700 text-sm">
-                LinkedIn
-                </span>
-            </button>
-            </div>
-
-            <p className="text-center mt-8 text-sm text-slate-600">
-                {isLogin ? "Don't have an account? " : "Already have an account? "}
-                <button onClick={() => setIsLogin(!isLogin)} className="text-slate-900 font-bold hover:underline">
-                    {isLogin ? 'Sign Up' : 'Sign In'}
+                ) : (
+                    <>
+                        <span className="absolute inset-0 overflow-hidden rounded-full">
+                            <span className="absolute inset-0 rounded-full bg-[image:radial-gradient(75%_100%_at_50%_0%,rgba(56,189,248,0.6)_0%,rgba(56,189,248,0)_75%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                        </span>
+                        <div className="relative flex space-x-2 items-center z-10 rounded-full bg-slate-950 py-2.5 px-4 ring-1 ring-white/10 justify-center">
+                            <span>{isLogin ? "Sign In" : "Sign Up"}</span>
+                            <svg
+                                fill="none"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                width="16"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <path
+                                    d="M10.75 8.75L14.25 12L10.75 15.25"
+                                    stroke="currentColor"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="1.5"
+                                />
+                            </svg>
+                        </div>
+                        <span className="absolute -bottom-0 left-[1.125rem] h-px w-[calc(100%-2.25rem)] bg-gradient-to-r from-emerald-400/0 via-emerald-400/90 to-emerald-400/0 transition-opacity duration-500 group-hover:opacity-40" />
+                    </>
+                )}
                 </button>
-            </p>
-        </form>
+
+                <div className="bg-gradient-to-r from-transparent via-slate-300 to-transparent my-8 h-[1px] w-full" />
+
+                <div className="flex flex-col space-y-4">
+                <button
+                    className="relative group/btn flex space-x-2 items-center justify-start px-4 w-full text-slate-900 rounded-md h-10 font-medium shadow-sm bg-white hover:bg-slate-50 border border-slate-200 transition-colors"
+                    type="button"
+                    onClick={() => alert("Github Auth coming soon!")}
+                >
+                    <IconBrandGithub className="h-4 w-4 text-slate-800" />
+                    <span className="text-slate-700 text-sm">
+                    GitHub
+                    </span>
+                </button>
+                <button
+                    className="relative group/btn flex space-x-2 items-center justify-start px-4 w-full text-slate-900 rounded-md h-10 font-medium shadow-sm bg-white hover:bg-slate-50 border border-slate-200 transition-colors"
+                    type="button"
+                    onClick={() => alert("Google Auth coming soon!")}
+                >
+                    <IconBrandGoogle className="h-4 w-4 text-slate-800" />
+                    <span className="text-slate-700 text-sm">
+                    Google
+                    </span>
+                </button>
+                <button
+                    className="relative group/btn flex space-x-2 items-center justify-start px-4 w-full text-slate-900 rounded-md h-10 font-medium shadow-sm bg-white hover:bg-slate-50 border border-slate-200 transition-colors"
+                    type="button"
+                    onClick={() => alert("LinkedIn Auth coming soon!")}
+                >
+                    <IconBrandLinkedin className="h-4 w-4 text-slate-800" />
+                    <span className="text-slate-700 text-sm">
+                    LinkedIn
+                    </span>
+                </button>
+                </div>
+
+                <p className="text-center mt-8 text-sm text-slate-600">
+                    {isLogin ? "Don't have an account? " : "Already have an account? "}
+                    <button onClick={() => setIsLogin(!isLogin)} className="text-slate-900 font-bold hover:underline" type="button">
+                        {isLogin ? 'Sign Up' : 'Sign In'}
+                    </button>
+                </p>
+            </form>
         </div>
-    </div>
+      </motion.div>
+    </AuroraBackground>
   );
 }
 
 // --- HELPER COMPONENTS ---
-
-const BottomGradient = () => {
-  return (
-    <>
-      <span className="group-hover/btn:opacity-100 block transition duration-500 opacity-0 absolute h-px w-full -bottom-px inset-x-0 bg-gradient-to-r from-transparent via-cyan-500 to-transparent" />
-      <span className="group-hover/btn:opacity-100 blur-sm block transition duration-500 opacity-0 absolute h-px w-1/2 mx-auto -bottom-px inset-x-10 bg-gradient-to-r from-transparent via-indigo-500 to-transparent" />
-    </>
-  );
-};
 
 const LabelInputContainer = ({
   children,
