@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { BarChart3, Calendar, ChevronRight } from "lucide-react";
+import { useAuthStore } from "@/stores/useAuthStore"; // Import store
+import SignOutButton from "@/components/logOutButton";
 
 interface Interview {
   id: string;
@@ -15,10 +17,11 @@ interface Interview {
 export default function Dashboard() {
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuthStore(); // <--- Get User
   const router = useRouter();
 
   useEffect(() => {
-    axios.get("http://localhost:4000/api/interviews")
+    axios.get(`http://localhost:4000/api/interviews?userId=${user?.id ?? ""}`)
       .then((res) => {
         setInterviews(res.data);
         setLoading(false);
@@ -33,6 +36,24 @@ export default function Dashboard() {
     return (
       <main className="min-h-screen bg-slate-50 p-8">
         <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+            <div>
+                <h1 className="text-3xl font-bold text-slate-800">Your Interviews</h1>
+                <p className="text-slate-500 text-sm mt-1">Welcome back, {user?.email}</p>
+            </div>
+            
+            <div className="flex gap-3">
+                {/* 2. ADD LOGOUT BUTTON HERE */}
+                <SignOutButton />
+                
+                <button 
+                    onClick={() => router.push("/")} 
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow-sm"
+                >
+                    + New Interview
+                </button>
+            </div>
+        </div>
           <div className="flex justify-between items-center mb-8">
             <div className="h-9 w-48 bg-slate-200 rounded animate-pulse"></div>
             <div className="h-10 w-36 bg-slate-200 rounded-lg animate-pulse"></div>
@@ -61,10 +82,17 @@ export default function Dashboard() {
     <main className="min-h-screen bg-slate-50 p-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-slate-800">Your Interviews</h1>
-            <button onClick={() => router.push("/")} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-                + New Interview
-            </button>
+            <div>
+                <h1 className="text-3xl font-bold text-slate-800">Your Interviews</h1>
+                <p className="text-slate-500 text-sm mt-1">Welcome back, {user?.email}</p>
+            </div>
+            
+            <div className="flex gap-3">
+                <SignOutButton />
+                <button onClick={() => router.push("/")} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                    + New Interview
+                </button>
+            </div>
         </div>
 
         <div className="grid gap-4">

@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useInterviewStore } from "@/stores/useInterviewStore"; // Import store
 import { UploadCloud, FileText, PlayCircle, LayoutDashboard } from "lucide-react"; // Icons
+import { useAuthStore } from "@/stores/useAuthStore"; // Import store
 
 export default function Home() {
   const router = useRouter();
+  const { user } = useAuthStore(); // <--- Get User
   const { setSessionId, setQuestion ,setFirstQuestionAudio} = useInterviewStore();
 
   const [file, setFile] = useState<File | null>(null);
@@ -16,11 +18,13 @@ export default function Home() {
 
   const startInterview = async () => {
     if (!file) return alert("Please upload a resume!");
+    if (!user?.id) return alert("Please login to start an interview!");
     setLoading(true);
 
     const formData = new FormData();
     formData.append("resume", file);
     formData.append("jobDescription", jd);
+    formData.append("userId", user?.id ?? ""); // <--- SEND ID
 
     try {
       const res = await axios.post(
