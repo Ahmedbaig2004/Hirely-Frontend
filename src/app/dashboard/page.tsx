@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { BarChart3, Calendar, ChevronRight } from "lucide-react";
+import { BarChart3, Calendar, ChevronRight,Loader2 } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore"; // Import store
 import SignOutButton from "@/components/logOutButton";
+import { LoaderFour } from "@/components/ui/loader";
+
 
 interface Interview {
   id: string;
@@ -16,12 +18,15 @@ interface Interview {
 
 export default function Dashboard() {
   const [interviews, setInterviews] = useState<Interview[]>([]);
+  const [isCheckingAuth,setIsCheckingAuth]=useState(true)
   const [loading, setLoading] = useState(true);
   const { user } = useAuthStore(); // <--- Get User
   const router = useRouter();
 
+
   useEffect(() => {
-    axios.get(`http://localhost:4000/api/interviews?userId=${user?.id ?? ""}`)
+    if(user){
+      axios.get(`http://localhost:4000/api/interviews?userId=${user?.id ?? ""}`)
       .then((res) => {
         setInterviews(res.data);
         setLoading(false);
@@ -30,7 +35,17 @@ export default function Dashboard() {
         console.error(err);
         setLoading(false);
       });
-  }, []);
+
+    }
+  
+  }, [user]);
+  if (!user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-slate-50">
+        <LoaderFour />
+      </div>
+    );
+  }
 
   if (loading) {
     return (

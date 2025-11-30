@@ -5,8 +5,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { cn } from "@/lib/utils";
 import { IconBrandGithub, IconBrandGoogle, IconBrandLinkedin } from "@tabler/icons-react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { motion } from "framer-motion"; // <--- 1. Import motion
-import { AuroraBackground } from "@/components/ui/aurora-background"; // <--- 2. Import Aurora
+import { motion } from "framer-motion"; 
+import { AuroraBackground } from "@/components/ui/aurora-background"; 
 
 export default function AuthPage() {
   const router = useRouter();
@@ -50,7 +50,6 @@ export default function AuthPage() {
   };
 
   return (
-    // 3. Wrap everything in AuroraBackground
     <AuroraBackground>
       <motion.div
         initial={{ opacity: 0.0, y: 40 }}
@@ -60,7 +59,9 @@ export default function AuthPage() {
           duration: 0.8,
           ease: "easeInOut",
         }}
-        className="relative flex flex-col gap-4 items-center justify-center px-4 w-full"
+        // ✅ FIXED: Added 'z-10' here. 
+        // This forces the form to sit ON TOP of the Aurora Background blobs.
+        className="relative z-10 flex flex-col gap-4 items-center justify-center px-4 w-full"
       >
         <div className="max-w-md w-full mx-auto rounded-2xl p-8 shadow-xl border border-slate-200 bg-white/90 backdrop-blur-sm">
             <h2 className="font-bold text-xl text-slate-900">

@@ -13,6 +13,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { AuroraBackground } from "@/components/ui/aurora-background"; // <--- 1. Import Aurora
 import { motion } from "framer-motion"; // <--- 2. Import Motion
 import { EncryptedText } from "@/components/ui/encrypted-text";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 
 export default function Home() {
@@ -31,6 +33,9 @@ export default function Home() {
         setFile(null);
     }
   };
+  const handleDashboardClick = () => {
+      router.push('/dashboard')
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -39,8 +44,12 @@ export default function Home() {
   };
 
   const startInterview = async () => {
-    if (!file) return alert("Please upload a resume!");
-    if (!user?.id) return alert("Please login to start an interview!");
+    if (!file) return toast.error("Please Upload A Resume 🔒")
+    if (!user) {
+      toast.error("Please login to start an interview! 🔒");
+      router.push("/auth"); // <--- Redirects to Auth
+      return;
+  }
     setLoading(true);
 
     const formData = new FormData();
@@ -69,7 +78,7 @@ export default function Home() {
     }
   };
 
-  const words = ["better", "successful", "confident", "winning", "stronger"];
+  const words = ["BETTER", "SUCCESSFULL", "CONFIDENT", "WINNING", "STRONGER"];
 
   return (
     // 3. Wrap everything in AuroraBackground
@@ -87,7 +96,7 @@ export default function Home() {
         <div className="w-full max-w-4xl mx-auto relative z-10 pointer-events-none">
           
           {/* Header Bar */}
-          <div className="flex justify-between items-center mb-12 pointer-events-auto">
+          <div className="relative z-50 flex justify-between items-center mb-12 pointer-events-auto">
               {/* Sign Out Button */}
               {user && (
                   <HoverBorderGradient
@@ -106,7 +115,7 @@ export default function Home() {
                   containerClassName="rounded-full"
                   as="button"
                   className="dark:bg-black bg-white text-black dark:text-white flex items-center space-x-2 px-4 py-2"
-                  onClick={() => router.push("/dashboard")}
+                  onClick={handleDashboardClick}
               >
                   <LayoutDashboard size={16} />
                   <span>Dashboard</span>
