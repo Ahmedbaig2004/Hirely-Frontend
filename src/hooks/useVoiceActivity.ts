@@ -17,7 +17,7 @@ export const useVoiceActivity = (isAIThinking: boolean) => {
   }, [isAIThinking]);
 
   // ⚙️ CONFIG
-  const SILENCE_DURATION = 3000;
+  const SILENCE_DURATION = 4000;
   const MIN_VOLUME = 15; 
 
   const startListening = async () => {

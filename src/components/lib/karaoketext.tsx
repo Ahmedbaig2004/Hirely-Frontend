@@ -12,51 +12,50 @@ export const KaraokeText = ({ text, isPlaying, audioRef }: KaraokeTextProps) => 
   const [currentIndex, setCurrentIndex] = useState(-1);
 
   useEffect(() => {
-    if (!isPlaying || !audioRef.current) {
-      // When not playing, show everything fully visible (or hide all if you prefer)
-      // Usually, when finished, we want to see the full text.
-      if (!isPlaying && currentIndex > 0) setCurrentIndex(words.length); 
+    // 1. If Audio is NOT playing, reset to show ALL text immediately.
+    // This fixes the "Black Box" issue when toggling TTS on manually.
+    if (!isPlaying) {
+      setCurrentIndex(words.length); 
       return;
     }
 
+    // 2. If Audio IS playing, sync text to audio time
     const audio = audioRef.current;
-    
-    // Calculate duration per word (Simple estimate)
-    // A better way is real timestamps, but for a simple hack:
+    if (!audio) return;
+
     const updateProgress = () => {
         const duration = audio.duration || 1;
         const currentTime = audio.currentTime;
         const progress = currentTime / duration;
         
-        // Map progress (0.0 to 1.0) to word index
+        // Map progress to word index
         const index = Math.floor(progress * words.length);
         setCurrentIndex(index);
     };
 
     audio.addEventListener("timeupdate", updateProgress);
     return () => audio.removeEventListener("timeupdate", updateProgress);
-  }, [isPlaying, words.length]);
+  }, [isPlaying, words.length]); // Re-run when play state changes
 
   return (
-    <div className="p-6 bg-slate-900/50 rounded-xl border border-slate-700/50 backdrop-blur-sm min-h-[100px]">
-      <p className="text-xl leading-relaxed font-medium flex flex-wrap gap-2">
+    <div className="w-full px-4"> 
+      {/* Kept wrapper consistent with Static Text padding */}
+      <p className="text-xl md:text-2xl leading-relaxed font-medium flex flex-wrap justify-center gap-x-2 gap-y-1">
         {words.map((word, i) => (
           <motion.span
             key={i}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 5 }}
             animate={{ 
-              // 1. If index is passed: Show fully (100%)
-              // 2. If index is future: Hide completely (0%)
+              // 🚨 THE FIX:
+              // If not playing (currentIndex = length), show full text (1).
+              // If playing, follow the index logic.
               opacity: i <= currentIndex ? 1 : 0, 
-              
-              // Optional: Add a subtle pop-up effect when it appears
               y: i <= currentIndex ? 0 : 5,
-              scale: i === currentIndex ? 1.1 : 1, // Current word pops slightly
+              scale: (isPlaying && i === currentIndex) ? 1.05 : 1, // Only pop if actually playing
+              color: (isPlaying && i === currentIndex) ? "#22d3ee" : "#e2e8f0" // Cyan active, Slate inactive
             }}
             transition={{ duration: 0.2 }}
-            className={`transition-colors duration-200 ${
-                i === currentIndex ? "text-cyan-400" : "text-slate-200"
-            }`}
+            className="transition-colors duration-200"
           >
             {word}
           </motion.span>

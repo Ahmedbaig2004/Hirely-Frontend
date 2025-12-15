@@ -11,6 +11,8 @@ import { KaraokeText } from "../components/lib/karaoketext";
 
 export default function InterviewPanel() {
   const router = useRouter(); 
+  
+  // 1. Get State
   const { 
     sessionId, 
     currentQuestion, 
@@ -18,46 +20,42 @@ export default function InterviewPanel() {
     setFeedback, 
     firstQuestionAudio, 
     setFirstQuestionAudio,
-    isTtsEnabled,   // <--- From Store (The User Toggle)
-    toggleTts       // <--- From Store
+    isTtsEnabled,   
+    toggleTts       
   } = useInterviewStore();
   
+  // 2. Local State
   const [isAIThinking, setIsAIThinking] = useState(false);
   const [hasSpoken, setHasSpoken] = useState(false);
+  const [questionCount, setQuestionCount] = useState(1);
   
-  // 🎵 NEW: Track if we actually have audio data from the backend
+  // 🎵 Audio State
   const [currentAudioData, setCurrentAudioData] = useState<string | null>(null);
-
-  // Karaoke Sync State
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  // 3. Hooks
   const { isRecording, volume, getAudioBlob, resetRecorder, stopRecordingManual } = useVoiceActivity(isAIThinking);
   const prevRecordingState = useRef(false);
 
   // ─────────────────────────────────────────────────────────────
-  // 1. Startup Logic
+  // LOGIC SECTIONS (Startup, Audio, Submission)
   // ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    // If we have startup audio AND the user wants TTS...
     if (firstQuestionAudio && isTtsEnabled) {
-        console.log("🔊 Found startup audio.");
         setIsAIThinking(true);
-        setCurrentAudioData(firstQuestionAudio); // <--- Save it!
+        setCurrentAudioData(firstQuestionAudio); 
         playAudio(firstQuestionAudio);
     } else {
-        // Otherwise clear it
         setFirstQuestionAudio(null);
         setCurrentAudioData(null);
     }
   }, []);
 
-  // 2. Detect Speech (User Logic)
   useEffect(() => {
     if (isRecording) setHasSpoken(true);
   }, [isRecording]);
 
-  // 3. Auto-Stop (User Logic)
   useEffect(() => {
     if (!isAIThinking && prevRecordingState.current === true && isRecording === false) {
       handleSubmission();
@@ -65,22 +63,18 @@ export default function InterviewPanel() {
     prevRecordingState.current = isRecording;
   }, [isRecording]);
 
-  // ─────────────────────────────────────────────────────────────
-  // 4. Play Audio Logic
-  // ─────────────────────────────────────────────────────────────
-  const playAudio = (base64String: string) => {
-    if (!audioRef.current) return;
-
-    // 🚨 IF TTS IS DISABLED, STOP HERE.
-    if (!isTtsEnabled) {
-        setIsAIThinking(false);
-        setIsPlaying(false);
-        return;
-    }
+  const playAudio = async (base64String: string) => {
+    if (!audioRef.current || !isTtsEnabled) return;
 
     try {
+      // 1. Force stop any previous audio
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+
+      // 2. Set new source
       audioRef.current.src = `data:audio/mp3;base64,${base64String}`;
       
+      // 3. Setup Listeners
       audioRef.current.onended = () => {
         resetRecorder();
         setIsAIThinking(false);
@@ -94,8 +88,20 @@ export default function InterviewPanel() {
         setIsPlaying(false);
       };
 
-      audioRef.current.play();
-      setIsPlaying(true);
+      // 4. Play with Promise Handling (The Fix)
+      setIsPlaying(true); // Optimistic UI update
+      
+      try {
+        await audioRef.current.play();
+      } catch (err: any) {
+        // Ignore "Interrupted" errors (common in React Strict Mode)
+        if (err.name === "AbortError" || err.message.includes("interrupted")) {
+             console.log("Audio playback interrupted (harmless)");
+        } else {
+             console.error("Playback failed:", err);
+             setIsPlaying(false);
+        }
+      }
 
     } catch (e) {
       console.error("Audio setup error", e);
@@ -104,15 +110,9 @@ export default function InterviewPanel() {
     }
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // 5. Handle Submission (The Fix)
-  // ─────────────────────────────────────────────────────────────
   const handleSubmission = async (manualBlob?: Blob) => {
     const audioBlob = manualBlob || getAudioBlob();
-    if (audioBlob.size < 5000) {
-        resetRecorder();
-        return; 
-    }
+    if (audioBlob.size < 3000) { resetRecorder(); return; }
 
     setIsAIThinking(true);
     setHasSpoken(false);
@@ -127,30 +127,21 @@ export default function InterviewPanel() {
       const { evaluation, nextQuestion, isFinished, audio } = res.data;
 
       setFeedback(evaluation.feedback); 
-
-      if (isFinished) {
-          router.replace(`/dashboard/${sessionId}`);
-          return;
-      }
+      if (isFinished) { router.replace(`/dashboard/${sessionId}`); return; }
 
       setQuestion(nextQuestion?.question);
+      setQuestionCount(prev => prev + 1); 
 
-      // 🚨 CRITICAL FIX: Save the audio state
-      if (audio) {
-          setCurrentAudioData(audio); // Save logic: "We have audio"
-      } else {
-          setCurrentAudioData(null);  // Logic: "Backend sent no audio"
-      }
+      if (audio) setCurrentAudioData(audio);
+      else setCurrentAudioData(null);
 
-      // Check BOTH: Does audio exist? AND Is toggle ON?
       if (audio && isTtsEnabled) {
           playAudio(audio); 
       } else {
-          // Fallback to text mode immediately
           resetRecorder();
           setIsAIThinking(false);
+          setIsPlaying(false);
       }
-
     } catch (err) {
       console.error(err);
       setIsAIThinking(false);
@@ -165,46 +156,54 @@ export default function InterviewPanel() {
   };
 
   // ─────────────────────────────────────────────────────────────
-  // 6. RENDER HELPERS
+  // RENDER LOGIC
   // ─────────────────────────────────────────────────────────────
   
-  // Rule: Show Karaoke ONLY if User Enabled it AND Backend provided Audio
+  // Only show Karaoke if enabled + audio exists
   const showKaraokeMode = isTtsEnabled && currentAudioData;
 
   return (
-    <div className="flex flex-col items-center justify-center w-full max-w-4xl p-6 min-h-[80vh]">
+    <div className="flex flex-col items-center w-full max-w-4xl p-6 min-h-[70vh] relative">
       
-      {/* 🔴 TOGGLE SWITCH */}
-      <div className="absolute top-6 right-6 z-50">
+      {/* ────────────────────────────────────────────────── */}
+      {/* TOP: Question Number & Toggle */}
+      {/* ────────────────────────────────────────────────── */}
+      <div className="w-full flex justify-between items-center mb-10 px-2">
+        <div className="flex flex-col">
+            <span className="text-slate-500 text-sm font-semibold tracking-wider uppercase">Question</span>
+            <h2 className="text-3xl font-bold text-slate-100">#{questionCount}</h2>
+        </div>
+
         <button 
             onClick={toggleTts}
             className={`p-3 rounded-full transition-all border ${
                 isTtsEnabled 
                 ? "bg-slate-800 text-cyan-400 border-cyan-500/50 shadow-lg shadow-cyan-900/20" 
-                : "bg-slate-900 text-slate-500 border-slate-700"
+                : "bg-slate-900 text-slate-500 border-slate-700 hover:border-slate-500"
             }`}
-            title={isTtsEnabled ? "Mute TTS" : "Enable TTS"}
         >
             {isTtsEnabled ? <Volume2 size={24} /> : <VolumeX size={24} />}
         </button>
       </div>
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* DYNAMIC UI SWITCHING */}
-      {/* ───────────────────────────────────────────────────────────── */}
-      <div className="mb-8 w-full">
+      {/* ────────────────────────────────────────────────── */}
+      {/* CENTER: Question Text (Karaoke OR Clean Text) */}
+      {/* ────────────────────────────────────────────────── */}
+      <div className="w-full flex-grow flex items-center justify-center mb-10">
         {currentQuestion && (
             showKaraokeMode ? (
-                // ✅ MODE A: KARAOKE (Audio exists + Toggle ON)
-                <KaraokeText 
-                    text={currentQuestion} 
-                    isPlaying={isPlaying} 
-                    audioRef={audioRef} 
-                />
+                // ✅ KARAOKE MODE (Has its own box styling in component)
+                <div className="w-full">
+                    <KaraokeText 
+                        text={currentQuestion} 
+                        isPlaying={isPlaying} 
+                        audioRef={audioRef} 
+                    />
+                </div>
             ) : (
-                // ✅ MODE B: STANDARD TEXT (Audio missing OR Toggle OFF)
-                <div className="p-6 bg-slate-900/50 rounded-xl border border-slate-700/50 backdrop-blur-sm">
-                    <p className="text-lg leading-relaxed text-slate-200 font-medium">
+                // ✅ STATIC MODE (Box Removed - Just Text)
+                <div className="w-full px-4">
+                    <p className="text-xl md:text-2xl leading-relaxed text-slate-200 font-medium text-center">
                         {currentQuestion}
                     </p>
                 </div>
@@ -212,52 +211,64 @@ export default function InterviewPanel() {
         )}
       </div>
 
-      {/* Visualizer & Controls (Unchanged) */}
-      <div className="mb-10 relative h-32 flex items-center justify-center">
-        {isAIThinking ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center text-blue-400">
-            <BrainCircuit size={80} />
-            <p className="mt-4 text-xl font-bold animate-pulse">
-                {isPlaying ? "INTERVIEWER SPEAKING..." : "ANALYZING ANSWER..."}
-            </p>
-          </motion.div>
-        ) : isRecording ? (
-           <div className="flex flex-col items-center text-red-500">
-             <div className="relative">
-                <Mic size={80} />
-                <motion.div className="absolute inset-0 rounded-full border-4 border-red-500" animate={{ scale: [1, 1.4], opacity: [1, 0] }} transition={{ repeat: Infinity, duration: 1 }} />
-             </div>
-             <p className="mt-4 text-xl font-bold">LISTENING...</p>
-           </div>
-        ) : (
-          <div className="flex flex-col items-center text-slate-400 opacity-80">
-            <MicOff size={80} />
-            <p className="mt-4 text-lg font-medium">Speak when ready...</p>
-          </div>
-        )}
+      {/* ────────────────────────────────────────────────── */}
+      {/* BOTTOM: Visualizer & Button */}
+      {/* ────────────────────────────────────────────────── */}
+      <div className="w-full flex flex-col items-center justify-end space-y-6">
+        
+        {/* Visualizer */}
+        <div className="h-24 flex items-center justify-center">
+            {isAIThinking ? (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center text-blue-400">
+                <BrainCircuit size={60} />
+                <p className="mt-2 text-sm font-bold animate-pulse tracking-widest">ANALYZING</p>
+            </motion.div>
+            ) : isRecording ? (
+            <div className="flex flex-col items-center text-red-500">
+                <div className="relative">
+                    <Mic size={60} />
+                    <motion.div 
+                        className="absolute inset-0 rounded-full border-4 border-red-500" 
+                        animate={{ scale: [1, 1.4], opacity: [1, 0] }} 
+                        transition={{ repeat: Infinity, duration: 1 }} 
+                    />
+                </div>
+                <p className="mt-2 text-sm font-bold tracking-widest">LISTENING</p>
+            </div>
+            ) : (
+            <div className="flex flex-col items-center text-slate-500 opacity-60">
+                <MicOff size={60} />
+                <p className="mt-2 text-sm font-medium">Ready</p>
+            </div>
+            )}
+        </div>
+
+        {/* Volume Bar */}
+        <div className="w-64 h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700/50">
+            <motion.div 
+            className={`h-full ${isAIThinking ? 'bg-blue-500' : 'bg-green-500'}`}
+            animate={{ width: isAIThinking ? "100%" : `${Math.min(volume * 2, 100)}%` }}
+            transition={{ ease: "linear", duration: 0.1 }}
+            />
+        </div>
+
+        {/* Done Button */}
+        <button
+            onClick={handleManualStop}
+            disabled={!hasSpoken || isAIThinking}
+            className={`flex items-center gap-2 px-10 py-4 rounded-full font-bold text-lg transition-all shadow-lg ${
+                hasSpoken && !isAIThinking 
+                ? "bg-green-600 text-white hover:bg-green-500 hover:scale-105 shadow-green-900/20" 
+                : "bg-slate-800 text-slate-500 cursor-not-allowed"
+            }`}
+        >
+            <CheckCircle size={22} />
+            I'm Done Speaking
+        </button>
+
       </div>
 
-      {/* Volume Bar */}
-      <div className="w-96 h-3 bg-slate-800 rounded-full overflow-hidden border border-slate-700 mb-8">
-        <motion.div 
-          className={`h-full ${isAIThinking ? 'bg-blue-500' : 'bg-green-500'}`}
-          animate={{ width: isAIThinking ? "100%" : `${Math.min(volume * 2, 100)}%` }}
-          transition={{ ease: "linear", duration: 0.1 }}
-        />
-      </div>
-
-      <button
-        onClick={handleManualStop}
-        disabled={!hasSpoken || isAIThinking}
-        className={`flex items-center gap-2 px-8 py-3 rounded-full font-bold transition-all ${hasSpoken && !isAIThinking ? "bg-green-600 text-white" : "bg-slate-800 text-slate-500"}`}
-      >
-        <CheckCircle size={20} />
-        I'm Done Speaking
-      </button>
-
-      {/* Audio Element */}
       <audio ref={audioRef} className="hidden" />
-
     </div>
   );
 }

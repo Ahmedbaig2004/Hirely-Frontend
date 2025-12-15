@@ -14,12 +14,7 @@ export default function InterviewPage() {
       {/* We will build this component next! */}
       <InterviewPanel />
 
-      <div className="mt-8 p-4 bg-slate-800 rounded-lg max-w-2xl w-full text-center">
-        <p className="text-slate-400 text-sm uppercase tracking-wider font-bold mb-2">
-          Current Question
-        </p>
-        <p className="text-xl">{currentQuestion || "Loading question..."}</p>
-      </div>
+ 
     </main>
   );
 }
