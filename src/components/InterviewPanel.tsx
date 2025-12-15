@@ -1,88 +1,115 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Mic, MicOff, BrainCircuit, CheckCircle } from "lucide-react";
+import { Mic, MicOff, BrainCircuit, CheckCircle, Volume2, VolumeX } from "lucide-react";
 import { useVoiceActivity } from "../hooks/useVoiceActivity";
 import { useInterviewStore } from "../stores/useInterviewStore";
 import { useRouter } from "next/navigation"; 
 import axios from "axios";
 import { motion } from "framer-motion";
+import { KaraokeText } from "../components/lib/karaoketext"; 
 
 export default function InterviewPanel() {
   const router = useRouter(); 
-  const { sessionId, currentQuestion, setQuestion, setFeedback,firstQuestionAudio,        // <--- GET AUDIO
-    setFirstQuestionAudio  } = useInterviewStore();
+  const { 
+    sessionId, 
+    currentQuestion, 
+    setQuestion, 
+    setFeedback, 
+    firstQuestionAudio, 
+    setFirstQuestionAudio,
+    isTtsEnabled,   // <--- From Store (The User Toggle)
+    toggleTts       // <--- From Store
+  } = useInterviewStore();
   
   const [isAIThinking, setIsAIThinking] = useState(false);
   const [hasSpoken, setHasSpoken] = useState(false);
+  
+  // 🎵 NEW: Track if we actually have audio data from the backend
+  const [currentAudioData, setCurrentAudioData] = useState<string | null>(null);
 
-  // Hook
+  // Karaoke Sync State
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
   const { isRecording, volume, getAudioBlob, resetRecorder, stopRecordingManual } = useVoiceActivity(isAIThinking);
   const prevRecordingState = useRef(false);
 
+  // ─────────────────────────────────────────────────────────────
+  // 1. Startup Logic
+  // ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (firstQuestionAudio) {
-        console.log("🔊 Found startup audio. Playing...");
-        
-        // 1. Lock Interface (AI is Thinking/Speaking)
-        setIsAIThinking(true); 
-        
-        // 2. Play it
+    // If we have startup audio AND the user wants TTS...
+    if (firstQuestionAudio && isTtsEnabled) {
+        console.log("🔊 Found startup audio.");
+        setIsAIThinking(true);
+        setCurrentAudioData(firstQuestionAudio); // <--- Save it!
         playAudio(firstQuestionAudio);
-        
-        // 3. Clear it from store so it doesn't play again on refresh
+    } else {
+        // Otherwise clear it
         setFirstQuestionAudio(null);
+        setCurrentAudioData(null);
     }
-  }, []); // Empty dependency array = Runs once on mount
-  // 1. Detect Speech for Button State
+  }, []);
+
+  // 2. Detect Speech (User Logic)
   useEffect(() => {
     if (isRecording) setHasSpoken(true);
   }, [isRecording]);
 
-  // 2. Watch for AUTO-STOP (Silence) only
+  // 3. Auto-Stop (User Logic)
   useEffect(() => {
     if (!isAIThinking && prevRecordingState.current === true && isRecording === false) {
-      console.log("🤖 Auto-Submitting due to silence...");
       handleSubmission();
     }
     prevRecordingState.current = isRecording;
   }, [isRecording]);
 
-  // 3. Play Deepgram Audio (MP3)
-  // This function locks the interface until audio finishes
+  // ─────────────────────────────────────────────────────────────
+  // 4. Play Audio Logic
+  // ─────────────────────────────────────────────────────────────
   const playAudio = (base64String: string) => {
+    if (!audioRef.current) return;
+
+    // 🚨 IF TTS IS DISABLED, STOP HERE.
+    if (!isTtsEnabled) {
+        setIsAIThinking(false);
+        setIsPlaying(false);
+        return;
+    }
+
     try {
-      const audio = new Audio(`data:audio/mp3;base64,${base64String}`);
+      audioRef.current.src = `data:audio/mp3;base64,${base64String}`;
       
-      // 🔒 MIC REMAINS LOCKED (isAIThinking is true)
-      
-      audio.onended = () => {
-        console.log("✅ Audio finished. Unlocking Mic.");
-        // 🔓 UNLOCK MIC NOW
+      audioRef.current.onended = () => {
         resetRecorder();
         setIsAIThinking(false);
+        setIsPlaying(false);
       };
 
-      audio.onerror = (e) => {
+      audioRef.current.onerror = (e) => {
         console.error("Audio playback error", e);
-        // Safety unlock if audio fails
         resetRecorder();
         setIsAIThinking(false);
+        setIsPlaying(false);
       };
 
-      audio.play();
+      audioRef.current.play();
+      setIsPlaying(true);
+
     } catch (e) {
       console.error("Audio setup error", e);
       setIsAIThinking(false);
+      setIsPlaying(false);
     }
   };
 
-  // 4. Unified Submission Logic
+  // ─────────────────────────────────────────────────────────────
+  // 5. Handle Submission (The Fix)
+  // ─────────────────────────────────────────────────────────────
   const handleSubmission = async (manualBlob?: Blob) => {
     const audioBlob = manualBlob || getAudioBlob();
-    
     if (audioBlob.size < 5000) {
-        console.log("⚠️ Audio too short ("+audioBlob.size+"), ignoring.");
         resetRecorder();
         return; 
     }
@@ -97,27 +124,29 @@ export default function InterviewPanel() {
 
     try {
       const res = await axios.post("http://localhost:4000/api/submit-answer", formData);
-      
       const { evaluation, nextQuestion, isFinished, audio } = res.data;
 
-      // Update UI Text
       setFeedback(evaluation.feedback); 
 
       if (isFinished) {
-          // 🏁 FINISHED: Redirect to Dashboard Result
           router.replace(`/dashboard/${sessionId}`);
           return;
       }
 
       setQuestion(nextQuestion?.question);
 
-      // 🔊 PLAY AUDIO IF AVAILABLE
+      // 🚨 CRITICAL FIX: Save the audio state
       if (audio) {
-          playAudio(audio); 
-          // Note: playAudio handles unlocking setIsAIThinking(false) when done
+          setCurrentAudioData(audio); // Save logic: "We have audio"
       } else {
-          // Fallback if no audio: Unlock immediately
-          console.warn("No audio received from backend.");
+          setCurrentAudioData(null);  // Logic: "Backend sent no audio"
+      }
+
+      // Check BOTH: Does audio exist? AND Is toggle ON?
+      if (audio && isTtsEnabled) {
+          playAudio(audio); 
+      } else {
+          // Fallback to text mode immediately
           resetRecorder();
           setIsAIThinking(false);
       }
@@ -129,23 +158,68 @@ export default function InterviewPanel() {
     }
   };
 
-  // 5. Manual Button Handler
   const handleManualStop = async () => {
     if (isAIThinking) return;
     const blob = await stopRecordingManual();
-    console.log("👤 Manual Submit Clicked");
     await handleSubmission(blob);
   };
 
+  // ─────────────────────────────────────────────────────────────
+  // 6. RENDER HELPERS
+  // ─────────────────────────────────────────────────────────────
+  
+  // Rule: Show Karaoke ONLY if User Enabled it AND Backend provided Audio
+  const showKaraokeMode = isTtsEnabled && currentAudioData;
+
   return (
-    <div className="flex flex-col items-center justify-center w-full max-w-4xl p-6">
+    <div className="flex flex-col items-center justify-center w-full max-w-4xl p-6 min-h-[80vh]">
       
-      {/* Visualizer */}
+      {/* 🔴 TOGGLE SWITCH */}
+      <div className="absolute top-6 right-6 z-50">
+        <button 
+            onClick={toggleTts}
+            className={`p-3 rounded-full transition-all border ${
+                isTtsEnabled 
+                ? "bg-slate-800 text-cyan-400 border-cyan-500/50 shadow-lg shadow-cyan-900/20" 
+                : "bg-slate-900 text-slate-500 border-slate-700"
+            }`}
+            title={isTtsEnabled ? "Mute TTS" : "Enable TTS"}
+        >
+            {isTtsEnabled ? <Volume2 size={24} /> : <VolumeX size={24} />}
+        </button>
+      </div>
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* DYNAMIC UI SWITCHING */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <div className="mb-8 w-full">
+        {currentQuestion && (
+            showKaraokeMode ? (
+                // ✅ MODE A: KARAOKE (Audio exists + Toggle ON)
+                <KaraokeText 
+                    text={currentQuestion} 
+                    isPlaying={isPlaying} 
+                    audioRef={audioRef} 
+                />
+            ) : (
+                // ✅ MODE B: STANDARD TEXT (Audio missing OR Toggle OFF)
+                <div className="p-6 bg-slate-900/50 rounded-xl border border-slate-700/50 backdrop-blur-sm">
+                    <p className="text-lg leading-relaxed text-slate-200 font-medium">
+                        {currentQuestion}
+                    </p>
+                </div>
+            )
+        )}
+      </div>
+
+      {/* Visualizer & Controls (Unchanged) */}
       <div className="mb-10 relative h-32 flex items-center justify-center">
         {isAIThinking ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center text-blue-400">
             <BrainCircuit size={80} />
-            <p className="mt-4 text-xl font-bold animate-pulse">ANALYZING...</p>
+            <p className="mt-4 text-xl font-bold animate-pulse">
+                {isPlaying ? "INTERVIEWER SPEAKING..." : "ANALYZING ANSWER..."}
+            </p>
           </motion.div>
         ) : isRecording ? (
            <div className="flex flex-col items-center text-red-500">
@@ -172,24 +246,17 @@ export default function InterviewPanel() {
         />
       </div>
 
-      {/* Manual Button */}
       <button
         onClick={handleManualStop}
         disabled={!hasSpoken || isAIThinking}
-        className={`
-          flex items-center gap-2 px-8 py-3 rounded-full font-bold transition-all
-          ${hasSpoken && !isAIThinking 
-            ? "bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-900/20 cursor-pointer transform hover:scale-105 active:scale-95" 
-            : "bg-slate-800 text-slate-500 cursor-not-allowed"}
-        `}
+        className={`flex items-center gap-2 px-8 py-3 rounded-full font-bold transition-all ${hasSpoken && !isAIThinking ? "bg-green-600 text-white" : "bg-slate-800 text-slate-500"}`}
       >
         <CheckCircle size={20} />
         I'm Done Speaking
       </button>
 
-      <p className="mt-4 text-slate-500 text-sm">
-        {isAIThinking ? "Generating feedback..." : "Wait 3s or click 'Done' to submit."}
-      </p>
+      {/* Audio Element */}
+      <audio ref={audioRef} className="hidden" />
 
     </div>
   );
