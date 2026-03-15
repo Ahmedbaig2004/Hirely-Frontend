@@ -7,6 +7,7 @@ import { BarChart3, Calendar, ChevronRight,Loader2 } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore"; // Import store
 import SignOutButton from "@/components/logOutButton";
 import { LoaderFour } from "@/components/ui/loader";
+import { toast } from "react-toastify";
 
 
 interface Interview {
@@ -26,12 +27,15 @@ export default function Dashboard() {
 
   useEffect(() => {
     if(user){
-      axios.get(`http://localhost:4000/api/interviews?userId=${user?.id ?? ""}`)
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
+      axios.get(`${backendUrl}/api/interviews?userId=${user?.id ?? ""}`)
       .then((res) => {
         setInterviews(res.data);
         setLoading(false);
       })
       .catch((err) => {
+        const errorMsg = err.response?.data?.error || err.message || "Failed to load interviews";
+        toast.error(`Error: ${errorMsg}`);
         console.error(err);
         setLoading(false);
       });
