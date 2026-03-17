@@ -240,22 +240,35 @@ export default function InterviewDetail() {
         {/* 5. VOICE ANALYSIS SUMMARY */}
         {feedback.voiceSummary && (
           <div className="glass-card p-6 rounded-xl border-l-4 border-violet-500 mb-8">
-            <div className="flex flex-wrap justify-between items-start mb-4 gap-2">
-              <h3 className="font-bold text-violet-300 flex items-center gap-2">
-                <Mic size={20} /> Voice Analysis Summary
-              </h3>
-              <div className="flex items-center gap-3">
-                <span
-                  className={`text-xs font-bold px-3 py-1 rounded-full border ${getVoiceLabelStyle(
-                    feedback.voiceSummary.overallLabel
-                  )}`}
-                >
-                  {feedback.voiceSummary.overallLabel}
-                </span>
+            <div className="flex flex-wrap justify-between items-start mb-5 gap-4">
+              <div>
+                <h3 className="font-bold text-violet-300 flex items-center gap-2 mb-1">
+                  <Mic size={20} /> Voice Analysis Summary
+                </h3>
+                <p className="text-xs text-white/30">
+                  AI-powered acoustic confidence analysis across all answers
+                </p>
+              </div>
+              <div className="flex items-center gap-4">
+                {/* Circular confidence score */}
+                {feedback.scores?.voice != null && (
+                  <div className="flex flex-col items-center gap-1">
+                    <CircularProgress value={feedback.scores.voice} size={88} />
+                    <span className="text-[10px] text-white/30 font-bold uppercase tracking-wide">
+                      Confidence
+                    </span>
+                  </div>
+                )}
+                {/* WPM badge */}
                 {feedback.voiceSummary.avgWPM && feedback.voiceSummary.avgWPM !== "N/A" && (
-                  <span className="flex items-center gap-1 bg-violet-500/15 text-violet-300 text-xs font-bold px-3 py-1 rounded-full border border-violet-500/20">
-                    <Activity size={12} /> {feedback.voiceSummary.avgWPM} WPM
-                  </span>
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="flex items-center gap-1 bg-violet-500/15 text-violet-300 text-sm font-black px-3 py-2 rounded-xl border border-violet-500/20">
+                      <Activity size={14} /> {feedback.voiceSummary.avgWPM}
+                    </span>
+                    <span className="text-[10px] text-white/30 font-bold uppercase tracking-wide">
+                      Avg WPM
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
@@ -372,15 +385,20 @@ export default function InterviewDetail() {
                     Voice Metrics Detail
                   </summary>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
-                    <div className="bg-white/[0.04] p-3 rounded-lg text-center">
-                      <span className="block text-xs text-white/30 mb-1">Quality</span>
-                      <span className="text-sm font-bold text-white/70">
-                        {turn.voiceAnalysis.speakingQuality != null
-                          ? `${(turn.voiceAnalysis.speakingQuality * 100).toFixed(0)}%`
-                          : "N/A"}
-                      </span>
+                    {/* Confidence — circular progress */}
+                    <div className="bg-white/[0.04] p-3 rounded-lg flex flex-col items-center gap-1">
+                      <span className="block text-xs text-white/30 mb-1">Confidence</span>
+                      <CircularProgress
+                        value={
+                          turn.voiceAnalysis.confidenceLevel != null
+                            ? turn.voiceAnalysis.confidenceLevel * 100
+                            : 0
+                        }
+                        size={60}
+                        strokeWidth={5}
+                      />
                       <span className="block text-[10px] text-white/20 mt-1">
-                        Model prediction certainty
+                        ML confidence score
                       </span>
                     </div>
                     <div className="bg-white/[0.04] p-3 rounded-lg text-center">
@@ -472,6 +490,63 @@ export default function InterviewDetail() {
         </div>
       </motion.div>
     </main>
+  );
+}
+
+// --- CIRCULAR PROGRESS BAR ---
+
+function CircularProgress({
+  value,
+  size = 96,
+  strokeWidth = 7,
+}: {
+  value: number;
+  size?: number;
+  strokeWidth?: number;
+}) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (Math.min(100, Math.max(0, value)) / 100) * circumference;
+  const color = value >= 70 ? "#10B981" : value >= 50 ? "#F59E0B" : "#EF4444";
+  const glowColor =
+    value >= 70
+      ? "drop-shadow(0 0 8px rgba(16,185,129,0.55))"
+      : value >= 50
+        ? "drop-shadow(0 0 8px rgba(245,158,11,0.55))"
+        : "drop-shadow(0 0 8px rgba(239,68,68,0.55))";
+  const cx = size / 2;
+  const cy = size / 2;
+
+  return (
+    <div className="relative inline-flex items-center justify-center shrink-0">
+      <svg width={size} height={size} style={{ filter: glowColor }}>
+        {/* Track */}
+        <circle
+          cx={cx} cy={cy} r={radius}
+          fill="none"
+          stroke="rgba(255,255,255,0.06)"
+          strokeWidth={strokeWidth}
+        />
+        {/* Progress arc */}
+        <circle
+          cx={cx} cy={cy} r={radius}
+          fill="none"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          transform={`rotate(-90 ${cx} ${cy})`}
+          style={{ transition: "stroke-dashoffset 0.7s ease" }}
+        />
+      </svg>
+      {/* Label */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="font-black leading-none" style={{ color, fontSize: size * 0.22 }}>
+          {Math.round(value)}%
+        </span>
+      </div>
+    </div>
   );
 }
 
