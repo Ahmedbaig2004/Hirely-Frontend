@@ -61,7 +61,7 @@ export default function StartPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#080810] text-white overflow-hidden">
+    <div className="relative min-h-screen bg-background text-on-surface overflow-hidden">
       <MeshGradient />
 
       <div className="relative z-10 min-h-screen flex flex-col">
@@ -77,10 +77,10 @@ export default function StartPage() {
             className="text-center mb-8"
           >
             <span className="label-caps block mb-3">Ready to begin?</span>
-            <h1 className="text-2xl md:text-3xl font-bold text-white/90 tracking-tight">
+            <h1 className="text-2xl md:text-3xl font-bold text-on-surface tracking-tight opacity-90">
               Set Up Your Interview
             </h1>
-            <p className="text-sm text-white/40 mt-2">
+            <p className="text-sm text-on-surface-variant mt-2 opacity-55">
               Upload your resume and paste the job description to get started.
             </p>
           </motion.div>
@@ -94,49 +94,49 @@ export default function StartPage() {
           >
             {/* Ambient glow */}
             <div
-              className="absolute inset-0 rounded-2xl blur-[60px] opacity-15 pointer-events-none"
-              style={{ background: "radial-gradient(circle, #7C3AED 0%, transparent 70%)" }}
+              className="absolute inset-0 rounded-2xl blur-[60px] opacity-10 pointer-events-none"
+              style={{ background: "radial-gradient(circle, var(--md-sys-color-primary) 0%, transparent 70%)" }}
             />
 
             <div className="relative rounded-2xl glass-card-raised p-7">
               {/* Card header */}
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-base font-semibold text-white/90 tracking-tight">
+                  <h2 className="text-base font-semibold text-on-surface tracking-tight opacity-90">
                     Start your session
                   </h2>
-                  <p className="text-xs text-white/30 mt-0.5">Takes less than 60 seconds</p>
+                  <p className="text-xs text-on-surface-variant mt-0.5 opacity-40">Takes less than 60 seconds</p>
                 </div>
                 <div
                   className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
                   style={{
-                    background: "linear-gradient(135deg, rgba(124,58,237,0.25), rgba(91,33,182,0.15))",
-                    border: "1px solid rgba(124,58,237,0.25)",
+                    background: "color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)",
+                    border: "1px solid color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent)",
                   }}
                 >
-                  <Zap size={14} style={{ color: "#a78bfa" }} />
+                  <Zap size={14} style={{ color: "var(--md-sys-color-primary)" }} />
                 </div>
               </div>
 
-              <div className="h-px mb-6" style={{ background: "rgba(255,255,255,0.06)" }} />
+              <div className="h-px mb-6 bg-outline-variant opacity-40" />
 
               {/* Job Description */}
               <div className="mb-5">
                 <label className="label-caps block mb-2">Job Description</label>
                 <textarea
-                  className="w-full rounded-xl px-4 py-3 text-sm text-white/80 placeholder-white/20 outline-none resize-none"
+                  className="w-full rounded-xl px-4 py-3 text-sm outline-none resize-none text-on-surface"
                   style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.07)",
+                    background: "var(--md-sys-color-surface-container-low)",
+                    border: "1px solid var(--md-sys-color-outline-variant)",
                     minHeight: "88px",
                     transition: "border 0.2s, box-shadow 0.2s",
                   }}
                   onFocus={(e) => {
-                    e.currentTarget.style.border = "1px solid rgba(124,58,237,0.45)";
-                    e.currentTarget.style.boxShadow = "0 0 0 3px rgba(124,58,237,0.08)";
+                    e.currentTarget.style.border = "1px solid color-mix(in srgb, var(--md-sys-color-primary) 60%, transparent)";
+                    e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent)";
                   }}
                   onBlur={(e) => {
-                    e.currentTarget.style.border = "1px solid rgba(255,255,255,0.07)";
+                    e.currentTarget.style.border = "1px solid var(--md-sys-color-outline-variant)";
                     e.currentTarget.style.boxShadow = "none";
                   }}
                   rows={3}
@@ -158,11 +158,17 @@ export default function StartPage() {
               <button
                 onClick={startInterview}
                 disabled={loading}
-                className="w-full rounded-xl py-3.5 text-sm font-semibold text-white btn-violet disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
+                className="w-full rounded-xl py-3.5 text-sm font-semibold btn-violet disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
-                    <span className="w-3.5 h-3.5 rounded-full border-2 border-white/20 border-t-white/80 inline-block animate-spin" />
+                    <span
+                      className="w-3.5 h-3.5 rounded-full border-2 inline-block animate-spin"
+                      style={{
+                        borderColor: "color-mix(in srgb, var(--md-sys-color-on-primary) 20%, transparent)",
+                        borderTopColor: "var(--md-sys-color-on-primary)",
+                      }}
+                    />
                     Analyzing Resume...
                   </span>
                 ) : (

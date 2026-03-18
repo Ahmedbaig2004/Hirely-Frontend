@@ -10,9 +10,9 @@ const steps = [
     title: "Upload Resume & JD",
     description:
       "Drop your resume PDF and paste the job description. Our AI analyzes your profile and identifies skill gaps instantly.",
-    accent: "#7C3AED",
-    glow: "rgba(124,58,237,0.15)",
-    border: "rgba(124,58,237,0.2)",
+    accent: "var(--md-sys-color-primary)",
+    glowColor: "var(--md-sys-color-primary)",
+    borderColor: "var(--md-sys-color-primary)",
   },
   {
     step: "02",
@@ -20,9 +20,9 @@ const steps = [
     title: "Face the AI Interviewer",
     description:
       "Answer adaptive questions out loud. The AI adjusts difficulty in real-time based on your responses and expertise level.",
-    accent: "#22D3EE",
-    glow: "rgba(34,211,238,0.15)",
-    border: "rgba(34,211,238,0.2)",
+    accent: "var(--md-sys-color-tertiary)",
+    glowColor: "var(--md-sys-color-tertiary)",
+    borderColor: "var(--md-sys-color-tertiary)",
   },
   {
     step: "03",
@@ -31,8 +31,8 @@ const steps = [
     description:
       "Receive a detailed hiring report with scores, strengths, weaknesses, voice analysis, and actionable recommendations.",
     accent: "#10B981",
-    glow: "rgba(16,185,129,0.15)",
-    border: "rgba(16,185,129,0.2)",
+    glowColor: "#10B981",
+    borderColor: "#10B981",
   },
 ];
 
@@ -49,32 +49,35 @@ export function HowItWorks() {
           className="text-center mb-12"
         >
           <span className="label-caps block mb-4">Process</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-white/90 tracking-tight">
+          <h2 className="text-3xl md:text-4xl font-bold text-on-surface tracking-tight opacity-90">
             How It Works
           </h2>
-          <p className="text-white/40 text-sm mt-4 max-w-md mx-auto">
+          <p className="text-on-surface-variant text-sm mt-4 max-w-md mx-auto opacity-60">
             From upload to offer-ready in minutes. No scheduling, no waiting.
           </p>
         </motion.div>
 
         {/* Cards */}
         <div className="grid md:grid-cols-3 gap-6">
-          {steps.map(({ step, icon: Icon, title, description, accent, glow, border }, i) => (
+          {steps.map(({ step, icon: Icon, title, description, accent, glowColor, borderColor }, i) => (
             <motion.div
               key={step}
               initial={{ opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ delay: i * 0.15, duration: 0.5, ease: "easeOut" }}
-              className="glass-card rounded-2xl p-8 text-center group hover:border-violet-500/40 hover:shadow-[0_0_24px_rgba(124,58,237,0.12)] transition-all duration-300"
+              className="glass-card rounded-2xl p-8 text-center group transition-all duration-300"
+              style={{
+                ["--hover-border" as string]: `color-mix(in srgb, ${borderColor} 40%, transparent)`,
+              }}
             >
               {/* Step badge */}
               <div className="flex justify-center mb-6">
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center"
                   style={{
-                    background: `${glow}`,
-                    border: `1px solid ${border}`,
+                    background: `color-mix(in srgb, ${glowColor} 15%, transparent)`,
+                    border: `1px solid color-mix(in srgb, ${borderColor} 20%, transparent)`,
                   }}
                 >
                   <Icon size={22} style={{ color: accent }} />
@@ -83,16 +86,16 @@ export function HowItWorks() {
 
               {/* Step number */}
               <span
-                className="text-xs font-bold tracking-widest mb-3 block"
-                style={{ color: accent, opacity: 0.6 }}
+                className="text-xs font-bold tracking-widest mb-3 block opacity-60"
+                style={{ color: accent }}
               >
                 STEP {step}
               </span>
 
-              <h3 className="text-base font-semibold text-white/90 mb-3 tracking-tight">
+              <h3 className="text-base font-semibold text-on-surface mb-3 tracking-tight opacity-90">
                 {title}
               </h3>
-              <p className="text-sm text-white/45 leading-relaxed">{description}</p>
+              <p className="text-sm text-on-surface-variant leading-relaxed opacity-60">{description}</p>
             </motion.div>
           ))}
         </div>

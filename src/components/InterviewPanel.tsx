@@ -307,7 +307,7 @@ export default function InterviewPanel() {
               background:
                 processingStage === "done"
                   ? "radial-gradient(circle, #10B981 0%, transparent 60%)"
-                  : "radial-gradient(circle, #7C3AED 0%, transparent 60%)",
+                  : "radial-gradient(circle, var(--md-sys-color-primary) 0%, transparent 60%)",
             }}
           />
         </div>
@@ -327,17 +327,17 @@ export default function InterviewPanel() {
               transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
               className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center"
               style={{
-                background: "linear-gradient(135deg, rgba(124,58,237,0.25), rgba(34,211,238,0.1))",
-                border: "1px solid rgba(124,58,237,0.25)",
-                boxShadow: "0 0 30px rgba(124,58,237,0.15)",
+                background: "color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent)",
+                boxShadow: "0 0 30px color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent)",
               }}
             >
-              <BrainCircuit size={26} style={{ color: "#a78bfa" }} />
+              <BrainCircuit size={26} style={{ color: "var(--md-sys-color-primary)" }} />
             </motion.div>
-            <h2 className="text-xl font-semibold text-white/90 tracking-tight">
+            <h2 className="text-xl font-semibold text-on-surface tracking-tight opacity-90">
               Building Your Report
             </h2>
-            <p className="text-xs text-white/35 mt-1.5 tracking-wide">
+            <p className="text-xs text-on-surface-variant mt-1.5 tracking-wide opacity-45">
               Analyzing your full interview session
             </p>
           </div>
@@ -363,15 +363,15 @@ export default function InterviewPanel() {
                       background: isCompleted
                         ? "rgba(16,185,129,0.15)"
                         : isActive
-                        ? "rgba(124,58,237,0.2)"
-                        : "rgba(255,255,255,0.04)",
+                        ? "color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)"
+                        : "var(--md-sys-color-surface-container)",
                       border: isCompleted
                         ? "1px solid rgba(16,185,129,0.4)"
                         : isActive
-                        ? "1px solid rgba(124,58,237,0.4)"
-                        : "1px solid rgba(255,255,255,0.06)",
+                        ? "1px solid color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent)"
+                        : "1px solid var(--md-sys-color-outline-variant)",
                       boxShadow: isActive
-                        ? "0 0 12px rgba(124,58,237,0.25)"
+                        ? "0 0 12px color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent)"
                         : "none",
                     }}
                   >
@@ -382,12 +382,12 @@ export default function InterviewPanel() {
                         animate={{ rotate: 360 }}
                         transition={{ repeat: Infinity, duration: 1.4, ease: "linear" }}
                       >
-                        <Loader2 size={14} style={{ color: "#a78bfa" }} />
+                        <Loader2 size={14} style={{ color: "var(--md-sys-color-primary)" }} />
                       </motion.div>
                     ) : (
                       <div
                         className="w-1.5 h-1.5 rounded-full"
-                        style={{ background: "rgba(255,255,255,0.15)" }}
+                        style={{ background: "var(--md-sys-color-surface-container-high)" }}
                       />
                     )}
                   </div>
@@ -401,7 +401,7 @@ export default function InterviewPanel() {
                           ? "#10B981"
                           : isActive
                           ? "#ffffff"
-                          : "rgba(255,255,255,0.22)",
+                          : "var(--md-sys-color-on-surface-variant)",
                       }}
                     >
                       {stage.label}
@@ -410,8 +410,8 @@ export default function InterviewPanel() {
                       className="text-xs mt-0.5 transition-colors duration-500"
                       style={{
                         color: isActive
-                          ? "rgba(255,255,255,0.4)"
-                          : "rgba(255,255,255,0.16)",
+                          ? "var(--md-sys-color-on-surface-variant)"
+                          : "var(--md-sys-color-on-surface-variant)",
                       }}
                     >
                       {stage.subtitle}
@@ -422,17 +422,17 @@ export default function InterviewPanel() {
                       <div className="mt-2.5 flex items-center gap-2.5">
                         <div
                           className="flex-1 h-1 rounded-full overflow-hidden"
-                          style={{ background: "rgba(255,255,255,0.06)" }}
+                          style={{ background: "var(--md-sys-color-surface-container-high)" }}
                         >
                           <motion.div
                             className="h-full rounded-full"
                             style={{
                               background: isCompleted
                                 ? "#10B981"
-                                : "linear-gradient(90deg, #7C3AED, #22D3EE)",
+                                : "linear-gradient(90deg, var(--md-sys-color-primary), var(--md-sys-color-tertiary))",
                               boxShadow: isCompleted
                                 ? "none"
-                                : "0 0 8px rgba(124,58,237,0.5)",
+                                : "0 0 8px color-mix(in srgb, var(--md-sys-color-primary) 50%, transparent)",
                             }}
                             initial={{ width: "0%" }}
                             animate={{ width: `${isCompleted ? 100 : pct}%` }}
@@ -441,7 +441,7 @@ export default function InterviewPanel() {
                         </div>
                         <span
                           className="text-xs font-mono shrink-0 tabular-nums"
-                          style={{ color: isCompleted ? "#10B981" : "#22D3EE" }}
+                          style={{ color: isCompleted ? "#10B981" : "var(--md-sys-color-tertiary)" }}
                         >
                           {isCompleted ? "100" : pct}%
                         </span>
@@ -481,10 +481,10 @@ export default function InterviewPanel() {
             width: 700,
             height: 700,
             background: isAIThinking
-              ? "radial-gradient(circle, #7C3AED 0%, transparent 60%)"
+              ? "radial-gradient(circle, var(--md-sys-color-primary) 0%, transparent 60%)"
               : isRecording
-              ? "radial-gradient(circle, #22D3EE 0%, transparent 60%)"
-              : "radial-gradient(circle, #4338CA 0%, transparent 60%)",
+              ? "radial-gradient(circle, var(--md-sys-color-tertiary) 0%, transparent 60%)"
+              : "radial-gradient(circle, var(--md-sys-color-secondary) 0%, transparent 60%)",
           }}
         />
       </div>
@@ -500,7 +500,7 @@ export default function InterviewPanel() {
           {/* Question counter */}
           <div className="flex items-center gap-2">
             <span className="label-caps">Question</span>
-            <span className="text-sm font-bold text-white tabular-nums">
+            <span className="text-sm font-bold text-on-surface tabular-nums">
               #{questionCount}
             </span>
           </div>
@@ -508,14 +508,14 @@ export default function InterviewPanel() {
           {/* Divider */}
           <div
             className="w-px h-4"
-            style={{ background: "rgba(255,255,255,0.1)" }}
+            style={{ background: "var(--md-sys-color-outline-variant)" }}
           />
 
           {/* TTS toggle */}
           <button
             onClick={toggleTts}
             className="flex items-center gap-1.5 transition-all duration-200"
-            style={{ color: isTtsEnabled ? "#22D3EE" : "rgba(255,255,255,0.3)" }}
+            style={{ color: isTtsEnabled ? "var(--md-sys-color-tertiary)" : "var(--md-sys-color-on-surface-variant)" }}
             aria-label={isTtsEnabled ? "Disable voice" : "Enable voice"}
           >
             {isTtsEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
@@ -541,7 +541,7 @@ export default function InterviewPanel() {
             ) : (
               <motion.p
                 key={currentQuestion}
-                className="text-2xl md:text-3xl leading-relaxed font-medium text-center text-white/90"
+                className="text-2xl md:text-3xl leading-relaxed font-medium text-center text-on-surface opacity-90"
                 initial="hidden"
                 animate="visible"
                 variants={{
@@ -581,9 +581,9 @@ export default function InterviewPanel() {
           className="flex flex-col items-center gap-5 px-8 py-6 rounded-2xl glass-card"
           style={{
             boxShadow: isRecording
-              ? "0 0 0 1px rgba(34,211,238,0.12), 0 8px 40px rgba(0,0,0,0.4)"
+              ? "0 0 0 1px color-mix(in srgb, var(--md-sys-color-tertiary) 12%, transparent), 0 8px 40px rgba(0,0,0,0.4)"
               : isAIThinking
-              ? "0 0 0 1px rgba(124,58,237,0.12), 0 8px 40px rgba(0,0,0,0.4)"
+              ? "0 0 0 1px color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent), 0 8px 40px rgba(0,0,0,0.4)"
               : "0 8px 40px rgba(0,0,0,0.3)",
             transition: "box-shadow 0.8s ease",
           }}
@@ -603,22 +603,22 @@ export default function InterviewPanel() {
                   <div
                     className="absolute inset-0 rounded-full shimmer-ring"
                     style={{
-                      border: "1px solid rgba(124,58,237,0.4)",
-                      boxShadow: "0 0 16px rgba(124,58,237,0.25)",
+                      border: "1px solid color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent)",
+                      boxShadow: "0 0 16px color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent)",
                     }}
                   />
                   {/* Inner orb */}
                   <div
                     className="w-8 h-8 rounded-full orb-breathe flex items-center justify-center"
                     style={{
-                      background: "radial-gradient(circle, rgba(124,58,237,0.5), rgba(91,33,182,0.25))",
-                      boxShadow: "0 0 20px rgba(124,58,237,0.4)",
+                      background: "radial-gradient(circle, color-mix(in srgb, var(--md-sys-color-primary) 50%, transparent), color-mix(in srgb, var(--md-sys-color-primary-container) 25%, transparent))",
+                      boxShadow: "0 0 20px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent)",
                     }}
                   >
-                    <BrainCircuit size={14} style={{ color: "#c4b5fd" }} />
+                    <BrainCircuit size={14} style={{ color: "var(--md-sys-color-on-primary-container)" }} />
                   </div>
                 </div>
-                <span className="label-caps" style={{ color: "rgba(196,181,253,0.6)" }}>
+                <span className="label-caps" style={{ color: "var(--md-sys-color-primary)" }}>
                   Analyzing
                 </span>
               </motion.div>
@@ -636,7 +636,7 @@ export default function InterviewPanel() {
                     <motion.div
                       key={ring}
                       className="absolute inset-0 rounded-full"
-                      style={{ border: "1px solid rgba(34,211,238,0.35)" }}
+                      style={{ border: "1px solid color-mix(in srgb, var(--md-sys-color-tertiary) 35%, transparent)" }}
                       animate={{ scale: [1, 1.9], opacity: [0.6, 0] }}
                       transition={{
                         repeat: Infinity,
@@ -649,15 +649,15 @@ export default function InterviewPanel() {
                   <div
                     className="w-8 h-8 rounded-full flex items-center justify-center"
                     style={{
-                      background: "radial-gradient(circle, rgba(34,211,238,0.35), rgba(34,211,238,0.12))",
-                      border: "1px solid rgba(34,211,238,0.45)",
-                      boxShadow: "0 0 18px rgba(34,211,238,0.35)",
+                      background: "radial-gradient(circle, color-mix(in srgb, var(--md-sys-color-tertiary) 35%, transparent), color-mix(in srgb, var(--md-sys-color-tertiary) 12%, transparent))",
+                      border: "1px solid color-mix(in srgb, var(--md-sys-color-tertiary) 45%, transparent)",
+                      boxShadow: "0 0 18px color-mix(in srgb, var(--md-sys-color-tertiary) 35%, transparent)",
                     }}
                   >
-                    <Mic size={14} style={{ color: "#22D3EE" }} />
+                    <Mic size={14} style={{ color: "var(--md-sys-color-tertiary)" }} />
                   </div>
                 </div>
-                <span className="label-caps" style={{ color: "rgba(34,211,238,0.6)" }}>
+                <span className="label-caps" style={{ color: "var(--md-sys-color-tertiary)" }}>
                   Listening
                 </span>
               </motion.div>
@@ -671,8 +671,8 @@ export default function InterviewPanel() {
                 <div
                   className="w-8 h-8 rounded-full orb-breathe"
                   style={{
-                    background: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.1)",
+                    background: "var(--md-sys-color-surface-container)",
+                    border: "1px solid var(--md-sys-color-outline-variant)",
                   }}
                 />
                 <span className="label-caps">Ready — start speaking</span>
@@ -702,9 +702,10 @@ export default function InterviewPanel() {
                     color: "#ffffff",
                   }
                 : {
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.07)",
-                    color: "rgba(255,255,255,0.2)",
+                    background: "var(--md-sys-color-surface-container)",
+                    border: "1px solid var(--md-sys-color-outline-variant)",
+                    color: "var(--md-sys-color-on-surface-variant)",
+                    opacity: 0.4,
                     cursor: "not-allowed",
                   }
             }

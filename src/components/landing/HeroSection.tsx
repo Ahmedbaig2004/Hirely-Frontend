@@ -9,8 +9,8 @@ import { EncryptedText } from "@/components/ui/encrypted-text";
 const flipWords = ["Reimagined.", "Elevated.", "Mastered.", "Perfected."];
 
 const features = [
-  { icon: Brain,    label: "AI-Powered Analysis",  accent: "#7C3AED" },
-  { icon: Zap,      label: "Real-time Feedback",   accent: "#22D3EE" },
+  { icon: Brain,    label: "AI-Powered Analysis",  accent: "var(--md-sys-color-primary)" },
+  { icon: Zap,      label: "Real-time Feedback",   accent: "var(--md-sys-color-tertiary)" },
   { icon: Sparkles, label: "Adaptive Questions",   accent: "#10B981" },
 ];
 
@@ -33,7 +33,10 @@ export function HeroSection() {
       >
         <div
           className="w-1.5 h-1.5 rounded-full"
-          style={{ backgroundColor: "#22D3EE", boxShadow: "0 0 8px #22D3EE" }}
+          style={{
+            backgroundColor: "var(--md-sys-color-tertiary)",
+            boxShadow: "0 0 8px var(--md-sys-color-tertiary)",
+          }}
         />
         <span className="label-caps">AI Interview Platform</span>
       </motion.div>
@@ -45,14 +48,14 @@ export function HeroSection() {
         transition={{ delay: 0.2, duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
         className="mb-6"
       >
-        <h1 className="text-5xl md:text-6xl xl:text-7xl font-bold leading-[1.05] tracking-tight text-white">
+        <h1 className="text-5xl md:text-6xl xl:text-7xl font-bold leading-[1.05] tracking-tight text-on-surface">
           Your Interview,
         </h1>
         <h1 className="text-5xl md:text-6xl xl:text-7xl font-bold leading-[1.05] tracking-tight">
           <FlipWords
             words={flipWords}
             duration={3500}
-            className="text-violet-400"
+            className="text-primary"
           />
         </h1>
       </motion.div>
@@ -67,8 +70,8 @@ export function HeroSection() {
         <EncryptedText
           text="Upload your resume. Describe the role. Face a real AI interviewer."
           className="font-mono"
-          encryptedClassName="text-white/10"
-          revealedClassName="text-white/40 font-light tracking-wide"
+          encryptedClassName="text-on-surface/10"
+          revealedClassName="text-on-surface-variant font-light tracking-wide opacity-60"
           revealDelayMs={40}
         />
       </motion.p>
@@ -89,7 +92,7 @@ export function HeroSection() {
             className="flex items-center gap-2 px-3 py-2 rounded-xl glass-card"
           >
             <Icon size={13} style={{ color: accent }} />
-            <span className="text-xs text-white/45 font-medium">{label}</span>
+            <span className="text-xs font-medium text-on-surface-variant opacity-70">{label}</span>
           </motion.div>
         ))}
       </motion.div>
@@ -110,7 +113,7 @@ export function HeroSection() {
         </Link>
         <button
           onClick={scrollToHowItWorks}
-          className="glass-card rounded-full px-6 py-3.5 text-sm text-white/60 hover:text-white/90 transition-all duration-200 inline-flex items-center gap-2"
+          className="glass-card rounded-full px-6 py-3.5 text-sm transition-all duration-200 inline-flex items-center gap-2 text-on-surface-variant hover:text-on-surface"
         >
           See How It Works
           <ChevronDown size={16} />
@@ -121,7 +124,7 @@ export function HeroSection() {
       <div
         className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
         style={{
-          background: "linear-gradient(to bottom, transparent, #080810)",
+          background: "linear-gradient(to bottom, transparent, var(--md-sys-color-background))",
         }}
       />
 
@@ -134,14 +137,17 @@ export function HeroSection() {
         className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 group cursor-pointer"
         aria-label="Scroll down"
       >
-        <span className="text-[10px] tracking-widest uppercase text-white/25 group-hover:text-white/50 transition-colors duration-200">
+        <span className="text-[10px] tracking-widest uppercase text-on-surface-variant opacity-40 group-hover:opacity-70 transition-opacity duration-200">
           Discover More
         </span>
         <motion.div
           animate={{ y: [0, 6, 0] }}
           transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
         >
-          <ChevronDown size={18} className="text-white/25 group-hover:text-violet-400 transition-colors duration-200" />
+          <ChevronDown
+            size={18}
+            className="text-on-surface-variant opacity-40 group-hover:text-primary group-hover:opacity-100 transition-all duration-200"
+          />
         </motion.div>
       </motion.button>
     </section>

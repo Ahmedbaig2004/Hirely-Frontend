@@ -23,7 +23,7 @@ export default function SignOutButton() {
   return (
     <button
       onClick={handleLogout}
-      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white/40 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors opacity-55 hover:opacity-100"
     >
       <LogOut size={18} />
       Sign Out

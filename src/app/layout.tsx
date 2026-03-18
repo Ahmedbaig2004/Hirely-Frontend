@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import AuthProvider from "../components/AuthProvider"; // <--- Import the wrapper
-import { ToastContainer } from "react-toastify";
+import AuthProvider from "../components/AuthProvider";
+import { ThemeProvider } from "../components/ThemeProvider";
+import { ThemedToastContainer } from "../components/ThemedToastContainer";
 import "react-toastify/dist/ReactToastify.css";
 
 const geistSans = Geist({
@@ -26,18 +27,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {/* Wrap everything in the Auth Logic */}
-        <AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
             {children}
-        </AuthProvider>
-        <ToastContainer 
-            position="bottom-right"
-            theme="dark"
-            autoClose={3000}
-            toastStyle={{ zIndex: 99999 }} 
-          />
+          </AuthProvider>
+          <ThemedToastContainer />
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -18,10 +18,10 @@ export function VoiceVisualizer({ volume, isRecording, isAIThinking }: VoiceVisu
   const norm = Math.min(volume / 80, 1);
 
   const color = isAIThinking
-    ? "#7C3AED"
+    ? "var(--md-sys-color-primary)"
     : isRecording
-    ? "#22D3EE"
-    : "rgba(255,255,255,0.15)";
+    ? "var(--md-sys-color-tertiary)"
+    : "var(--md-sys-color-on-surface-variant)";
 
   return (
     <div

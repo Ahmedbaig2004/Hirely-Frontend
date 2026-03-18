@@ -9,7 +9,7 @@ import { Footer } from "@/components/landing/Footer";
 
 export default function Home() {
   return (
-    <main className="relative min-h-screen bg-[#080810] text-white overflow-x-hidden">
+    <main className="relative min-h-screen bg-background text-on-surface overflow-x-hidden">
       <MeshGradient />
       <div className="relative z-10">
         <Navbar />

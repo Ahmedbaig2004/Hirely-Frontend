@@ -18,7 +18,7 @@ function AnalysisMockup() {
     <div className="glass-card-raised rounded-2xl p-6 space-y-5">
       {/* Header row */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-white/60">Gap Analysis</span>
+        <span className="text-xs font-semibold text-on-surface-variant opacity-70">Gap Analysis</span>
         <span
           className="text-xs font-bold px-2 py-0.5 rounded-full"
           style={{
@@ -65,12 +65,12 @@ function AnalysisMockup() {
         ].map(({ label, value, color }) => (
           <div key={label}>
             <div className="flex justify-between mb-1">
-              <span className="text-xs text-white/40">{label}</span>
+              <span className="text-xs text-on-surface-variant opacity-50">{label}</span>
               <span className="text-xs font-semibold" style={{ color }}>
                 {value}%
               </span>
             </div>
-            <div className="h-1.5 bg-white/[0.08] rounded-full overflow-hidden">
+            <div className="h-1.5 bg-surface-container-high rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 whileInView={{ width: `${value}%` }}
@@ -112,13 +112,13 @@ function AdaptiveMockup() {
   return (
     <div className="glass-card-raised rounded-2xl p-6 space-y-4">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-semibold text-white/60">Live Interview</span>
+        <span className="text-xs font-semibold text-on-surface-variant opacity-70">Live Interview</span>
         <span
           className="text-xs font-bold px-2 py-0.5 rounded-full"
           style={{
-            background: "rgba(124,58,237,0.15)",
-            border: "1px solid rgba(124,58,237,0.25)",
-            color: "#a78bfa",
+            background: "color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent)",
+            color: "var(--md-sys-color-primary)",
           }}
         >
           Q 2 / 5
@@ -136,20 +136,20 @@ function AdaptiveMockup() {
             className={`flex ${msg.type === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[80%] rounded-xl px-3 py-2 text-xs leading-relaxed ${
-                msg.type === "ai"
-                  ? "text-white/70"
-                  : "text-white/50 italic"
-              }`}
+              className={`max-w-[80%] rounded-xl px-3 py-2 text-xs leading-relaxed`}
               style={
                 msg.type === "ai"
                   ? {
-                      background: "rgba(124,58,237,0.1)",
-                      border: "1px solid rgba(124,58,237,0.2)",
+                      background: "color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent)",
+                      border: "1px solid color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)",
+                      color: "var(--md-sys-color-on-surface)",
+                      opacity: 0.85,
                     }
                   : {
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.07)",
+                      background: "var(--md-sys-color-surface-container)",
+                      border: "1px solid var(--md-sys-color-outline-variant)",
+                      color: "var(--md-sys-color-on-surface-variant)",
+                      fontStyle: "italic",
                     }
               }
             >
@@ -178,8 +178,8 @@ const rows = [
     description:
       "Our AI doesn't just listen — it deeply understands. Resumes are parsed semantically, skill gaps are mapped against the job description, and every answer is scored using embedding similarity and LLM grading.",
     bullets: [
-      { text: "Semantic resume parsing with gap detection", accent: "#7C3AED" },
-      { text: "Cosine similarity over pgvector embeddings", accent: "#22D3EE" },
+      { text: "Semantic resume parsing with gap detection", accent: "var(--md-sys-color-primary)" },
+      { text: "Cosine similarity over pgvector embeddings", accent: "var(--md-sys-color-tertiary)" },
       { text: "LLM grading with structured feedback", accent: "#10B981" },
     ],
     visual: <AnalysisMockup />,
@@ -191,8 +191,8 @@ const rows = [
     description:
       "No two interviews are the same. Questions evolve in real-time based on your answers — strong responses unlock harder follow-ups, while gaps trigger targeted exploration to assess your true depth.",
     bullets: [
-      { text: "Real-time difficulty adjustment per answer", accent: "#7C3AED" },
-      { text: "Topic-aware follow-up generation", accent: "#22D3EE" },
+      { text: "Real-time difficulty adjustment per answer", accent: "var(--md-sys-color-primary)" },
+      { text: "Topic-aware follow-up generation", accent: "var(--md-sys-color-tertiary)" },
       { text: "Powered by Gemini 2.5 Flash", accent: "#10B981" },
     ],
     visual: <AdaptiveMockup />,
@@ -213,10 +213,10 @@ export function FeatureSection() {
           className="text-center mb-14"
         >
           <span className="label-caps block mb-4">Features</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-white/90 tracking-tight">
+          <h2 className="text-3xl md:text-4xl font-bold text-on-surface tracking-tight opacity-90">
             Built for Real Hiring Decisions
           </h2>
-          <p className="text-white/40 text-sm mt-4 max-w-md mx-auto">
+          <p className="text-on-surface-variant text-sm mt-4 max-w-md mx-auto opacity-60">
             Every layer of Hirely is designed to give you signal, not noise.
           </p>
         </motion.div>
@@ -239,10 +239,10 @@ export function FeatureSection() {
                 className="flex-1 max-w-lg"
               >
                 <span className="label-caps block mb-4">{eyebrow}</span>
-                <h3 className="text-2xl md:text-3xl font-bold text-white/90 tracking-tight mb-4">
+                <h3 className="text-2xl md:text-3xl font-bold text-on-surface tracking-tight mb-4 opacity-90">
                   {title}
                 </h3>
-                <p className="text-white/50 text-sm leading-relaxed mb-8">{description}</p>
+                <p className="text-on-surface-variant text-sm leading-relaxed mb-8 opacity-60">{description}</p>
                 <ul className="space-y-3">
                   {bullets.map(({ text, accent }) => (
                     <li key={text} className="flex items-start gap-3">
@@ -251,7 +251,7 @@ export function FeatureSection() {
                         className="mt-0.5 shrink-0"
                         style={{ color: accent }}
                       />
-                      <span className="text-sm text-white/60">{text}</span>
+                      <span className="text-sm text-on-surface-variant opacity-70">{text}</span>
                     </li>
                   ))}
                 </ul>
