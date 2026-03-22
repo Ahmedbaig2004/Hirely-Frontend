@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-export const useVoiceActivity = (isAIThinking: boolean) => {
+export const useVoiceActivity = (isAIThinking: boolean, interviewMode: string) => {
   const [isRecording, setIsRecording] = useState(false);
   const [volume, setVolume] = useState(0);
 
@@ -8,13 +8,35 @@ export const useVoiceActivity = (isAIThinking: boolean) => {
   const audioChunksRef = useRef<Blob[]>([]);
   const silenceTimer = useRef<NodeJS.Timeout | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  
-  // Ref to track state inside the loop
+
+  // Refs to track state inside the rAF loop
   const isAIThinkingRef = useRef(isAIThinking);
+  const interviewModeRef = useRef(interviewMode);
+  const isSwitchingModeRef = useRef(false);
 
   useEffect(() => {
     isAIThinkingRef.current = isAIThinking;
   }, [isAIThinking]);
+
+  useEffect(() => {
+    const prevMode = interviewModeRef.current;
+    interviewModeRef.current = interviewMode;
+
+    // Switching away from audio: stop recording, clear buffer
+    if (prevMode === "audio" && interviewMode !== "audio") {
+      isSwitchingModeRef.current = true;
+      if (silenceTimer.current) {
+        clearTimeout(silenceTimer.current);
+        silenceTimer.current = null;
+      }
+      if (mediaRecorderRef.current?.state === "recording") {
+        mediaRecorderRef.current.stop();
+      }
+      audioChunksRef.current = [];
+      setIsRecording(false);
+      setTimeout(() => { isSwitchingModeRef.current = false; }, 100);
+    }
+  }, [interviewMode]);
 
   // ⚙️ CONFIG
   const SILENCE_DURATION = 4000;
@@ -53,8 +75,8 @@ export const useVoiceActivity = (isAIThinking: boolean) => {
       };
 
       const checkVolume = () => {
-        if (isAIThinkingRef.current) {
-           setVolume(0); 
+        if (isAIThinkingRef.current || interviewModeRef.current !== "audio") {
+           setVolume(0);
            requestAnimationFrame(checkVolume);
            return;
         }
@@ -163,5 +185,5 @@ export const useVoiceActivity = (isAIThinking: boolean) => {
     };
   }, []);
 
-  return { isRecording, volume, getAudioBlob, resetRecorder, stopRecordingManual };
+  return { isRecording, volume, getAudioBlob, resetRecorder, stopRecordingManual, isSwitchingModeRef };
 };

@@ -9,12 +9,17 @@ import {
   Volume2,
   VolumeX,
   Loader2,
+  X,
+  AlertTriangle,
+  MessageSquare,
+  Video,
+  Send,
 } from "lucide-react";
 import { useVoiceActivity } from "../hooks/useVoiceActivity";
 import { useInterviewStore } from "../stores/useInterviewStore";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { KaraokeText } from "../components/lib/karaoketext";
 import { toast } from "react-toastify";
 import { VoiceVisualizer } from "./ui/voice-visualizer";
@@ -24,6 +29,13 @@ type ProcessingStage =
   | "analyzing_voice"
   | "generating_report"
   | "done";
+
+type InterviewMode = "audio" | "chat" | "video";
+
+type ChatMessage = {
+  role: "ai" | "user";
+  content: string;
+};
 
 export default function InterviewPanel() {
   const router = useRouter();
@@ -38,6 +50,7 @@ export default function InterviewPanel() {
     setFirstQuestionAudio,
     isTtsEnabled,
     toggleTts,
+    resetSession,
   } = useInterviewStore();
 
   // 2. Local State
@@ -50,10 +63,22 @@ export default function InterviewPanel() {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  // Exit modal state
+  const [showExitModal, setShowExitModal] = useState(false);
+
+  // Interview mode state
+  const [interviewMode, setInterviewMode] = useState<InterviewMode>("audio");
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
   // Report Processing State
   const [isProcessingReport, setIsProcessingReport] = useState(false);
   const [voiceProgress, setVoiceProgress] = useState({ completed: 0, total: 9 });
   const [processingStage, setProcessingStage] = useState<ProcessingStage>("evaluating");
+
+  // Track whether any audio turns have been submitted (for smart finalization)
+  const [hasAudioTurns, setHasAudioTurns] = useState(false);
 
   // 3. Hooks
   const {
@@ -62,7 +87,8 @@ export default function InterviewPanel() {
     getAudioBlob,
     resetRecorder,
     stopRecordingManual,
-  } = useVoiceActivity(isAIThinking);
+    isSwitchingModeRef,
+  } = useVoiceActivity(isAIThinking, interviewMode);
   const prevRecordingState = useRef(false);
 
   // ─────────────────────────────────────────────────────────────
@@ -79,6 +105,20 @@ export default function InterviewPanel() {
     }
   }, []);
 
+  // Initialize chat with first question
+  useEffect(() => {
+    if (currentQuestion && chatMessages.length === 0) {
+      setChatMessages([{ role: "ai", content: currentQuestion }]);
+    }
+  }, [currentQuestion]);
+
+  // Auto-scroll chat to bottom
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
   useEffect(() => {
     if (isRecording) setHasSpoken(true);
   }, [isRecording]);
@@ -87,7 +127,9 @@ export default function InterviewPanel() {
     if (
       !isAIThinking &&
       prevRecordingState.current === true &&
-      isRecording === false
+      isRecording === false &&
+      interviewMode === "audio" &&
+      !isSwitchingModeRef.current
     ) {
       handleSubmission();
     }
@@ -201,13 +243,19 @@ export default function InterviewPanel() {
       const backendUrl =
         process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
       const res = await axios.post(`${backendUrl}/api/submit-answer`, formData);
-      const { evaluation, nextQuestion, isFinished, audio } = res.data;
+      const { evaluation, nextQuestion, isFinished, audio, transcript } = res.data;
 
       setFeedback(evaluation.feedback);
+      setHasAudioTurns(true);
+
+      // Sync audio transcript into chat history so switching to chat shows full conversation
+      if (transcript) {
+        setChatMessages((prev) => [...prev, { role: "user", content: transcript }]);
+      }
 
       if (isFinished) {
-        // Enter the report processing flow
         setIsProcessingReport(true);
+        // Only poll voice progress if there were audio turns
         setProcessingStage("analyzing_voice");
         pollVoiceProgress();
         return;
@@ -215,6 +263,11 @@ export default function InterviewPanel() {
 
       setQuestion(nextQuestion?.question);
       setQuestionCount((prev) => prev + 1);
+
+      // Add next AI question to chat history
+      if (nextQuestion?.question) {
+        setChatMessages((prev) => [...prev, { role: "ai", content: nextQuestion.question }]);
+      }
 
       if (audio) setCurrentAudioData(audio);
       else setCurrentAudioData(null);
@@ -236,10 +289,110 @@ export default function InterviewPanel() {
     }
   };
 
+  const handleExitConfirm = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+    }
+    resetSession();
+    router.replace("/start");
+  };
+
   const handleManualStop = async () => {
     if (isAIThinking) return;
     const blob = await stopRecordingManual();
     await handleSubmission(blob);
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  // CHAT MODE SUBMISSION
+  // ─────────────────────────────────────────────────────────────
+  const handleChatSubmit = async () => {
+    if (!chatInput.trim() || isAIThinking) return;
+
+    const userMessage = chatInput.trim();
+    setChatInput("");
+    setChatMessages((prev) => [...prev, { role: "user", content: userMessage }]);
+    setIsAIThinking(true);
+
+    try {
+      const backendUrl =
+        process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
+      const res = await axios.post(`${backendUrl}/api/submit-answer`, {
+        sessionId,
+        question: currentQuestion,
+        answer: userMessage,
+      });
+      const { evaluation, nextQuestion, isFinished } = res.data;
+
+      setFeedback(evaluation.feedback);
+
+      if (isFinished) {
+        setIsProcessingReport(true);
+        if (hasAudioTurns) {
+          // Mixed mode: poll for voice analysis on audio turns
+          setProcessingStage("analyzing_voice");
+          pollVoiceProgress();
+        } else {
+          // Chat-only: skip voice polling, finalize immediately
+          setProcessingStage("generating_report");
+          const backendUrl2 =
+            process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
+          try {
+            await axios.post(`${backendUrl2}/api/finalize-interview`, { sessionId });
+            setProcessingStage("done");
+            setTimeout(() => router.replace(`/dashboard/${sessionId}`), 1200);
+          } catch (finalizeErr: any) {
+            console.error("Finalize error:", finalizeErr);
+            toast.error("Failed to generate report. Please try again.");
+            setTimeout(() => router.replace(`/dashboard/${sessionId}`), 2000);
+          }
+        }
+        return;
+      }
+
+      setQuestion(nextQuestion?.question);
+      setQuestionCount((prev) => prev + 1);
+      setChatMessages((prev) => [
+        ...prev,
+        { role: "ai", content: nextQuestion?.question },
+      ]);
+      setIsAIThinking(false);
+    } catch (err: any) {
+      const errorMsg =
+        err.response?.data?.error || err.message || "Failed to submit answer";
+      toast.error(`Error: ${errorMsg}`);
+      setIsAIThinking(false);
+    }
+  };
+
+  const handleModeSwitch = (newMode: InterviewMode) => {
+    if (newMode === interviewMode || isAIThinking) return;
+
+    // Switching FROM audio: cleanup is handled by useVoiceActivity's interviewMode effect
+    if (interviewMode === "audio") {
+      setHasSpoken(false);
+    }
+
+    setInterviewMode(newMode);
+
+    // Switching TO chat: ensure current question is in chat messages
+    if (newMode === "chat" && currentQuestion) {
+      setChatMessages((prev) => {
+        const lastAI = prev.filter((m) => m.role === "ai").pop();
+        if (lastAI?.content !== currentQuestion) {
+          return [...prev, { role: "ai", content: currentQuestion }];
+        }
+        return prev;
+      });
+    }
+  };
+
+  const handleChatKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleChatSubmit();
+    }
   };
 
   // ─────────────────────────────────────────────────────────────
@@ -523,56 +676,275 @@ export default function InterviewPanel() {
               {isTtsEnabled ? "Voice On" : "Voice Off"}
             </span>
           </button>
+
+          {/* Divider */}
+          <div
+            className="w-px h-4"
+            style={{ background: "var(--md-sys-color-outline-variant)" }}
+          />
+
+          {/* Exit button */}
+          <button
+            onClick={() => setShowExitModal(true)}
+            className="flex items-center gap-1.5 transition-all duration-200"
+            style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+            aria-label="Exit interview"
+          >
+            <X size={16} />
+            <span className="text-xs font-medium">Exit</span>
+          </button>
         </motion.div>
       </div>
 
-      {/* ── CENTER — Question text ───────────────────────────── */}
-      <div className="flex-1 flex items-center justify-center w-full px-6 py-10 relative z-10">
-        <div className="w-full max-w-2xl">
-          {currentQuestion && (
-            showKaraokeMode ? (
-              <div className="w-full [&_p]:!text-2xl [&_p]:md:!text-3xl [&_p]:!leading-relaxed">
-                <KaraokeText
-                  text={currentQuestion}
-                  isPlaying={isPlaying}
-                  audioRef={audioRef as React.RefObject<HTMLAudioElement>}
-                />
-              </div>
-            ) : (
-              <motion.p
-                key={currentQuestion}
-                className="text-2xl md:text-3xl leading-relaxed font-medium text-center text-on-surface opacity-90"
-                initial="hidden"
-                animate="visible"
-                variants={{
-                  hidden: {},
-                  visible: { transition: { staggerChildren: 0.04 } },
-                }}
+      {/* ── MODE SELECTOR — segmented control ────────────────── */}
+      <div className="w-full flex justify-center pt-3 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.4, ease: "easeOut" }}
+          className="flex items-center rounded-full p-1 gap-1"
+          style={{
+            background: "var(--md-sys-color-surface-container)",
+            border: "1px solid var(--md-sys-color-outline-variant)",
+          }}
+        >
+          {([
+            { id: "audio" as InterviewMode, label: "Audio", icon: <Mic size={14} /> },
+            { id: "chat" as InterviewMode, label: "Chat", icon: <MessageSquare size={14} /> },
+            { id: "video" as InterviewMode, label: "Video", icon: <Video size={14} />, disabled: true },
+          ]).map((mode) => {
+            const isActive = interviewMode === mode.id;
+            return (
+              <button
+                key={mode.id}
+                onClick={() => !mode.disabled && handleModeSwitch(mode.id)}
+                disabled={mode.disabled || isAIThinking}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200"
+                style={
+                  mode.disabled
+                    ? {
+                        color: "var(--md-sys-color-on-surface-variant)",
+                        opacity: 0.3,
+                        cursor: "not-allowed",
+                      }
+                    : isActive
+                    ? {
+                        background: "color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)",
+                        color: "var(--md-sys-color-primary)",
+                        border: "1px solid color-mix(in srgb, var(--md-sys-color-primary) 35%, transparent)",
+                        boxShadow: "0 0 12px color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent)",
+                      }
+                    : {
+                        color: "var(--md-sys-color-on-surface-variant)",
+                        border: "1px solid transparent",
+                      }
+                }
               >
-                {currentQuestion.split(" ").map((word, i) => (
-                  <motion.span
-                    key={i}
-                    className="inline-block mr-[0.3em]"
-                    variants={{
-                      hidden: { opacity: 0, y: 12, filter: "blur(4px)" },
-                      visible: {
-                        opacity: 1,
-                        y: 0,
-                        filter: "blur(0px)",
-                        transition: { duration: 0.4, ease: "easeOut" },
-                      },
+                {mode.icon}
+                {mode.label}
+                {mode.disabled && (
+                  <span
+                    className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full ml-0.5"
+                    style={{
+                      background: "var(--md-sys-color-surface-container-high)",
+                      color: "var(--md-sys-color-on-surface-variant)",
+                      opacity: 0.6,
                     }}
                   >
-                    {word}
-                  </motion.span>
-                ))}
-              </motion.p>
-            )
-          )}
-        </div>
+                    Soon
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </motion.div>
       </div>
 
-      {/* ── BOTTOM DOCK — floating glass pill ───────────────── */}
+      {/* ── CENTER — Question text (Audio mode) ────────────── */}
+      {interviewMode === "audio" && (
+        <div className="flex-1 flex items-center justify-center w-full px-6 py-10 relative z-10">
+          <div className="w-full max-w-2xl">
+            {currentQuestion && (
+              showKaraokeMode ? (
+                <div className="w-full [&_p]:!text-2xl [&_p]:md:!text-3xl [&_p]:!leading-relaxed">
+                  <KaraokeText
+                    text={currentQuestion}
+                    isPlaying={isPlaying}
+                    audioRef={audioRef as React.RefObject<HTMLAudioElement>}
+                  />
+                </div>
+              ) : (
+                <motion.p
+                  key={currentQuestion}
+                  className="text-2xl md:text-3xl leading-relaxed font-medium text-center text-on-surface opacity-90"
+                  initial="hidden"
+                  animate="visible"
+                  variants={{
+                    hidden: {},
+                    visible: { transition: { staggerChildren: 0.04 } },
+                  }}
+                >
+                  {currentQuestion.split(" ").map((word, i) => (
+                    <motion.span
+                      key={i}
+                      className="inline-block mr-[0.3em]"
+                      variants={{
+                        hidden: { opacity: 0, y: 12, filter: "blur(4px)" },
+                        visible: {
+                          opacity: 1,
+                          y: 0,
+                          filter: "blur(0px)",
+                          transition: { duration: 0.4, ease: "easeOut" },
+                        },
+                      }}
+                    >
+                      {word}
+                    </motion.span>
+                  ))}
+                </motion.p>
+              )
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── CENTER — Chat thread (Chat mode) ──────────────── */}
+      {interviewMode === "chat" && (
+        <div className="flex-1 flex flex-col w-full max-w-2xl mx-auto relative z-10 pt-4 pb-4 px-4 min-h-0">
+          {/* Messages */}
+          <div
+            ref={chatContainerRef}
+            className="flex-1 overflow-y-auto space-y-3 pr-1 scroll-smooth"
+            style={{ scrollbarWidth: "thin", scrollbarColor: "var(--md-sys-color-outline-variant) transparent" }}
+          >
+            {chatMessages.map((msg, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: i === chatMessages.length - 1 ? 0.1 : 0 }}
+                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className="max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed"
+                  style={
+                    msg.role === "ai"
+                      ? {
+                          background: "var(--md-sys-color-surface-container)",
+                          border: "1px solid var(--md-sys-color-outline-variant)",
+                          color: "var(--md-sys-color-on-surface)",
+                          borderBottomLeftRadius: "6px",
+                        }
+                      : {
+                          background: "color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)",
+                          border: "1px solid color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent)",
+                          color: "var(--md-sys-color-on-surface)",
+                          borderBottomRightRadius: "6px",
+                        }
+                  }
+                >
+                  {msg.role === "ai" && (
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <BrainCircuit size={12} style={{ color: "var(--md-sys-color-primary)" }} />
+                      <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--md-sys-color-primary)" }}>
+                        Interviewer
+                      </span>
+                    </div>
+                  )}
+                  {msg.content}
+                </div>
+              </motion.div>
+            ))}
+
+            {/* Typing indicator */}
+            {isAIThinking && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex justify-start"
+              >
+                <div
+                  className="px-4 py-3 rounded-2xl flex items-center gap-1.5"
+                  style={{
+                    background: "var(--md-sys-color-surface-container)",
+                    border: "1px solid var(--md-sys-color-outline-variant)",
+                    borderBottomLeftRadius: "6px",
+                  }}
+                >
+                  {[0, 1, 2].map((dot) => (
+                    <motion.div
+                      key={dot}
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ background: "var(--md-sys-color-primary)" }}
+                      animate={{ opacity: [0.3, 1, 0.3] }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 1,
+                        delay: dot * 0.2,
+                        ease: "easeInOut",
+                      }}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Input area */}
+          <div className="pt-3">
+            <div
+              className="flex items-end gap-2 rounded-2xl px-4 py-3"
+              style={{
+                background: "var(--md-sys-color-surface-container)",
+                border: "1px solid var(--md-sys-color-outline-variant)",
+              }}
+            >
+              <textarea
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={handleChatKeyDown}
+                placeholder="Type your answer..."
+                rows={1}
+                className="flex-1 resize-none bg-transparent text-sm outline-none"
+                style={{
+                  color: "var(--md-sys-color-on-surface)",
+                  maxHeight: "120px",
+                }}
+                onInput={(e) => {
+                  const target = e.target as HTMLTextAreaElement;
+                  target.style.height = "auto";
+                  target.style.height = Math.min(target.scrollHeight, 120) + "px";
+                }}
+                disabled={isAIThinking}
+              />
+              <button
+                onClick={handleChatSubmit}
+                disabled={!chatInput.trim() || isAIThinking}
+                className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200"
+                style={
+                  chatInput.trim() && !isAIThinking
+                    ? {
+                        background: "var(--md-sys-color-primary)",
+                        color: "var(--md-sys-color-on-primary)",
+                        boxShadow: "0 2px 8px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent)",
+                      }
+                    : {
+                        background: "var(--md-sys-color-surface-container-high)",
+                        color: "var(--md-sys-color-on-surface-variant)",
+                        opacity: 0.4,
+                        cursor: "not-allowed",
+                      }
+                }
+              >
+                <Send size={14} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── BOTTOM DOCK — floating glass pill (Audio mode) ──── */}
+      {interviewMode === "audio" && (
       <div className="w-full flex justify-center pb-10 relative z-10 px-4">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -715,9 +1087,85 @@ export default function InterviewPanel() {
           </motion.button>
         </motion.div>
       </div>
+      )}
 
       {/* Hidden audio element */}
       <audio ref={audioRef} className="hidden" />
+
+      {/* Exit confirmation modal */}
+      <AnimatePresence>
+        {showExitModal && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50"
+              style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+              onClick={() => setShowExitModal(false)}
+            />
+
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 16 }}
+              transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="fixed inset-0 z-50 flex items-center justify-center px-4 pointer-events-none"
+            >
+              <div
+                className="glass-card-raised rounded-2xl p-8 w-full max-w-sm pointer-events-auto"
+                style={{ border: "1px solid rgba(239,68,68,0.2)" }}
+              >
+                {/* Icon */}
+                <div
+                  className="w-12 h-12 rounded-xl mx-auto mb-5 flex items-center justify-center"
+                  style={{
+                    background: "rgba(239,68,68,0.12)",
+                    border: "1px solid rgba(239,68,68,0.25)",
+                  }}
+                >
+                  <AlertTriangle size={22} className="text-rose-400" />
+                </div>
+
+                <h3 className="text-lg font-semibold text-white/90 text-center mb-2">
+                  Exit Interview?
+                </h3>
+                <p className="text-sm text-white/50 text-center mb-7 leading-relaxed">
+                  Your progress will be lost and this session cannot be resumed.
+                </p>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowExitModal(false)}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
+                    style={{
+                      background: "var(--md-sys-color-surface-container)",
+                      border: "1px solid var(--md-sys-color-outline-variant)",
+                      color: "var(--md-sys-color-on-surface-variant)",
+                    }}
+                  >
+                    Keep Going
+                  </button>
+                  <button
+                    onClick={handleExitConfirm}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200"
+                    style={{
+                      background: "linear-gradient(135deg, #EF4444, #DC2626)",
+                      boxShadow: "0 4px 16px rgba(239,68,68,0.3)",
+                      color: "#ffffff",
+                    }}
+                  >
+                    Exit
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -8,7 +8,8 @@ import { toast } from "react-toastify";
 import {
   ArrowLeft, CheckCircle, XCircle, Lightbulb,
   TrendingUp, BarChart3, Tag, Mic, Activity,
-  Gauge, MessageCircle, Zap
+  Gauge, MessageCircle, MessageSquare, Zap,
+  FileText, AlertTriangle
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { MeshGradient } from "@/components/ui/mesh-gradient";
@@ -206,19 +207,26 @@ export default function InterviewDetail() {
             <h3 className="label-caps mb-6 flex items-center gap-2">
               <Gauge size={16} /> Score Breakdown
             </h3>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {(
                 [
-                  { label: "Technical", value: feedback.scores.technical },
-                  { label: "Voice & Communication", value: feedback.scores.voice },
-                  { label: "Combined", value: feedback.scores.combined },
-                ] as { label: string; value: number }[]
-              ).map(({ label, value }) => {
+                  { label: "Technical", value: feedback.scores.technical, weight: null },
+                  ...(feedback.scores.delivery != null
+                    ? [{ label: "Delivery", value: feedback.scores.delivery, weight: null }]
+                    : []),
+                  { label: "Content Quality", value: feedback.scores.contentQuality ?? feedback.scores.technical, weight: "60%" },
+                  { label: "Vocal Delivery", value: feedback.scores.voice, weight: "40%" },
+                  { label: "Combined", value: feedback.scores.combined, weight: null },
+                ] as { label: string; value: number; weight: string | null }[]
+              ).map(({ label, value, weight }) => {
                 const barStyle = getScoreBarStyle(value);
                 return (
                   <div key={label}>
                     <div className="flex justify-between items-baseline mb-2">
-                      <span className="text-sm font-semibold text-on-surface-variant opacity-70">{label}</span>
+                      <span className="text-sm font-semibold text-on-surface-variant opacity-70">
+                        {label}
+                        {weight && <span className="text-[10px] opacity-50 ml-1">({weight})</span>}
+                      </span>
                       <span className={`text-lg font-black ${getScoreTextColor(value)}`}>
                         {Math.round(value)}%
                       </span>
@@ -233,20 +241,22 @@ export default function InterviewDetail() {
                 );
               })}
             </div>
-            <p className="text-xs text-on-surface-variant mt-4 opacity-30">Combined = 60% Technical + 40% Communication</p>
+            <p className="text-xs text-on-surface-variant mt-4 opacity-30">
+              Content Quality = Technical accuracy + Delivery quality | Combined = 60% Content + 40% Vocal
+            </p>
           </div>
         )}
 
-        {/* 5. VOICE ANALYSIS SUMMARY */}
+        {/* 5. VOCAL DELIVERY — Actionable metrics + honest framing */}
         {feedback.voiceSummary && (
           <div className="glass-card p-6 rounded-xl border-l-4 border-primary mb-8">
             <div className="flex flex-wrap justify-between items-start mb-5 gap-4">
               <div>
                 <h3 className="font-bold text-primary flex items-center gap-2 mb-1">
-                  <Mic size={20} /> Voice Analysis Summary
+                  <Mic size={20} /> Vocal Delivery
                 </h3>
                 <p className="text-xs text-on-surface-variant opacity-40">
-                  AI-powered acoustic confidence analysis across all answers
+                  How interviewers typically perceive your vocal patterns
                 </p>
               </div>
               <div className="flex items-center gap-4">
@@ -254,47 +264,277 @@ export default function InterviewDetail() {
                   <div className="flex flex-col items-center gap-1">
                     <CircularProgress value={feedback.scores.voice} size={88} />
                     <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wide opacity-40">
-                      Confidence
-                    </span>
-                  </div>
-                )}
-                {feedback.voiceSummary.avgWPM && feedback.voiceSummary.avgWPM !== "N/A" && (
-                  <div className="flex flex-col items-center gap-1">
-                    <span
-                      className="flex items-center gap-1 text-sm font-black px-3 py-2 rounded-xl border"
-                      style={{
-                        background: "color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent)",
-                        color: "var(--md-sys-color-primary)",
-                        borderColor: "color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)",
-                      }}
-                    >
-                      <Activity size={14} /> {feedback.voiceSummary.avgWPM}
-                    </span>
-                    <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wide opacity-40">
-                      Avg WPM
+                      Perception Score
                     </span>
                   </div>
                 )}
               </div>
             </div>
-            {feedback.voiceSummary.allInsights?.length > 0 ? (
-              <ul className="space-y-2">
-                {feedback.voiceSummary.allInsights.map((insight: string, i: number) => (
-                  <li key={i} className="text-sm text-on-surface-variant flex items-start gap-2 opacity-70">
-                    <MessageCircle size={14} className="mt-0.5 shrink-0 text-primary" />
-                    {insight}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-on-surface-variant italic opacity-50">
-                No specific vocal observations were recorded for this session.
+
+            {/* 4 Actionable metric cards from voice analysis data */}
+            {(() => {
+              const voiceTurns = data.turns.filter((t: any) => t.voiceAnalysis?.status === "completed");
+              if (voiceTurns.length === 0) return null;
+
+              const avgWPM = voiceTurns.reduce((s: number, t: any) => s + (t.voiceAnalysis.wordsPerMinute || 0), 0) / voiceTurns.length;
+              const avgPauseRatio = voiceTurns.reduce((s: number, t: any) => s + (t.voiceAnalysis.pauseRatio || 0), 0) / voiceTurns.length;
+              const avgPitchStd = voiceTurns.reduce((s: number, t: any) => s + (t.voiceAnalysis.pitchStd || 0), 0) / voiceTurns.length;
+
+              const paceOk = avgWPM >= 100 && avgWPM <= 160;
+              const pauseOk = avgPauseRatio <= 0.2;
+              const pitchVarOk = avgPitchStd >= 15;
+
+              return (
+                <div className="grid grid-cols-3 gap-3 mb-5">
+                  {/* Speaking Pace */}
+                  <div className="bg-surface-container-low p-3 rounded-lg text-center">
+                    <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Speaking Pace</span>
+                    <span className={`text-lg font-bold ${paceOk ? "text-emerald-400" : "text-amber-400"}`}>
+                      {Math.round(avgWPM)} <span className="text-xs font-normal opacity-60">WPM</span>
+                    </span>
+                    <span className="block text-[10px] text-on-surface-variant mt-1 opacity-30">
+                      {avgWPM < 100 ? "Too slow — speak more naturally" : avgWPM > 160 ? "Too fast — slow down slightly" : "Good pace (100-160 range)"}
+                    </span>
+                  </div>
+                  {/* Pause Pattern */}
+                  <div className="bg-surface-container-low p-3 rounded-lg text-center">
+                    <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Pauses</span>
+                    <span className={`text-lg font-bold ${pauseOk ? "text-emerald-400" : avgPauseRatio <= 0.4 ? "text-amber-400" : "text-rose-400"}`}>
+                      {(avgPauseRatio * 100).toFixed(0)}%
+                    </span>
+                    <span className="block text-[10px] text-on-surface-variant mt-1 opacity-30">
+                      {pauseOk ? "Natural flow" : avgPauseRatio <= 0.4 ? "Some silence gaps — connect thoughts" : "High silence — practice fluency"}
+                    </span>
+                  </div>
+                  {/* Pitch Variation */}
+                  <div className="bg-surface-container-low p-3 rounded-lg text-center">
+                    <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Pitch Variation</span>
+                    <span className={`text-lg font-bold ${pitchVarOk ? "text-emerald-400" : "text-amber-400"}`}>
+                      {pitchVarOk ? "Varied" : "Flat"}
+                    </span>
+                    <span className="block text-[10px] text-on-surface-variant mt-1 opacity-30">
+                      {pitchVarOk ? "Engaging vocal variation" : "Try emphasizing key words"}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Honest framing note */}
+            <div className="bg-surface-container-low p-3 rounded-lg mb-4">
+              <p className="text-[11px] text-on-surface-variant opacity-45 leading-relaxed">
+                <span className="font-bold text-emerald-400/70">The 3 metrics above are all within your control</span> — practice them to improve your delivery.
+                The Perception Score also factors in natural voice characteristics (pitch, tremor) that interviewers subconsciously react to but you cannot change — this is why the score may not fully reflect your improvement.
+                Track the metrics above for your real progress. Your Delivery Analysis score (transcript quality) has the highest impact and is entirely in your hands.
               </p>
+            </div>
+
+            {/* Keep Gemini insights but filter out jargon-heavy ones */}
+            {feedback.voiceSummary.allInsights?.length > 0 && (
+              <details className="group">
+                <summary className="text-xs font-bold text-on-surface-variant uppercase tracking-wider cursor-pointer hover:text-on-surface transition select-none opacity-40 hover:opacity-70">
+                  Detailed AI Observations
+                </summary>
+                <ul className="space-y-2 mt-3">
+                  {feedback.voiceSummary.allInsights.map((insight: string, i: number) => (
+                    <li key={i} className="text-sm text-on-surface-variant flex items-start gap-2 opacity-60">
+                      <MessageCircle size={14} className="mt-0.5 shrink-0 text-primary" />
+                      {insight}
+                    </li>
+                  ))}
+                </ul>
+              </details>
             )}
           </div>
         )}
 
-        {/* 6. TRANSCRIPT */}
+        {/* 6. DELIVERY ANALYSIS SUMMARY */}
+        {(() => {
+          const turnsWithDelivery = data.turns.filter((t: any) => t.deliveryFeedback);
+          if (turnsWithDelivery.length === 0 && !feedback.deliverySummary) return null;
+
+          // Aggregate filler words across all turns
+          const allFillers: Record<string, number> = {};
+          const allHedging: string[] = [];
+          const structureFeedbacks: string[] = [];
+          const improvements: string[] = [];
+
+          turnsWithDelivery.forEach((t: any) => {
+            const d = t.deliveryFeedback;
+            if (d.fillerWords) {
+              d.fillerWords.forEach((f: any) => {
+                allFillers[f.word] = (allFillers[f.word] || 0) + f.count;
+              });
+            }
+            if (d.hedgingPhrases) {
+              d.hedgingPhrases.forEach((p: string) => {
+                if (!allHedging.includes(p)) allHedging.push(p);
+              });
+            }
+            if (d.structureFeedback) structureFeedbacks.push(d.structureFeedback);
+            if (d.topImprovement) improvements.push(d.topImprovement);
+          });
+
+          const totalFillers = feedback.deliverySummary?.totalFillers ?? Object.values(allFillers).reduce((s: number, c: number) => s + c, 0);
+          const totalHedging = feedback.deliverySummary?.totalHedging ?? allHedging.length;
+          const avgRelevance = feedback.deliverySummary?.avgRelevance ?? 0;
+          const avgSpecificity = feedback.deliverySummary?.avgSpecificity ?? 0;
+          const totalRestarts = feedback.deliverySummary?.totalRestarts ?? 0;
+
+          // Deduplicate improvements
+          const uniqueImprovements = [...new Set(improvements)];
+
+          return (
+            <div className="glass-card p-6 rounded-xl border-l-4 border-cyan-500 mb-8">
+              <div className="flex flex-wrap justify-between items-start mb-5 gap-4">
+                <div>
+                  <h3 className="font-bold text-cyan-400 flex items-center gap-2 mb-1">
+                    <FileText size={20} /> Delivery Analysis
+                  </h3>
+                  <p className="text-xs text-on-surface-variant opacity-40">
+                    How you communicated your answers — structure, clarity, and language patterns
+                  </p>
+                </div>
+                {feedback.scores?.delivery != null && (
+                  <div className="flex flex-col items-center gap-1">
+                    <CircularProgress value={feedback.scores.delivery} size={88} />
+                    <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wide opacity-40">
+                      Delivery Score
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Metric cards row */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+                <div className="bg-surface-container-low p-3 rounded-lg text-center">
+                  <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Filler Words</span>
+                  <span className={`text-lg font-bold ${totalFillers <= 3 ? "text-emerald-400" : totalFillers <= 8 ? "text-amber-400" : "text-rose-400"}`}>
+                    {totalFillers}
+                  </span>
+                </div>
+                <div className="bg-surface-container-low p-3 rounded-lg text-center">
+                  <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Hedging Phrases</span>
+                  <span className={`text-lg font-bold ${totalHedging <= 2 ? "text-emerald-400" : totalHedging <= 5 ? "text-amber-400" : "text-rose-400"}`}>
+                    {totalHedging}
+                  </span>
+                </div>
+                <div className="bg-surface-container-low p-3 rounded-lg text-center">
+                  <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Relevance</span>
+                  <span className={`text-lg font-bold ${getScoreTextColor(avgRelevance)}`}>
+                    {Math.round(avgRelevance)}%
+                  </span>
+                  <span className="block text-[10px] text-on-surface-variant mt-1 opacity-30">
+                    How well answers addressed questions
+                  </span>
+                </div>
+                <div className="bg-surface-container-low p-3 rounded-lg text-center">
+                  <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Specificity</span>
+                  <span className={`text-lg font-bold ${getScoreTextColor(avgSpecificity)}`}>
+                    {Math.round(avgSpecificity)}%
+                  </span>
+                  <span className="block text-[10px] text-on-surface-variant mt-1 opacity-30">
+                    Concrete examples vs vague statements
+                  </span>
+                </div>
+              </div>
+
+              {/* Filler words breakdown */}
+              {Object.keys(allFillers).length > 0 && (
+                <div className="mb-4 bg-surface-container-low p-4 rounded-lg">
+                  <span className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2 opacity-50">
+                    Filler Words Detected
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(allFillers)
+                      .sort(([, a], [, b]) => (b as number) - (a as number))
+                      .map(([word, count]) => (
+                        <span
+                          key={word}
+                          className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
+                            (count as number) >= 3
+                              ? "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                              : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                          }`}
+                        >
+                          &ldquo;{word}&rdquo; x{count as number}
+                        </span>
+                      ))}
+                  </div>
+                  <p className="text-[11px] text-on-surface-variant mt-2 opacity-40">
+                    Try replacing fillers with a brief pause — silence sounds more confident than &ldquo;um&rdquo; or &ldquo;like&rdquo;.
+                  </p>
+                </div>
+              )}
+
+              {/* Hedging phrases breakdown */}
+              {allHedging.length > 0 && (
+                <div className="mb-4 bg-surface-container-low p-4 rounded-lg">
+                  <span className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2 opacity-50">
+                    Hedging Phrases Detected
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {allHedging.map((phrase, i) => (
+                      <span
+                        key={i}
+                        className="text-xs font-bold px-2.5 py-1 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/20"
+                      >
+                        &ldquo;{phrase}&rdquo;
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-on-surface-variant mt-2 opacity-40">
+                    Hedging weakens your statements. Instead of &ldquo;I think maybe we could...&rdquo;, say &ldquo;We should...&rdquo; — be direct and assertive.
+                  </p>
+                </div>
+              )}
+
+              {/* Structure feedback per question */}
+              {structureFeedbacks.length > 0 && (
+                <div className="mb-4 bg-surface-container-low p-4 rounded-lg">
+                  <span className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2 opacity-50">
+                    Answer Structure
+                  </span>
+                  <ul className="space-y-1.5">
+                    {structureFeedbacks.map((sf, i) => (
+                      <li key={i} className="text-xs text-on-surface-variant flex items-start gap-2 opacity-65">
+                        <span className="shrink-0 text-cyan-400 font-bold">Q{i + 1}:</span>
+                        {sf}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Sentence restarts */}
+              {totalRestarts > 0 && (
+                <div className="flex items-center gap-2 text-xs text-amber-400/70 mb-4">
+                  <AlertTriangle size={12} />
+                  {totalRestarts} sentence restart{totalRestarts > 1 ? "s" : ""} detected — practice completing your thoughts before starting a new sentence.
+                </div>
+              )}
+
+              {/* Top improvements */}
+              {uniqueImprovements.length > 0 && (
+                <div className="bg-surface-container-low p-4 rounded-lg border-l-4 border-cyan-500/40">
+                  <span className="block text-xs font-bold text-cyan-400 uppercase tracking-wider mb-2 opacity-70">
+                    How to Improve
+                  </span>
+                  <ul className="space-y-2">
+                    {uniqueImprovements.map((tip, i) => (
+                      <li key={i} className="text-sm text-on-surface-variant flex items-start gap-2 opacity-70">
+                        <Lightbulb size={14} className="mt-0.5 shrink-0 text-cyan-400" />
+                        {tip}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* 7. TRANSCRIPT */}
         <div className="flex items-center gap-2 mb-6">
           <h2 className="text-2xl font-bold text-on-surface opacity-90">Transcript</h2>
           <span className="glass-card text-on-surface-variant text-xs font-bold px-2 py-1 rounded-full opacity-70">
@@ -349,6 +589,61 @@ export default function InterviewDetail() {
                     {Math.round(turn.voiceAnalysis.wordsPerMinute)} WPM
                   </span>
                 )}
+                {turn.answerMode === "chat" && (
+                  <span
+                    className="flex items-center text-xs font-bold px-2 py-1 rounded border"
+                    style={{
+                      background: "var(--md-sys-color-surface-container)",
+                      color: "var(--md-sys-color-on-surface-variant)",
+                      borderColor: "var(--md-sys-color-outline-variant)",
+                    }}
+                  >
+                    <MessageSquare size={12} className="mr-1" />
+                    Chat Answer
+                  </span>
+                )}
+                {/* Inline Fluency badge */}
+                {turn.voiceAnalysis?.speakingFluency != null && (
+                  <span
+                    className={`flex items-center text-xs font-bold px-2 py-1 rounded border ${
+                      turn.voiceAnalysis.speakingFluency >= 0.8
+                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        : turn.voiceAnalysis.speakingFluency >= 0.5
+                        ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                        : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                    }`}
+                  >
+                    Fluency {(turn.voiceAnalysis.speakingFluency * 100).toFixed(0)}%
+                  </span>
+                )}
+                {/* Inline Pause Ratio badge */}
+                {turn.voiceAnalysis?.pauseRatio != null && (
+                  <span
+                    className={`flex items-center text-xs font-bold px-2 py-1 rounded border ${
+                      turn.voiceAnalysis.pauseRatio <= 0.2
+                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        : turn.voiceAnalysis.pauseRatio <= 0.4
+                        ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                        : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                    }`}
+                  >
+                    Pauses {(turn.voiceAnalysis.pauseRatio * 100).toFixed(0)}%
+                  </span>
+                )}
+                {/* Inline Relevance badge from delivery analysis */}
+                {turn.deliveryFeedback?.relevanceScore != null && (
+                  <span
+                    className={`flex items-center text-xs font-bold px-2 py-1 rounded border ${
+                      turn.deliveryFeedback.relevanceScore >= 70
+                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        : turn.deliveryFeedback.relevanceScore >= 50
+                        ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                        : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                    }`}
+                  >
+                    Relevance {Math.round(turn.deliveryFeedback.relevanceScore)}%
+                  </span>
+                )}
               </div>
 
               {/* Question */}
@@ -390,112 +685,36 @@ export default function InterviewDetail() {
                 </div>
               )}
 
-              {/* Expandable Voice Metrics */}
-              {turn.voiceAnalysis && turn.voiceAnalysis.status === "completed" && (
-                <details className="mt-4 pt-4 border-t border-outline-variant">
-                  <summary className="text-xs font-bold text-on-surface-variant uppercase tracking-wider cursor-pointer hover:text-on-surface transition select-none opacity-40 hover:opacity-70">
-                    Voice Metrics Detail
-                  </summary>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
-                    {/* Confidence — circular progress */}
-                    <div className="bg-surface-container-low p-3 rounded-lg flex flex-col items-center gap-1">
-                      <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Confidence</span>
-                      <CircularProgress
-                        value={
-                          turn.voiceAnalysis.confidenceLevel != null
-                            ? turn.voiceAnalysis.confidenceLevel * 100
-                            : 0
-                        }
-                        size={60}
-                        strokeWidth={5}
-                      />
-                      <span className="block text-[10px] text-on-surface-variant mt-1 opacity-30">
-                        ML confidence score
-                      </span>
-                    </div>
-                    <div className="bg-surface-container-low p-3 rounded-lg text-center">
-                      <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Stability</span>
-                      <span
-                        className={`text-sm font-bold ${
-                          turn.voiceAnalysis.vocalStability != null &&
-                          turn.voiceAnalysis.vocalStability >= 0.985
-                            ? "text-emerald-400"
-                            : "text-on-surface-variant opacity-70"
-                        }`}
-                      >
-                        {turn.voiceAnalysis.vocalStability != null
-                          ? `${(turn.voiceAnalysis.vocalStability * 100).toFixed(0)}%`
-                          : "N/A"}
-                      </span>
-                      <span className="block text-[10px] text-on-surface-variant mt-1 opacity-30">
-                        {turn.voiceAnalysis.vocalStability != null &&
-                        turn.voiceAnalysis.vocalStability >= 0.985
-                          ? "Steady vocal control"
-                          : "Some vocal variation"}
-                      </span>
-                    </div>
-                    <div className="bg-surface-container-low p-3 rounded-lg text-center">
-                      <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Fluency</span>
-                      <span
-                        className={`text-sm font-bold ${
-                          turn.voiceAnalysis.speakingFluency != null &&
-                          turn.voiceAnalysis.speakingFluency >= 0.8
-                            ? "text-emerald-400"
-                            : "text-on-surface-variant opacity-70"
-                        }`}
-                      >
-                        {turn.voiceAnalysis.speakingFluency != null
-                          ? `${(turn.voiceAnalysis.speakingFluency * 100).toFixed(0)}%`
-                          : "N/A"}
-                      </span>
-                      <span className="block text-[10px] text-on-surface-variant mt-1 opacity-30">
-                        {turn.voiceAnalysis.speakingFluency != null &&
-                        turn.voiceAnalysis.speakingFluency >= 0.8
-                          ? "Minimal hesitations"
-                          : "Noticeable pauses"}
-                      </span>
-                    </div>
-                    <div className="bg-surface-container-low p-3 rounded-lg text-center">
-                      <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Pause Ratio</span>
-                      <span
-                        className={`text-sm font-bold ${
-                          turn.voiceAnalysis.pauseRatio != null &&
-                          turn.voiceAnalysis.pauseRatio <= 0.2
-                            ? "text-emerald-400"
-                            : "text-amber-400"
-                        }`}
-                      >
-                        {turn.voiceAnalysis.pauseRatio != null
-                          ? `${(turn.voiceAnalysis.pauseRatio * 100).toFixed(0)}%`
-                          : "N/A"}
-                      </span>
-                      <span className="block text-[10px] text-on-surface-variant mt-1 opacity-30">
-                        {turn.voiceAnalysis.pauseRatio != null &&
-                        turn.voiceAnalysis.pauseRatio <= 0.2
-                          ? "Natural pacing"
-                          : "High silence ratio"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {turn.voiceAnalysis.rawFeatures?.featureExplanations?.length > 0 && (
-                    <div className="mt-3 glass-card p-3 rounded-lg border-l-4 border-primary">
-                      <span className="block text-[10px] font-bold text-primary uppercase tracking-wider mb-1.5 opacity-70">
-                        Why this prediction
-                      </span>
-                      <ul className="space-y-1">
-                        {turn.voiceAnalysis.rawFeatures.featureExplanations
-                          .slice(0, 3)
-                          .map((explanation: string, idx: number) => (
-                            <li key={idx} className="text-xs text-on-surface-variant flex items-start gap-1.5 opacity-65">
-                              <span className="mt-1 w-1 h-1 rounded-full bg-primary shrink-0" />
-                              {explanation}
-                            </li>
-                          ))}
-                      </ul>
+              {/* Delivery Feedback — 1 warning + 1 positive */}
+              {turn.deliveryFeedback && (
+                <div className="mt-4 pt-4 border-t border-outline-variant space-y-2">
+                  {turn.deliveryFeedback.topStrength && (
+                    <div className="flex items-start gap-2 text-sm text-emerald-400/80">
+                      <CheckCircle size={14} className="mt-0.5 shrink-0" />
+                      <span>{turn.deliveryFeedback.topStrength}</span>
                     </div>
                   )}
-                </details>
+                  {turn.deliveryFeedback.topImprovement && (
+                    <div className="flex items-start gap-2 text-sm text-amber-400/80">
+                      <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+                      <span>{turn.deliveryFeedback.topImprovement}</span>
+                    </div>
+                  )}
+                  {(turn.deliveryFeedback.fillerCount > 0 || turn.deliveryFeedback.hedgingCount > 0) && (
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {turn.deliveryFeedback.fillerCount > 0 && (
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${turn.deliveryFeedback.fillerCount <= 2 ? "bg-amber-500/10 text-amber-400 border-amber-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20"}`}>
+                          {turn.deliveryFeedback.fillerCount} filler{turn.deliveryFeedback.fillerCount > 1 ? "s" : ""}
+                        </span>
+                      )}
+                      {turn.deliveryFeedback.hedgingCount > 0 && (
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${turn.deliveryFeedback.hedgingCount <= 2 ? "bg-amber-500/10 text-amber-400 border-amber-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20"}`}>
+                          {turn.deliveryFeedback.hedgingCount} hedge{turn.deliveryFeedback.hedgingCount > 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
             </motion.div>
           ))}

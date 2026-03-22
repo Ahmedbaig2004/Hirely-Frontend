@@ -8,9 +8,9 @@ interface InterviewState {
   transcript: string;
   feedback: string | null;
   firstQuestionAudio: string | null;
-  
+
   // 1. NEW: TTS State & Action
-  isTtsEnabled: boolean; 
+  isTtsEnabled: boolean;
   toggleTts: () => void;
 
   setSessionId: (id: string) => void;
@@ -19,6 +19,7 @@ interface InterviewState {
   setTranscript: (text: string) => void;
   setFeedback: (text: string) => void;
   setFirstQuestionAudio: (audio: string | null) => void;
+  resetSession: () => void;
 }
 
 export const useInterviewStore = create<InterviewState>()(
@@ -42,7 +43,17 @@ export const useInterviewStore = create<InterviewState>()(
       setFirstQuestionAudio: (audio) => set({ firstQuestionAudio: audio }),
 
       // 3. NEW: Implement Toggle Action
-      toggleTts: () => set((state) => ({ isTtsEnabled: !state.isTtsEnabled })), 
+      toggleTts: () => set((state) => ({ isTtsEnabled: !state.isTtsEnabled })),
+
+      resetSession: () =>
+        set({
+          sessionId: null,
+          currentQuestion: null,
+          feedback: null,
+          firstQuestionAudio: null,
+          transcript: "",
+          loading: false,
+        }),
     }),
     {
       name: 'hirely-storage',
