@@ -170,6 +170,105 @@ function AdaptiveMockup() {
   );
 }
 
+/* ── Mock visual: Voice Pace (WPM) ───────────────────── */
+function VoicePaceMockup() {
+  const wpm = 138;
+
+  const categories = [
+    { label: "Fluency", status: "Good", accent: "#10B981" },
+    { label: "Energy", status: "Good", accent: "#10B981" },
+    { label: "Clarity", status: "Good", accent: "#10B981" },
+    {
+      label: "Speaking Pace",
+      status: wpm >= 110 && wpm <= 170 ? "Good" : "Needs Work",
+      accent: wpm >= 110 && wpm <= 170 ? "#10B981" : "#F59E0B",
+      wpm,
+    },
+  ];
+
+  const pct = Math.min(Math.max((wpm - 60) / (220 - 60), 0), 1) * 100;
+  const barColor = wpm >= 110 && wpm <= 170 ? "#10B981" : "#F59E0B";
+
+  return (
+    <div className="glass-card-raised rounded-2xl p-6 space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-on-surface-variant opacity-70">Voice Analysis</span>
+        <span
+          className="text-xs font-bold px-2 py-0.5 rounded-full"
+          style={{
+            background: "rgba(16,185,129,0.15)",
+            border: "1px solid rgba(16,185,129,0.25)",
+            color: "#10B981",
+          }}
+        >
+          {wpm} WPM
+        </span>
+      </div>
+
+      {/* WPM meter */}
+      <div className="space-y-1.5">
+        <div className="flex justify-between text-[10px] text-white/30">
+          <span>60</span>
+          <span className="text-white/50">Ideal: 110–170</span>
+          <span>220</span>
+        </div>
+        <div className="relative h-2.5 bg-white/[0.08] rounded-full overflow-hidden">
+          {/* ideal zone highlight */}
+          <div
+            className="absolute top-0 h-full rounded-full opacity-20"
+            style={{
+              left: `${((110 - 60) / 160) * 100}%`,
+              width: `${((170 - 110) / 160) * 100}%`,
+              background: "#10B981",
+            }}
+          />
+          <motion.div
+            initial={{ width: 0 }}
+            whileInView={{ width: `${pct}%` }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.9, ease: "easeOut" }}
+            className="h-full rounded-full"
+            style={{
+              background: barColor,
+              boxShadow: `0 0 10px ${barColor}70`,
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Category boxes */}
+      <div className="grid grid-cols-2 gap-2">
+        {categories.map(({ label, status, accent, wpm: w }) => (
+          <div
+            key={label}
+            className="rounded-xl px-3 py-2.5 space-y-0.5"
+            style={{
+              background: `${accent}12`,
+              border: `1px solid ${accent}30`,
+            }}
+          >
+            <span className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">{label}</span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold" style={{ color: accent }}>
+                {status}
+              </span>
+              {w !== undefined && (
+                <span className="text-[10px] text-white/30">{w} wpm</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tip */}
+      <p className="text-[11px] text-white/40 leading-relaxed border-l-2 border-emerald-500/40 pl-3">
+        Your pace of {wpm} WPM is perfect — calm, professional, and easy to follow.
+      </p>
+    </div>
+  );
+}
+
 /* ── Feature rows ────────────────────────────────────── */
 const rows = [
   {
@@ -197,6 +296,19 @@ const rows = [
     ],
     visual: <AdaptiveMockup />,
     reverse: true,
+  },
+  {
+    eyebrow: "Voice Intelligence",
+    title: "Speaking Pace Analysis",
+    description:
+      "Hirely measures your words-per-minute in real time and benchmarks it against the ideal interview pace (110–170 WPM). Too fast and you lose the interviewer; too slow and you lose their attention. We tell you exactly where you land.",
+    bullets: [
+      { text: "Real-time WPM detection per answer", accent: "var(--md-sys-color-primary)" },
+      { text: "Ideal range coaching — not just a raw number", accent: "var(--md-sys-color-tertiary)" },
+      { text: "Fluency, Energy & Clarity scored alongside pace", accent: "#10B981" },
+    ],
+    visual: <VoicePaceMockup />,
+    reverse: false,
   },
 ];
 

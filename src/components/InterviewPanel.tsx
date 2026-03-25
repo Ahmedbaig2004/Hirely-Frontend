@@ -80,6 +80,12 @@ export default function InterviewPanel() {
   // Track whether any audio turns have been submitted (for smart finalization)
   const [hasAudioTurns, setHasAudioTurns] = useState(false);
 
+  // Abort ref for voice polling — set to true on unmount to stop recursive setTimeout
+  const pollingAbortRef = useRef(false);
+  useEffect(() => {
+    return () => { pollingAbortRef.current = true; };
+  }, []);
+
   // 3. Hooks
   const {
     isRecording,
@@ -189,11 +195,15 @@ export default function InterviewPanel() {
     const backendUrl =
       process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
 
+    pollingAbortRef.current = false;
+
     const poll = async () => {
+      if (pollingAbortRef.current) return;
       try {
         const { data } = await axios.get(
           `${backendUrl}/api/voice-progress/${sessionId}`
         );
+        if (pollingAbortRef.current) return;
         setVoiceProgress({ completed: data.completed, total: data.total });
 
         if (data.allDone) {
@@ -203,19 +213,21 @@ export default function InterviewPanel() {
             await axios.post(`${backendUrl}/api/finalize-interview`, {
               sessionId,
             });
+            if (pollingAbortRef.current) return;
             setProcessingStage("done");
             // Brief pause so user sees the completed state before redirect
             setTimeout(() => router.replace(`/dashboard/${sessionId}`), 1200);
           } catch (finalizeErr: any) {
+            if (pollingAbortRef.current) return;
             console.error("Finalize error:", finalizeErr);
             toast.error("Failed to generate report. Please try again.");
-            // Redirect to dashboard anyway - the data may still be available
             setTimeout(() => router.replace(`/dashboard/${sessionId}`), 2000);
           }
         } else {
           setTimeout(poll, 2000);
         }
       } catch (err) {
+        if (pollingAbortRef.current) return;
         console.error("Polling error:", err);
         setTimeout(poll, 3000); // retry on error with longer delay
       }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useInterviewStore } from "@/stores/useInterviewStore";
 import { useRouter, usePathname } from "next/navigation";
 import { LoaderFour } from "@/components/ui/loader";
 
@@ -35,8 +36,11 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     // Listen for changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (!session && pathname.startsWith('/dashboard')) {
-        router.push('/auth');
+      if (!session) {
+        useInterviewStore.getState().resetSession();
+        if (pathname.startsWith('/dashboard')) {
+          router.push('/auth');
+        }
       }
     });
 

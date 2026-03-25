@@ -9,10 +9,43 @@ import {
   ArrowLeft, CheckCircle, XCircle, Lightbulb,
   TrendingUp, BarChart3, Tag, Mic, Activity,
   Gauge, MessageCircle, MessageSquare, Zap,
-  FileText, AlertTriangle
+  FileText, AlertTriangle, ChevronDown
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { MeshGradient } from "@/components/ui/mesh-gradient";
+
+// Frontend label override — always shows latest human-friendly names
+// regardless of what's baked into stored DB JSON
+const VOICE_FEATURE_LABELS: Record<string, string> = {
+  loudnessPeaksPerSec: "Passion & Emphasis",
+  "loudness_sma3_percentile20.0": "Quiet-Moment Volume",
+  loudness_dynamics_power: "Dynamic Range",
+  vocal_projection: "Room-Filling Power",
+  loudness_sma3_meanRisingSlope: "Starting Strength",
+  loudness_sma3_stddevNorm: "Volume Variety",
+  voiced_flow: "Talking in Flow",
+  vocal_instability: "Nervousness Meter",
+  StddevUnvoicedSegmentLength: "Pause Consistency",
+  "shimmerLocaldB_sma3nz_amean": "Word-to-Word Steadiness",
+  "shimmerLocaldB_sma3nz_stddevNorm": "Volume Wobble",
+  "F3bandwidth_sma3nz_amean": "Mumble-Meter",
+  "HNRdBACF_sma3nz_amean": "Voice Smoothness",
+  "alphaRatioUV_sma3nz_amean": "Consonant Crispness",
+  "slopeUV500-1500_sma3nz_amean": "Speech Crispness",
+  spectralFlux_sma3_amean: "Voice Aliveness",
+  "F2bandwidth_sma3nz_stddevNorm": "Mouth Movement Consistency",
+  "F0semitoneFrom27.5Hz_sma3nz_stddevNorm": "Pitch Movement",
+  "logRelF0-H1-H2_sma3nz_amean": "Breath Control",
+  "spectralFluxV_sma3nz_stddevNorm": "Expressive Variety",
+  equivalentSoundLevel_dBp: "Overall Volume",
+  "loudness_sma3_pctlrange0-2": "Whisper-to-Shout Range",
+  "F3amplitudeLogRelF0_sma3nz_stddevNorm": "Voice Richness Variety",
+  "F2amplitudeLogRelF0_sma3nz_amean": "Vowel Power",
+  "F1amplitudeLogRelF0_sma3nz_amean": "Open-Mouth Resonance",
+};
+
+const resolveLabel = (driver: any) =>
+  VOICE_FEATURE_LABELS[driver?.feature] || driver?.label || driver?.feature;
 
 export default function InterviewDetail() {
   const { id } = useParams();
@@ -20,6 +53,7 @@ export default function InterviewDetail() {
   const { user } = useAuthStore();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [gapExpanded, setGapExpanded] = useState(false);
 
   useEffect(() => {
     if (id && user) {
@@ -129,34 +163,59 @@ export default function InterviewDetail() {
               className="mb-8 p-6 rounded-xl border border-amber-500/20"
               style={{ background: "rgba(245,158,11,0.08)" }}
             >
-              <div className="flex justify-between items-start mb-4">
+              <button
+                onClick={() => setGapExpanded((prev) => !prev)}
+                className="w-full flex justify-between items-center cursor-pointer"
+              >
                 <h3 className="font-bold text-amber-300 flex items-center gap-2">
                   <TrendingUp size={20} /> Resume Gap Analysis
                 </h3>
-                <span className="bg-amber-500/15 text-amber-300 text-xs font-bold px-3 py-1 rounded-full border border-amber-500/20">
-                  Match Score: {feedback.originalGapAnalysis.matchScore}%
-                </span>
-              </div>
-              <p className="text-amber-400/80 text-sm leading-relaxed mb-4">
-                {feedback.originalGapAnalysis.feedback}
-              </p>
-              {feedback.originalGapAnalysis.missingSkills?.length > 0 && (
-                <div>
-                  <span className="text-xs font-bold text-amber-400/60 uppercase tracking-wide block mb-2">
-                    Missing Skills Detected:
+                <div className="flex items-center gap-3">
+                  <span className="bg-amber-500/15 text-amber-300 text-xs font-bold px-3 py-1 rounded-full border border-amber-500/20">
+                    Match Score: {feedback.originalGapAnalysis.matchScore}%
                   </span>
-                  <div className="flex flex-wrap gap-2">
-                    {feedback.originalGapAnalysis.missingSkills.map((skill: string, i: number) => (
-                      <span
-                        key={i}
-                        className="glass-card px-2 py-1 text-amber-300 text-xs font-semibold rounded border border-amber-500/20"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
+                  <ChevronDown
+                    size={16}
+                    className={`text-amber-400/60 transition-transform duration-300 ${gapExpanded ? "rotate-180" : ""}`}
+                  />
                 </div>
-              )}
+              </button>
+
+              <AnimatePresence initial={false}>
+                {gapExpanded && (
+                  <motion.div
+                    key="gap-body"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.28, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-4">
+                      <p className="text-amber-400/80 text-sm leading-relaxed mb-4">
+                        {feedback.originalGapAnalysis.feedback}
+                      </p>
+                      {feedback.originalGapAnalysis.missingSkills?.length > 0 && (
+                        <div>
+                          <span className="text-xs font-bold text-amber-400/60 uppercase tracking-wide block mb-2">
+                            Missing Skills Detected:
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {feedback.originalGapAnalysis.missingSkills.map((skill: string, i: number) => (
+                              <span
+                                key={i}
+                                className="glass-card px-2 py-1 text-amber-300 text-xs font-semibold rounded border border-amber-500/20"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
 
@@ -214,8 +273,10 @@ export default function InterviewDetail() {
                   ...(feedback.scores.delivery != null
                     ? [{ label: "Delivery", value: feedback.scores.delivery, weight: null }]
                     : []),
-                  { label: "Content Quality", value: feedback.scores.contentQuality ?? feedback.scores.technical, weight: "60%" },
-                  { label: "Vocal Delivery", value: feedback.scores.voice, weight: "40%" },
+                  { label: "Content Quality", value: feedback.scores.contentQuality ?? feedback.scores.technical, weight: feedback.scores.voice != null ? "60%" : null },
+                  ...(feedback.scores.voice != null
+                    ? [{ label: "Vocal Delivery", value: feedback.scores.voice, weight: "40%" }]
+                    : []),
                   { label: "Combined", value: feedback.scores.combined, weight: null },
                 ] as { label: string; value: number; weight: string | null }[]
               ).map(({ label, value, weight }) => {
@@ -271,22 +332,112 @@ export default function InterviewDetail() {
               </div>
             </div>
 
-            {/* 4 Actionable metric cards from voice analysis data */}
+            {/* Category sentiment cards — SHAP-driven (new) or threshold fallback (legacy) */}
             {(() => {
               const voiceTurns = data.turns.filter((t: any) => t.voiceAnalysis?.status === "completed");
               if (voiceTurns.length === 0) return null;
 
+              // Check if ANY turn has ui_sync data
+              const hasUiSync = voiceTurns.some((t: any) => t.voiceAnalysis?.rawFeatures?.ui_sync?.categories);
+
+              if (hasUiSync) {
+                // --- SHAP-driven categories ---
+                const categoryKeys = ["fluency", "energy", "clarity"];
+                const aggregated: Record<string, { shap_sum: number; count: number; top_driver: any; label: string }> = {};
+
+                voiceTurns.forEach((t: any) => {
+                  const uiSync = t.voiceAnalysis?.rawFeatures?.ui_sync;
+                  if (!uiSync?.categories) return;
+                  for (const key of categoryKeys) {
+                    const cat = uiSync.categories[key];
+                    if (!cat) continue;
+                    if (!aggregated[key]) aggregated[key] = { shap_sum: 0, count: 0, top_driver: cat.top_driver, label: cat.label };
+                    aggregated[key].shap_sum += cat.shap_sum;
+                    aggregated[key].count += 1;
+                    if (Math.abs(cat.top_driver?.shap_value || 0) > Math.abs(aggregated[key].top_driver?.shap_value || 0)) {
+                      aggregated[key].top_driver = cat.top_driver;
+                    }
+                  }
+                });
+
+                const cats = categoryKeys.filter(k => aggregated[k]?.count > 0);
+                if (cats.length === 0) return null;
+
+                // Collect coaching tips
+                const tips: { label: string; tip: string; direction: string; category: string }[] = [];
+                const seen = new Set<string>();
+                voiceTurns.forEach((t: any) => {
+                  const catData = t.voiceAnalysis?.rawFeatures?.ui_sync?.categories;
+                  if (!catData) return;
+                  for (const [, cat] of Object.entries(catData) as [string, any][]) {
+                    const d = cat.top_driver;
+                    if (d?.tip && !seen.has(d.feature)) {
+                      seen.add(d.feature);
+                      tips.push({ label: resolveLabel(d), tip: d.tip, direction: d.direction, category: cat.label });
+                    }
+                  }
+                });
+
+                // Primary goal: single most impactful thing to fix
+                const primaryGoal = voiceTurns
+                  .map((t: any) => t.voiceAnalysis?.rawFeatures?.ui_sync?.primary_goal)
+                  .find((g: any) => g != null);
+
+                return (
+                  <>
+                    {primaryGoal && (
+                      <div className="bg-surface-container-low p-4 rounded-lg border-l-4 border-violet-500/60 mb-5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-violet-400/70">Your #1 Goal</span>
+                        <p className="text-sm font-semibold text-on-surface mt-1">{VOICE_FEATURE_LABELS[primaryGoal.feature] || primaryGoal.label}</p>
+                        <p className="text-xs text-on-surface-variant opacity-60 mt-1 leading-relaxed">{primaryGoal.tip}</p>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-3 gap-3 mb-5">
+                      {cats.map((key) => {
+                        const cat = aggregated[key];
+                        const avgShap = cat.shap_sum / cat.count;
+                        const status = avgShap > 0.01 ? "Good" : avgShap < -0.01 ? "Needs Improvement" : "Neutral";
+                        const statusColor = status === "Good" ? "text-emerald-400" : status === "Needs Improvement" ? "text-rose-400" : "text-amber-400";
+                        const driver = cat.top_driver;
+
+                        return (
+                          <div key={key} className="bg-surface-container-low p-3 rounded-lg text-center">
+                            <span className="block text-xs text-on-surface-variant mb-1 opacity-40">{cat.label}</span>
+                            <span className={`text-lg font-bold ${statusColor}`}>{status}</span>
+                            {driver && (
+                              <span className="block text-[10px] text-on-surface-variant mt-1 opacity-40 leading-snug">
+                                {driver.direction === "positive" ? "Driven by " : "Held back by "}
+                                <span className="font-semibold text-on-surface-variant opacity-70">{resolveLabel(driver)}</span>
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {tips.length > 0 && (
+                      <div className="space-y-2 mb-4">
+                        {tips.map((t, i) => (
+                          <div key={i} className={`bg-surface-container-low p-3 rounded-lg border-l-2 ${t.direction === "positive" ? "border-emerald-500/40" : t.direction === "negative" ? "border-rose-500/40" : "border-amber-500/40"}`}>
+                            <span className="text-[10px] font-bold uppercase tracking-wider opacity-40">{t.category} — {t.label}</span>
+                            <p className="text-xs text-on-surface-variant opacity-60 mt-1 leading-relaxed">{t.tip}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                );
+              }
+
+              // --- Fallback: legacy threshold-based boxes (pre-SHAP data) ---
               const avgWPM = voiceTurns.reduce((s: number, t: any) => s + (t.voiceAnalysis.wordsPerMinute || 0), 0) / voiceTurns.length;
               const avgPauseRatio = voiceTurns.reduce((s: number, t: any) => s + (t.voiceAnalysis.pauseRatio || 0), 0) / voiceTurns.length;
               const avgPitchStd = voiceTurns.reduce((s: number, t: any) => s + (t.voiceAnalysis.pitchStd || 0), 0) / voiceTurns.length;
-
               const paceOk = avgWPM >= 100 && avgWPM <= 160;
               const pauseOk = avgPauseRatio <= 0.2;
               const pitchVarOk = avgPitchStd >= 15;
 
               return (
                 <div className="grid grid-cols-3 gap-3 mb-5">
-                  {/* Speaking Pace */}
                   <div className="bg-surface-container-low p-3 rounded-lg text-center">
                     <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Speaking Pace</span>
                     <span className={`text-lg font-bold ${paceOk ? "text-emerald-400" : "text-amber-400"}`}>
@@ -296,7 +447,6 @@ export default function InterviewDetail() {
                       {avgWPM < 100 ? "Too slow — speak more naturally" : avgWPM > 160 ? "Too fast — slow down slightly" : "Good pace (100-160 range)"}
                     </span>
                   </div>
-                  {/* Pause Pattern */}
                   <div className="bg-surface-container-low p-3 rounded-lg text-center">
                     <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Pauses</span>
                     <span className={`text-lg font-bold ${pauseOk ? "text-emerald-400" : avgPauseRatio <= 0.4 ? "text-amber-400" : "text-rose-400"}`}>
@@ -306,7 +456,6 @@ export default function InterviewDetail() {
                       {pauseOk ? "Natural flow" : avgPauseRatio <= 0.4 ? "Some silence gaps — connect thoughts" : "High silence — practice fluency"}
                     </span>
                   </div>
-                  {/* Pitch Variation */}
                   <div className="bg-surface-container-low p-3 rounded-lg text-center">
                     <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Pitch Variation</span>
                     <span className={`text-lg font-bold ${pitchVarOk ? "text-emerald-400" : "text-amber-400"}`}>
@@ -323,9 +472,9 @@ export default function InterviewDetail() {
             {/* Honest framing note */}
             <div className="bg-surface-container-low p-3 rounded-lg mb-4">
               <p className="text-[11px] text-on-surface-variant opacity-45 leading-relaxed">
-                <span className="font-bold text-emerald-400/70">The 3 metrics above are all within your control</span> — practice them to improve your delivery.
-                The Perception Score also factors in natural voice characteristics (pitch, tremor) that interviewers subconsciously react to but you cannot change — this is why the score may not fully reflect your improvement.
-                Track the metrics above for your real progress. Your Delivery Analysis score (transcript quality) has the highest impact and is entirely in your hands.
+                <span className="font-bold text-emerald-400/70">These insights are driven by your actual voice data</span> — the AI identified which vocal traits most influenced your score.
+                The Perception Score also factors in natural voice characteristics that interviewers subconsciously react to but you cannot change — this is why the score may not fully reflect your improvement.
+                Your Delivery Analysis score (transcript quality) has the highest impact and is entirely in your hands.
               </p>
             </div>
 

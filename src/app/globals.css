@@ -429,15 +429,26 @@
     border: 1px solid rgba(255, 255, 255, 0.09);
   }
 
-  /* Primary CTA button — maps to MD3 primary */
+  /* Primary CTA button */
+  /* Light mode: solid teal gradient (no fade to light) */
   .btn-violet {
-    background: linear-gradient(135deg, var(--md-sys-color-primary) 0%, var(--md-sys-color-primary-container) 100%);
-    color: var(--md-sys-color-on-primary);
-    box-shadow: 0 4px 24px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent);
+    background: linear-gradient(135deg, #0a5e4e 0%, #107b67 100%);
+    color: #ffffff;
+    box-shadow: 0 2px 12px rgba(16, 107, 87, 0.18);
     transition: box-shadow 0.3s ease, transform 0.2s ease;
   }
   .btn-violet:hover:not(:disabled) {
-    box-shadow: 0 8px 40px color-mix(in srgb, var(--md-sys-color-primary) 60%, transparent);
+    box-shadow: 0 6px 22px rgba(16, 107, 87, 0.30);
+    transform: translateY(-1px);
+  }
+  /* Dark mode: light teal → dark teal depth gradient */
+  :is(.dark *) .btn-violet {
+    background: linear-gradient(135deg, rgb(135, 214, 189) 0%, rgb(0, 81, 65) 100%);
+    color: rgb(0, 56, 44);
+    box-shadow: 0 4px 24px rgba(135, 214, 189, 0.30);
+  }
+  :is(.dark *) .btn-violet:hover:not(:disabled) {
+    box-shadow: 0 8px 40px rgba(135, 214, 189, 0.45);
     transform: translateY(-1px);
   }
 

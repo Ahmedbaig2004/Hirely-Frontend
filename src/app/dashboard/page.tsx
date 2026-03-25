@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { Calendar, ChevronDown, CheckCircle, XCircle, ArrowRight, Inbox, Zap } from "lucide-react";
+import { Calendar, ChevronDown, CheckCircle, XCircle, ArrowRight, Inbox, Zap, Trash2 } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import SignOutButton from "@/components/logOutButton";
 import { LoaderFour } from "@/components/ui/loader";
 import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
 import { MeshGradient } from "@/components/ui/mesh-gradient";
+import { Navbar } from "@/components/landing/Navbar";
 
 interface InterviewFeedback {
   decision?: string;
@@ -73,13 +74,16 @@ function InterviewCard({
   expanded,
   onToggle,
   onNavigate,
+  onDelete,
 }: {
   item: Interview;
   index: number;
   expanded: boolean;
   onToggle: () => void;
   onNavigate: () => void;
+  onDelete: () => void;
 }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const fb = item.finalFeedback;
   const strengths = fb?.strengths?.slice(0, 2) ?? [];
   const weaknesses = fb?.weaknesses?.slice(0, 2) ?? [];
@@ -100,31 +104,61 @@ function InterviewCard({
       }
     >
       {/* Card header — click to expand */}
-      <button
-        onClick={onToggle}
-        className="w-full p-6 flex justify-between items-center text-left"
-      >
-        <div className="flex-1 min-w-0 mr-4">
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <h2 className="font-bold text-lg text-on-surface truncate opacity-90">
-              {item.jobDescription.substring(0, 50)}
-              {item.jobDescription.length > 50 ? "…" : ""}
-            </h2>
-            <DecisionBadge decision={fb?.decision} />
+      <div className="p-6 flex items-center gap-3">
+        <button
+          onClick={onToggle}
+          className="flex-1 min-w-0 flex justify-between items-center text-left"
+        >
+          <div className="flex-1 min-w-0 mr-4">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <h2 className="font-bold text-lg text-on-surface truncate opacity-90">
+                {item.jobDescription.substring(0, 50)}
+                {item.jobDescription.length > 50 ? "…" : ""}
+              </h2>
+              <DecisionBadge decision={fb?.decision} />
+            </div>
+            <div className="flex flex-wrap items-center gap-4">
+              <span className="flex items-center gap-1 text-on-surface-variant text-sm opacity-40">
+                <Calendar size={14} />
+                {new Date(item.createdAt).toLocaleDateString()}
+              </span>
+              <ScoreBar score={item.finalScore} />
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <span className="flex items-center gap-1 text-on-surface-variant text-sm opacity-40">
-              <Calendar size={14} />
-              {new Date(item.createdAt).toLocaleDateString()}
-            </span>
-            <ScoreBar score={item.finalScore} />
-          </div>
+          <ChevronDown
+            size={18}
+            className={`text-on-surface-variant shrink-0 transition-transform duration-300 opacity-40 ${expanded ? "rotate-180" : ""}`}
+          />
+        </button>
+
+        {/* Delete control */}
+        <div className="shrink-0 flex items-center gap-1.5 ml-2">
+          {confirmDelete ? (
+            <>
+              <button
+                onClick={() => { setConfirmDelete(false); onDelete(); }}
+                className="text-xs font-bold text-rose-400 border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 rounded-lg hover:bg-rose-500/20 transition-colors"
+              >
+                Confirm
+              </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="text-xs text-white/40 hover:text-white/70 transition-colors px-1.5 py-1"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
+              className="p-1.5 rounded-lg text-white/20 hover:text-rose-400 hover:bg-rose-500/10 transition-all duration-150"
+              title="Delete interview"
+            >
+              <Trash2 size={15} />
+            </button>
+          )}
         </div>
-        <ChevronDown
-          size={18}
-          className={`text-on-surface-variant shrink-0 transition-transform duration-300 opacity-40 ${expanded ? "rotate-180" : ""}`}
-        />
-      </button>
+      </div>
 
       {/* Expandable body */}
       <AnimatePresence initial={false}>
@@ -199,6 +233,18 @@ export default function Dashboard() {
   const { user } = useAuthStore();
   const router = useRouter();
 
+  const handleDelete = async (id: string) => {
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
+      await axios.delete(`${backendUrl}/api/interviews/${id}?userId=${user?.id ?? ""}`);
+      setInterviews((prev) => prev.filter((iv) => iv.id !== id));
+      if (expandedId === id) setExpandedId(null);
+      toast.success("Interview deleted.");
+    } catch (err: any) {
+      toast.error("Failed to delete: " + (err.response?.data?.error || err.message));
+    }
+  };
+
   useEffect(() => {
     if (user) {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
@@ -243,9 +289,10 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <main className="relative min-h-screen bg-background p-8 overflow-hidden">
+      <main className="relative min-h-screen bg-background overflow-hidden">
         <MeshGradient />
-        <div className="relative z-10 max-w-4xl mx-auto">
+        <Navbar />
+        <div className="relative z-10 max-w-4xl mx-auto px-8 pt-32 pb-8">
           <Header />
           <div className="grid gap-4">
             {[1, 2, 3].map((i) => (
@@ -264,10 +311,11 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="relative min-h-screen bg-background p-8 overflow-hidden">
+    <main className="relative min-h-screen bg-background overflow-hidden">
       <MeshGradient />
+      <Navbar />
       <motion.div
-        className="relative z-10 max-w-4xl mx-auto"
+        className="relative z-10 max-w-4xl mx-auto px-8 pt-32 pb-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
@@ -283,6 +331,7 @@ export default function Dashboard() {
               expanded={expandedId === item.id}
               onToggle={() => setExpandedId(expandedId === item.id ? null : item.id)}
               onNavigate={() => router.push(`/dashboard/${item.id}`)}
+              onDelete={() => handleDelete(item.id)}
             />
           ))}
 
