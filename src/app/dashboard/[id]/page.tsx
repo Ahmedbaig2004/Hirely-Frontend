@@ -17,31 +17,29 @@ import { MeshGradient } from "@/components/ui/mesh-gradient";
 // Frontend label override — always shows latest human-friendly names
 // regardless of what's baked into stored DB JSON
 const VOICE_FEATURE_LABELS: Record<string, string> = {
-  loudnessPeaksPerSec: "Passion & Emphasis",
-  "loudness_sma3_percentile20.0": "Quiet-Moment Volume",
+  loudnessPeaksPerSec: "Energy & Emphasis",
+  "loudness_sma3_percentile20.0": "Low-volume Clarity",
   loudness_dynamics_power: "Dynamic Range",
-  vocal_projection: "Room-Filling Power",
-  loudness_sma3_meanRisingSlope: "Starting Strength",
+  vocal_projection: "Vocal Presence",
+  loudness_sma3_meanRisingSlope: "Sentence Energy",
   loudness_sma3_stddevNorm: "Volume Variety",
-  voiced_flow: "Talking in Flow",
-  vocal_instability: "Nervousness Meter",
+  voiced_flow: "Speaking Flow",
+  vocal_instability: "Voice Steadiness",
   StddevUnvoicedSegmentLength: "Pause Consistency",
   "shimmerLocaldB_sma3nz_amean": "Word-to-Word Steadiness",
   "shimmerLocaldB_sma3nz_stddevNorm": "Volume Wobble",
-  "F3bandwidth_sma3nz_amean": "Mumble-Meter",
-  "HNRdBACF_sma3nz_amean": "Voice Smoothness",
+  "HNRdBACF_sma3nz_amean": "Voice Clarity",
   "alphaRatioUV_sma3nz_amean": "Consonant Crispness",
-  "slopeUV500-1500_sma3nz_amean": "Speech Crispness",
-  spectralFlux_sma3_amean: "Voice Aliveness",
+  "slopeUV500-1500_sma3nz_amean": "Voice Brightness",
   "F2bandwidth_sma3nz_stddevNorm": "Mouth Movement Consistency",
-  "F0semitoneFrom27.5Hz_sma3nz_stddevNorm": "Pitch Movement",
-  "logRelF0-H1-H2_sma3nz_amean": "Breath Control",
+  "F0semitoneFrom27.5Hz_sma3nz_stddevNorm": "Pitch Variety",
   "spectralFluxV_sma3nz_stddevNorm": "Expressive Variety",
-  equivalentSoundLevel_dBp: "Overall Volume",
   "loudness_sma3_pctlrange0-2": "Whisper-to-Shout Range",
-  "F3amplitudeLogRelF0_sma3nz_stddevNorm": "Voice Richness Variety",
+  "F3amplitudeLogRelF0_sma3nz_stddevNorm": "Vocal Richness",
+  "F2amplitudeLogRelF0_sma3nz_stddevNorm": "Vocal Resonance",
   "F2amplitudeLogRelF0_sma3nz_amean": "Vowel Power",
-  "F1amplitudeLogRelF0_sma3nz_amean": "Open-Mouth Resonance",
+  "F3frequency_sma3nz_stddevNorm": "Tone Consistency",
+  "F3amplitudeLogRelF0_sma3nz_amean": "Voice Richness",
 };
 
 const resolveLabel = (driver: any) =>
@@ -332,139 +330,98 @@ export default function InterviewDetail() {
               </div>
             </div>
 
-            {/* Category sentiment cards — SHAP-driven (new) or threshold fallback (legacy) */}
+            {/* SHAP-driven coaching — final summary + 3 improvements + 2 strengths */}
             {(() => {
               const voiceTurns = data.turns.filter((t: any) => t.voiceAnalysis?.status === "completed");
               if (voiceTurns.length === 0) return null;
 
-              // Check if ANY turn has ui_sync data
-              const hasUiSync = voiceTurns.some((t: any) => t.voiceAnalysis?.rawFeatures?.ui_sync?.categories);
-
-              if (hasUiSync) {
-                // --- SHAP-driven categories ---
-                const categoryKeys = ["fluency", "energy", "clarity"];
-                const aggregated: Record<string, { shap_sum: number; count: number; top_driver: any; label: string }> = {};
-
-                voiceTurns.forEach((t: any) => {
-                  const uiSync = t.voiceAnalysis?.rawFeatures?.ui_sync;
-                  if (!uiSync?.categories) return;
-                  for (const key of categoryKeys) {
-                    const cat = uiSync.categories[key];
-                    if (!cat) continue;
-                    if (!aggregated[key]) aggregated[key] = { shap_sum: 0, count: 0, top_driver: cat.top_driver, label: cat.label };
-                    aggregated[key].shap_sum += cat.shap_sum;
-                    aggregated[key].count += 1;
-                    if (Math.abs(cat.top_driver?.shap_value || 0) > Math.abs(aggregated[key].top_driver?.shap_value || 0)) {
-                      aggregated[key].top_driver = cat.top_driver;
-                    }
+              // Collect all shapExplanations across turns, deduplicate by feature, keep highest impact
+              const byFeature: Record<string, any> = {};
+              voiceTurns.forEach((t: any) => {
+                const explanations: any[] = t.voiceAnalysis?.rawFeatures?.shapExplanations || [];
+                explanations.forEach((s: any) => {
+                  if (!s?.feature) return;
+                  const existing = byFeature[s.feature];
+                  if (!existing || Math.abs(s.impact_magnitude) > Math.abs(existing.impact_magnitude)) {
+                    byFeature[s.feature] = s;
                   }
                 });
+              });
 
-                const cats = categoryKeys.filter(k => aggregated[k]?.count > 0);
-                if (cats.length === 0) return null;
+              const allItems = Object.values(byFeature).sort((a: any, b: any) => b.impact_magnitude - a.impact_magnitude);
+              const improvements = allItems.filter((s: any) => s.direction === "decreased").slice(0, 3);
+              const strengths = allItems.filter((s: any) => s.direction === "increased").slice(0, 2);
 
-                // Collect coaching tips
-                const tips: { label: string; tip: string; direction: string; category: string }[] = [];
-                const seen = new Set<string>();
-                voiceTurns.forEach((t: any) => {
-                  const catData = t.voiceAnalysis?.rawFeatures?.ui_sync?.categories;
-                  if (!catData) return;
-                  for (const [, cat] of Object.entries(catData) as [string, any][]) {
-                    const d = cat.top_driver;
-                    if (d?.tip && !seen.has(d.feature)) {
-                      seen.add(d.feature);
-                      tips.push({ label: resolveLabel(d), tip: d.tip, direction: d.direction, category: cat.label });
-                    }
-                  }
-                });
+              // Final summary: use the first turn that has it
+              const finalSummary = voiceTurns
+                .map((t: any) => t.voiceAnalysis?.rawFeatures?.finalSummary)
+                .find((s: any) => s?.opening);
 
-                // Primary goal: single most impactful thing to fix
-                const primaryGoal = voiceTurns
-                  .map((t: any) => t.voiceAnalysis?.rawFeatures?.ui_sync?.primary_goal)
-                  .find((g: any) => g != null);
-
-                return (
-                  <>
-                    {primaryGoal && (
-                      <div className="bg-surface-container-low p-4 rounded-lg border-l-4 border-violet-500/60 mb-5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-violet-400/70">Your #1 Goal</span>
-                        <p className="text-sm font-semibold text-on-surface mt-1">{VOICE_FEATURE_LABELS[primaryGoal.feature] || primaryGoal.label}</p>
-                        <p className="text-xs text-on-surface-variant opacity-60 mt-1 leading-relaxed">{primaryGoal.tip}</p>
-                      </div>
-                    )}
-                    <div className="grid grid-cols-3 gap-3 mb-5">
-                      {cats.map((key) => {
-                        const cat = aggregated[key];
-                        const avgShap = cat.shap_sum / cat.count;
-                        const status = avgShap > 0.01 ? "Good" : avgShap < -0.01 ? "Needs Improvement" : "Neutral";
-                        const statusColor = status === "Good" ? "text-emerald-400" : status === "Needs Improvement" ? "text-rose-400" : "text-amber-400";
-                        const driver = cat.top_driver;
-
-                        return (
-                          <div key={key} className="bg-surface-container-low p-3 rounded-lg text-center">
-                            <span className="block text-xs text-on-surface-variant mb-1 opacity-40">{cat.label}</span>
-                            <span className={`text-lg font-bold ${statusColor}`}>{status}</span>
-                            {driver && (
-                              <span className="block text-[10px] text-on-surface-variant mt-1 opacity-40 leading-snug">
-                                {driver.direction === "positive" ? "Driven by " : "Held back by "}
-                                <span className="font-semibold text-on-surface-variant opacity-70">{resolveLabel(driver)}</span>
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {tips.length > 0 && (
-                      <div className="space-y-2 mb-4">
-                        {tips.map((t, i) => (
-                          <div key={i} className={`bg-surface-container-low p-3 rounded-lg border-l-2 ${t.direction === "positive" ? "border-emerald-500/40" : t.direction === "negative" ? "border-rose-500/40" : "border-amber-500/40"}`}>
-                            <span className="text-[10px] font-bold uppercase tracking-wider opacity-40">{t.category} — {t.label}</span>
-                            <p className="text-xs text-on-surface-variant opacity-60 mt-1 leading-relaxed">{t.tip}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                );
-              }
-
-              // --- Fallback: legacy threshold-based boxes (pre-SHAP data) ---
-              const avgWPM = voiceTurns.reduce((s: number, t: any) => s + (t.voiceAnalysis.wordsPerMinute || 0), 0) / voiceTurns.length;
-              const avgPauseRatio = voiceTurns.reduce((s: number, t: any) => s + (t.voiceAnalysis.pauseRatio || 0), 0) / voiceTurns.length;
-              const avgPitchStd = voiceTurns.reduce((s: number, t: any) => s + (t.voiceAnalysis.pitchStd || 0), 0) / voiceTurns.length;
-              const paceOk = avgWPM >= 100 && avgWPM <= 160;
-              const pauseOk = avgPauseRatio <= 0.2;
-              const pitchVarOk = avgPitchStd >= 15;
+              if (improvements.length === 0 && strengths.length === 0 && !finalSummary) return null;
 
               return (
-                <div className="grid grid-cols-3 gap-3 mb-5">
-                  <div className="bg-surface-container-low p-3 rounded-lg text-center">
-                    <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Speaking Pace</span>
-                    <span className={`text-lg font-bold ${paceOk ? "text-emerald-400" : "text-amber-400"}`}>
-                      {Math.round(avgWPM)} <span className="text-xs font-normal opacity-60">WPM</span>
-                    </span>
-                    <span className="block text-[10px] text-on-surface-variant mt-1 opacity-30">
-                      {avgWPM < 100 ? "Too slow — speak more naturally" : avgWPM > 160 ? "Too fast — slow down slightly" : "Good pace (100-160 range)"}
-                    </span>
-                  </div>
-                  <div className="bg-surface-container-low p-3 rounded-lg text-center">
-                    <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Pauses</span>
-                    <span className={`text-lg font-bold ${pauseOk ? "text-emerald-400" : avgPauseRatio <= 0.4 ? "text-amber-400" : "text-rose-400"}`}>
-                      {(avgPauseRatio * 100).toFixed(0)}%
-                    </span>
-                    <span className="block text-[10px] text-on-surface-variant mt-1 opacity-30">
-                      {pauseOk ? "Natural flow" : avgPauseRatio <= 0.4 ? "Some silence gaps — connect thoughts" : "High silence — practice fluency"}
-                    </span>
-                  </div>
-                  <div className="bg-surface-container-low p-3 rounded-lg text-center">
-                    <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Pitch Variation</span>
-                    <span className={`text-lg font-bold ${pitchVarOk ? "text-emerald-400" : "text-amber-400"}`}>
-                      {pitchVarOk ? "Varied" : "Flat"}
-                    </span>
-                    <span className="block text-[10px] text-on-surface-variant mt-1 opacity-30">
-                      {pitchVarOk ? "Engaging vocal variation" : "Try emphasizing key words"}
-                    </span>
-                  </div>
+                <div className="space-y-4 mb-5">
+                  {/* Final Summary */}
+                  {finalSummary && (
+                    <div className="glass-card p-4 rounded-xl border border-violet-500/20">
+                      <p className="text-sm font-semibold text-white/90 leading-relaxed mb-2">{finalSummary.opening}</p>
+                      {finalSummary.focus_note && (
+                        <p className="text-xs text-white/55 leading-relaxed mb-1">{finalSummary.focus_note}</p>
+                      )}
+                      {finalSummary.best_trait && (
+                        <p className="text-xs text-violet-400/80 leading-relaxed font-medium">{finalSummary.best_trait}</p>
+                      )}
+                      {finalSummary.reminder && (
+                        <p className="text-[11px] text-white/30 leading-relaxed mt-2 italic">{finalSummary.reminder}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Priority Improvements */}
+                  {improvements.length > 0 && (
+                    <div>
+                      <span className="label-caps text-rose-400/70 mb-2 block">Priority Improvements</span>
+                      <div className="space-y-2">
+                        {improvements.map((item: any, i: number) => (
+                          <motion.div
+                            key={item.feature}
+                            initial={{ opacity: 0, x: -8 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.07, duration: 0.3 }}
+                            className="glass-card p-3 rounded-xl border-l-4 border-rose-500/50"
+                          >
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400/70">
+                              {VOICE_FEATURE_LABELS[item.feature] || item.label}
+                            </span>
+                            <p className="text-xs text-white/60 mt-1 leading-relaxed">{item.explanation}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Strengths */}
+                  {strengths.length > 0 && (
+                    <div>
+                      <span className="label-caps text-emerald-400/70 mb-2 block">Your Strengths</span>
+                      <div className="space-y-2">
+                        {strengths.map((item: any, i: number) => (
+                          <motion.div
+                            key={item.feature}
+                            initial={{ opacity: 0, x: -8 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.07 + 0.21, duration: 0.3 }}
+                            className="glass-card p-3 rounded-xl border-l-4 border-emerald-500/50"
+                          >
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400/70">
+                              {VOICE_FEATURE_LABELS[item.feature] || item.label}
+                            </span>
+                            <p className="text-xs text-white/60 mt-1 leading-relaxed">{item.explanation}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })()}
@@ -474,7 +431,6 @@ export default function InterviewDetail() {
               <p className="text-[11px] text-on-surface-variant opacity-45 leading-relaxed">
                 <span className="font-bold text-emerald-400/70">These insights are driven by your actual voice data</span> — the AI identified which vocal traits most influenced your score.
                 The Perception Score also factors in natural voice characteristics that interviewers subconsciously react to but you cannot change — this is why the score may not fully reflect your improvement.
-                Your Delivery Analysis score (transcript quality) has the highest impact and is entirely in your hands.
               </p>
             </div>
 
