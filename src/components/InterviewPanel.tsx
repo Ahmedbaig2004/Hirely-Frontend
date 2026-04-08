@@ -255,9 +255,7 @@ export default function InterviewPanel() {
       const backendUrl =
         process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
       const res = await axios.post(`${backendUrl}/api/submit-answer`, formData);
-      const { evaluation, nextQuestion, isFinished, audio, transcript } = res.data;
-
-      setFeedback(evaluation.feedback);
+      const { nextQuestion, isFinished, audio, transcript } = res.data;
       setHasAudioTurns(true);
 
       // Sync audio transcript into chat history so switching to chat shows full conversation
@@ -335,9 +333,7 @@ export default function InterviewPanel() {
         question: currentQuestion,
         answer: userMessage,
       });
-      const { evaluation, nextQuestion, isFinished } = res.data;
-
-      setFeedback(evaluation.feedback);
+      const { nextQuestion, isFinished } = res.data;
 
       if (isFinished) {
         setIsProcessingReport(true);
