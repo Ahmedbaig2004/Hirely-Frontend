@@ -124,7 +124,13 @@ export default function InterviewDetail() {
             <div>
               <h1 className="text-3xl font-extrabold text-on-surface tracking-tight opacity-90">Interview Report</h1>
               <p className="text-on-surface-variant text-sm mt-1 opacity-50">
-                {data.jobDescription.substring(0, 60)}... • {new Date(data.createdAt).toLocaleDateString()}
+                {data.jobDescription
+                  ? data.jobDescription.substring(0, 60) + "..."
+                  : data.interviewType === "TECHNICAL"
+                  ? "Technical Interview"
+                  : data.interviewType === "BEHAVIORAL"
+                  ? "Behavioral Interview"
+                  : "Interview"} • {new Date(data.createdAt).toLocaleDateString()}
               </p>
             </div>
             <div className="flex items-center gap-4 glass-card p-3 rounded-xl">

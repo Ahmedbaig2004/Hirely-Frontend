@@ -1,6 +1,14 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
+export type InterviewType = "job-specific" | "technical" | "behavioral";
+
+export interface InterviewConfig {
+  stack?: string;
+  difficulty?: "Easy" | "Medium" | "Hard";
+  questionCount?: number;
+}
+
 interface InterviewState {
   sessionId: string | null;
   currentQuestion: string | null;
@@ -9,6 +17,12 @@ interface InterviewState {
   feedback: string | null;
   firstQuestionAudio: string | null;
   firstQuestionAudioMime: string | null;
+
+  // Interview type + config
+  interviewType: InterviewType;
+  config: InterviewConfig;
+  setInterviewType: (type: InterviewType) => void;
+  setConfig: (config: InterviewConfig) => void;
 
   // TTS State & Actions
   isTtsEnabled: boolean;
@@ -37,6 +51,11 @@ export const useInterviewStore = create<InterviewState>()(
       feedback: null,
       firstQuestionAudio: null,
       firstQuestionAudioMime: null,
+
+      interviewType: "job-specific" as InterviewType,
+      config: {} as InterviewConfig,
+      setInterviewType: (type) => set({ interviewType: type, config: {} }),
+      setConfig: (config) => set({ config }),
 
       isTtsEnabled: true,
       interviewerVoice: "female" as "male" | "female",
