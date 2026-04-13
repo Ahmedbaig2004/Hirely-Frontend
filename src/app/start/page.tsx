@@ -40,7 +40,13 @@ function getScoreColor(score: number) {
 export default function StartPage() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { setSessionId, setQuestion, setFirstQuestionAudio } = useInterviewStore();
+  const {
+    setSessionId,
+    setQuestion,
+    setFirstQuestionAudio,
+    interviewerVoice,
+    setInterviewerVoice,
+  } = useInterviewStore();
 
   const [file, setFile] = useState<File | null>(null);
   const [jd, setJd] = useState("We need a Senior React Developer...");
@@ -70,7 +76,7 @@ export default function StartPage() {
       setAnalysisData(result.analysis);
       setSessionId(result.sessionId);
       setQuestion(result.firstQuestion.question);
-      if (result.audio) setFirstQuestionAudio(result.audio);
+      if (result.audio) setFirstQuestionAudio(result.audio, result.audioMime);
       setStage("analysis");
     }
   };
@@ -100,6 +106,7 @@ export default function StartPage() {
     formData.append("resume", file);
     formData.append("jobDescription", jd);
     formData.append("userId", user?.id ?? "");
+    formData.append("interviewerVoice", interviewerVoice);
 
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
@@ -215,6 +222,26 @@ export default function StartPage() {
                       <label className="label-caps block mb-2">Resume (PDF)</label>
                       <div className="dark rounded-xl overflow-hidden">
                         <FileUpload onChange={handleFileUpload} />
+                      </div>
+                    </div>
+
+                    <div className="mb-5">
+                      <label className="label-caps block mb-2">Interviewer Voice</label>
+                      <div className="flex gap-2">
+                        {(["female", "male"] as const).map((v) => (
+                          <button
+                            key={v}
+                            type="button"
+                            onClick={() => setInterviewerVoice(v)}
+                            className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
+                              interviewerVoice === v
+                                ? "glass-card border border-violet-500/40 text-white/90 shadow-[0_0_20px_rgba(124,58,237,0.15)]"
+                                : "glass-card border border-transparent text-white/40 hover:text-white/70"
+                            }`}
+                          >
+                            {v === "female" ? "Female" : "Male"}
+                          </button>
+                        ))}
                       </div>
                     </div>
 

@@ -34,11 +34,19 @@ export function Footer() {
         <Link href="/" className="flex items-center gap-2">
           <div
             className="w-6 h-6 rounded-md flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, var(--md-sys-color-primary), var(--md-sys-color-primary-container))" }}
+            style={{
+              background:
+                "linear-gradient(135deg, var(--md-sys-color-primary), var(--md-sys-color-primary-container))",
+            }}
           >
-            <Zap size={12} style={{ color: "var(--md-sys-color-on-primary)" }} />
+            <Zap
+              size={12}
+              style={{ color: "var(--md-sys-color-on-primary)" }}
+            />
           </div>
-          <span className="font-semibold text-xs tracking-wide text-on-surface-variant opacity-60">HIRELY</span>
+          <span className="font-semibold text-xs tracking-wide text-on-surface-variant opacity-60">
+            HIRELY
+          </span>
         </Link>
 
         {/* Links */}
