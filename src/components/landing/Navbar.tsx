@@ -13,7 +13,8 @@ const navLinks = [
   { label: "Product", href: "#features", hasDropdown: true },
   { label: "Solutions", href: "#how-it-works", hasDropdown: true },
   { label: "Resources", href: "#faq", hasDropdown: true },
-  { label: "Company", href: "/about", hasDropdown: true },
+  { label: "About us", href: "/about", hasDropdown: false },
+  { label: "Contact", href: "/contact", hasDropdown: false },
   { label: "Pricing", href: "/pricing", hasDropdown: false },
 ];
 

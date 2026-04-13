@@ -1,205 +1,234 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Check, Zap } from "lucide-react";
 import { motion } from "framer-motion";
-import { MeshGradient } from "@/components/ui/mesh-gradient";
+import SectionWrapper from "@/components/ui/SectionWrapper";
+import FloatingShapes from "@/components/ui/FloatingShapes";
+import { fadeInUp, pageStagger, cardPop, staggerSpring } from "@/lib/motion";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 
-const tiers = [
+const plans = [
   {
-    name: "Free",
-    price: "$0",
-    period: "forever",
-    description: "Get started with AI-powered interviews at no cost.",
-    accent: "var(--md-sys-color-tertiary)",
-    glowColor: "var(--md-sys-color-tertiary)",
-    borderColor: "var(--md-sys-color-tertiary)",
-    features: [
-      "3 interviews per month",
-      "Basic resume parsing",
-      "AI-generated questions",
-      "Score & feedback report",
-      "Dashboard history",
-    ],
-    cta: "Start Free",
-    ctaHref: "/start",
+    name: "Basic",
+    monthly: 0,
+    yearly: 0,
+    desc: "Perfect for trying out HIRELY.",
+    features: ["3 mock interviews / month", "Basic AI questions", "Summary report", "Email support"],
+    cta: "Get Started Free",
     highlight: false,
   },
   {
     name: "Pro",
-    price: "$29",
-    period: "per month",
-    description: "For serious candidates preparing for competitive roles.",
-    accent: "var(--md-sys-color-primary)",
-    glowColor: "var(--md-sys-color-primary)",
-    borderColor: "var(--md-sys-color-primary)",
+    monthly: 19,
+    yearly: 15,
+    desc: "For serious job seekers who want an edge.",
     features: [
       "Unlimited interviews",
-      "Advanced gap analysis",
-      "Voice & tone analysis",
-      "Adaptive difficulty tuning",
-      "Detailed voice metrics",
-      "Priority report generation",
-      "Export reports as PDF",
+      "Advanced adaptive questions",
+      "Full detailed reports",
+      "Speech & confidence analysis",
+      "Technical + soft skill scoring",
+      "Priority support",
     ],
-    cta: "Get Pro",
-    ctaHref: "/start",
+    cta: "Start Pro Trial",
     highlight: true,
   },
   {
-    name: "Enterprise",
-    price: "Custom",
-    period: "contact us",
-    description: "Tailored solutions for recruiting teams and bootcamps.",
-    accent: "#10B981",
-    glowColor: "#10B981",
-    borderColor: "#10B981",
+    name: "Premium",
+    monthly: 39,
+    yearly: 29,
+    desc: "For teams and career coaches.",
     features: [
       "Everything in Pro",
-      "Bulk candidate evaluation",
-      "Custom question banks",
-      "Team dashboard & analytics",
+      "Team dashboard (up to 10)",
+      "Custom question sets",
       "API access",
-      "Dedicated support",
-      "SLA guarantees",
+      "White-label reports",
+      "Dedicated account manager",
     ],
     cta: "Contact Sales",
-    ctaHref: "mailto:sales@hirely.ai",
     highlight: false,
   },
 ];
 
+const comparison = [
+  { feature: "Mock interviews", basic: "3 / mo", pro: "Unlimited", premium: "Unlimited" },
+  { feature: "AI question generation", basic: "Basic", pro: "Advanced", premium: "Custom" },
+  { feature: "Performance reports", basic: "Summary", pro: "Full", premium: "White-label" },
+  { feature: "Speech analysis", basic: "—", pro: "Yes", premium: "Yes" },
+  { feature: "Confidence scoring", basic: "—", pro: "Yes", premium: "Yes" },
+  { feature: "Team dashboard", basic: "—", pro: "—", premium: "Up to 10" },
+  { feature: "API access", basic: "—", pro: "—", premium: "Yes" },
+  { feature: "Support", basic: "Email", pro: "Priority", premium: "Dedicated" },
+];
+
 export default function PricingPage() {
+  const [yearly, setYearly] = useState(false);
+  const user = useAuthStore((s) => s.user);
+  const isLoggedIn = !!user;
+
   return (
-    <div className="relative min-h-screen bg-background text-on-surface overflow-x-hidden">
-      <MeshGradient />
+    <div className="lp-page relative min-h-screen overflow-x-hidden bg-background text-foreground">
+      <Navbar />
 
-      <div className="relative z-10 flex flex-col min-h-screen">
-        <Navbar />
-
-        <main className="flex-1 px-6 md:px-10 pt-28 pb-16">
-          <div className="max-w-6xl mx-auto">
-            {/* Header */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-center mb-14"
-            >
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <div
-                  className="w-1.5 h-1.5 rounded-full"
-                  style={{
-                    backgroundColor: "var(--md-sys-color-tertiary)",
-                    boxShadow: "0 0 8px var(--md-sys-color-tertiary)",
-                  }}
-                />
-                <span className="label-caps">Pricing</span>
-              </div>
-              <h1 className="text-4xl md:text-5xl font-bold text-on-surface tracking-tight mb-4 opacity-90">
-                Simple, Transparent Pricing
+      <main className="relative z-10 flex flex-col pt-24">
+        <section className="relative py-20 sm:py-28">
+          <FloatingShapes />
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={pageStagger}
+            className="mx-auto flex max-w-3xl flex-col gap-6 px-4 text-center"
+          >
+            <motion.div variants={fadeInUp} className="space-y-5">
+              <p className="text-xs font-semibold uppercase tracking-widest text-primary">Pricing</p>
+              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+                Plans That <span className="gradient-text">Scale with You</span>
               </h1>
-              <p className="text-on-surface-variant text-sm max-w-md mx-auto opacity-60">
-                Start free, upgrade when you&apos;re ready. No hidden fees, no contracts.
+              <p className="mx-auto max-w-lg text-lg text-muted-foreground">
+                Start free, upgrade when you&apos;re ready. Cancel anytime.
               </p>
             </motion.div>
-
-            {/* Pricing cards */}
-            <div className="grid md:grid-cols-3 gap-6 items-start">
-              {tiers.map(({ name, price, period, description, accent, glowColor, borderColor, features, cta, ctaHref, highlight }, i) => (
+            <motion.div variants={fadeInUp} className="flex items-center justify-center gap-3">
+              <span
+                className={`text-sm font-medium transition ${!yearly ? "text-foreground" : "text-muted-foreground"}`}
+              >
+                Monthly
+              </span>
+              <button
+                type="button"
+                onClick={() => setYearly(!yearly)}
+                className={`relative h-7 w-12 rounded-full transition-colors ${yearly ? "bg-primary" : "bg-muted"}`}
+                aria-label={yearly ? "Switch to monthly billing" : "Switch to yearly billing"}
+              >
                 <motion.div
-                  key={name}
-                  initial={{ opacity: 0, y: 28 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1, duration: 0.5, ease: "easeOut" }}
-                  className={`relative rounded-2xl p-7 ${highlight ? "glass-card-raised" : "glass-card"}`}
-                  style={{
-                    border: highlight
-                      ? `1px solid color-mix(in srgb, ${borderColor} 35%, transparent)`
-                      : undefined,
-                    boxShadow: highlight
-                      ? `0 0 32px color-mix(in srgb, ${glowColor} 10%, transparent)`
-                      : undefined,
-                  }}
-                >
-                  {/* Popular badge */}
-                  {highlight && (
-                    <div
-                      className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase"
-                      style={{
-                        background: "linear-gradient(135deg, var(--md-sys-color-primary), var(--md-sys-color-primary-container))",
-                        color: "var(--md-sys-color-on-primary)",
-                        boxShadow: "0 0 16px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent)",
-                      }}
-                    >
-                      Most Popular
-                    </div>
-                  )}
+                  className="absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow"
+                  animate={{ x: yearly ? 20 : 0 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                />
+              </button>
+              <span
+                className={`text-sm font-medium transition ${yearly ? "text-foreground" : "text-muted-foreground"}`}
+              >
+                Yearly <span className="text-xs font-semibold text-primary">Save 20%</span>
+              </span>
+            </motion.div>
+          </motion.div>
+        </section>
 
-                  {/* Tier header */}
-                  <div className="mb-6">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div
-                        className="w-6 h-6 rounded-md flex items-center justify-center"
-                        style={{
-                          background: `color-mix(in srgb, ${glowColor} 12%, transparent)`,
-                          border: `1px solid color-mix(in srgb, ${borderColor} 20%, transparent)`,
-                        }}
-                      >
-                        <Zap size={12} style={{ color: accent }} />
-                      </div>
-                      <span className="text-sm font-semibold text-on-surface opacity-80">{name}</span>
-                    </div>
-                    <div className="flex items-baseline gap-1.5 mb-2">
-                      <span className="text-3xl font-bold text-on-surface opacity-90">{price}</span>
-                      <span className="text-xs text-on-surface-variant opacity-45">{period}</span>
-                    </div>
-                    <p className="text-xs text-on-surface-variant leading-relaxed opacity-55">{description}</p>
+        <SectionWrapper className="-mt-8 pb-20">
+          <motion.div
+            variants={staggerSpring}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-40px" }}
+            className="grid gap-6 lg:grid-cols-3"
+          >
+            {plans.map((p, i) => (
+              <motion.div
+                key={p.name}
+                custom={i}
+                variants={cardPop}
+                whileHover={{ y: -6, transition: { type: "spring", stiffness: 300, damping: 20 } }}
+                className={`relative rounded-2xl p-7 transition-shadow glass-card hover:shadow-[0_8px_32px_rgba(59,130,246,0.08)] ${
+                  p.highlight ? "shadow-xl ring-2 ring-primary shadow-[0_12px_40px_rgba(59,130,246,0.12)]" : ""
+                }`}
+              >
+                {p.highlight && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-primary to-primary-light px-4 py-1 text-[10px] font-bold text-white shadow-lg">
+                    Most Popular
                   </div>
+                )}
+                <div className="text-xs font-semibold text-muted-foreground">{p.name}</div>
+                <div className="mt-2 flex items-baseline gap-1">
+                  <span className="text-4xl font-extrabold tracking-tight">
+                    ${yearly ? p.yearly : p.monthly}
+                  </span>
+                  {p.monthly > 0 && <span className="text-sm text-muted-foreground">/ mo</span>}
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">{p.desc}</p>
+                <ul className="mt-6 space-y-2.5">
+                  {p.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-sm">
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        className="mt-0.5 shrink-0 text-primary"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href={
+                    isLoggedIn
+                      ? `/checkout?plan=${encodeURIComponent(p.name.toLowerCase())}`
+                      : "/auth"
+                  }
+                  className={`mt-7 flex h-11 items-center justify-center rounded-full text-sm font-semibold transition-transform hover:scale-[1.02] active:scale-[0.98] ${
+                    p.highlight
+                      ? "bg-gradient-to-r from-primary to-primary-light text-white shadow-lg shadow-[0_8px_24px_rgba(59,130,246,0.25)]"
+                      : "border border-border bg-muted/40 backdrop-blur-sm hover:bg-muted"
+                  }`}
+                >
+                  {isLoggedIn ? (p.monthly === 0 ? "Current Plan" : `Upgrade to ${p.name}`) : p.cta}
+                </Link>
+              </motion.div>
+            ))}
+          </motion.div>
+        </SectionWrapper>
 
-                  <div className="h-px mb-6 bg-outline-variant opacity-40" />
+        <SectionWrapper className="pb-24 sm:pb-32">
+          <motion.h2
+            variants={fadeInUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="text-center text-2xl font-bold tracking-tight sm:text-3xl"
+          >
+            Feature Comparison
+          </motion.h2>
+          <motion.div
+            variants={fadeInUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="mt-10 overflow-x-auto rounded-2xl glass-card"
+          >
+            <table className="w-full min-w-[580px] text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="px-5 py-3 text-left font-medium text-muted-foreground">Feature</th>
+                  <th className="px-5 py-3 text-center font-medium">Basic</th>
+                  <th className="px-5 py-3 text-center font-medium text-primary">Pro</th>
+                  <th className="px-5 py-3 text-center font-medium">Premium</th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparison.map((r) => (
+                  <tr key={r.feature} className="border-b border-border/50">
+                    <td className="px-5 py-3 text-muted-foreground">{r.feature}</td>
+                    <td className="px-5 py-3 text-center">{r.basic}</td>
+                    <td className="px-5 py-3 text-center font-medium">{r.pro}</td>
+                    <td className="px-5 py-3 text-center">{r.premium}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </motion.div>
+        </SectionWrapper>
+      </main>
 
-                  {/* Features */}
-                  <ul className="space-y-3 mb-8">
-                    {features.map((f) => (
-                      <li key={f} className="flex items-start gap-2.5">
-                        <Check size={14} className="mt-0.5 shrink-0" style={{ color: accent }} />
-                        <span className="text-xs text-on-surface-variant opacity-65">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* CTA */}
-                  <Link
-                    href={ctaHref}
-                    className={`block text-center w-full rounded-xl py-3 text-sm font-semibold transition-all duration-200 ${
-                      highlight
-                        ? "btn-violet"
-                        : "glass-card text-on-surface-variant hover:text-on-surface opacity-80 hover:opacity-100"
-                    }`}
-                  >
-                    {cta}
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Bottom note */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
-              className="text-center text-xs text-on-surface-variant opacity-35 mt-10"
-            >
-              All plans include access to the Hirely AI platform. Pricing is in USD.
-            </motion.p>
-          </div>
-        </main>
-
-        <Footer />
-      </div>
+      <Footer />
     </div>
   );
 }

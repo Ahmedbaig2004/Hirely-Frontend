@@ -15,6 +15,16 @@ export const staggerSpring: Variants = {
   },
 };
 
+export const pageStagger: Variants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.06,
+    },
+  },
+};
+
 export const cardPop: Variants = {
   hidden: { opacity: 0, y: 24 },
   visible: (i: number) => ({
