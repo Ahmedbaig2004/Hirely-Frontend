@@ -10,6 +10,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
     "@supabase/supabase-js": "^2.86.0",
     "@tabler/icons-react": "^3.35.0",
     "axios": "^1.13.2",
@@ -27,6 +29,7 @@
     "react-dropzone": "^14.3.8",
     "react-toastify": "^11.0.5",
     "tailwind-merge": "^3.4.0",
+    "three": "^0.183.2",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
@@ -35,6 +38,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "^0.183.1",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
     "prettier": "^3.6.2",

@@ -1,15 +1,17 @@
 "use client";
+
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { AuthAnimatedLaptop } from "@/components/auth/AuthAnimatedLaptop";
 import { supabase } from "@/lib/supabaseClient";
 import { cn } from "@/lib/utils";
-import { IconBrandGithub, IconBrandGoogle, IconBrandLinkedin } from "@tabler/icons-react";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { motion } from "framer-motion"; 
-import { AuroraBackground } from "@/components/ui/aurora-background"; 
+import { IconBrandGoogle, IconBrandLinkedin } from "@tabler/icons-react";
+import { Eye, EyeOff, Loader2, Rocket, Shield, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function AuthPage() {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -24,201 +26,331 @@ export default function AuthPage() {
     setError(null);
     setMsg(null);
 
-    // Client-side validation
-    if (!isLogin && password !== confirmPassword) {
+    if (!isLogin) {
+      if (!name.trim()) {
+        setError("Please enter your name");
+        return;
+      }
+      if (password !== confirmPassword) {
         setError("Passwords do not match");
         return;
+      }
     }
 
     setLoading(true);
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
+        if (signErr) throw signErr;
         router.push("/");
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
+        const { error: signErr } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: name.trim(),
+            },
+          },
+        });
+        if (signErr) throw signErr;
         setMsg("Account created! Check your email to confirm.");
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Something went wrong";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    setError(null);
+    setMsg(null);
+    if (!email.trim()) {
+      setError("Enter your email address first, then reset your password.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: typeof window !== "undefined" ? `${window.location.origin}/auth` : undefined,
+      });
+      if (resetErr) throw resetErr;
+      setMsg("Check your email for a password reset link.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Could not send reset email";
+      setError(message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <AuroraBackground>
-      <motion.div
-        initial={{ opacity: 0.0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{
-          delay: 0.3,
-          duration: 0.8,
-          ease: "easeInOut",
-        }}
-        // ✅ FIXED: Added 'z-10' here. 
-        // This forces the form to sit ON TOP of the Aurora Background blobs.
-        className="relative z-10 flex flex-col gap-4 items-center justify-center px-4 w-full"
-      >
-        <div className="max-w-md w-full mx-auto rounded-2xl p-8 shadow-xl border border-slate-200 bg-white/90 backdrop-blur-sm">
-            <h2 className="font-bold text-xl text-slate-900">
-                Welcome to HIRELY
-            </h2>
-            <p className="text-slate-600 text-sm max-w-sm mt-2">
-                {isLogin ? "Login to access your dashboard" : "Create an account to start interviewing"}
-            </p>
+    <div className="auth-page lp-page relative min-h-screen w-full overflow-x-hidden bg-[var(--auth-bg-right)] text-[var(--lp-foreground)]">
+      <div className="grid min-h-screen w-full lg:grid-cols-2">
+        {/* Left — branding (deeper + gradient vs. right panel) */}
+        <div className="auth-split-left relative hidden flex-col justify-between overflow-hidden px-10 py-12 lg:flex lg:px-14 xl:px-16">
+          <div className="relative z-10">
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="text-xl font-bold tracking-tight"
+              style={{ color: "#99f6e4" }}
+            >
+              Hirely
+            </motion.p>
+            <motion.h1
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, delay: 0.05 }}
+              className="mt-10 max-w-lg text-4xl font-bold leading-[1.15] tracking-tight text-white xl:text-5xl"
+            >
+              Master your next{" "}
+              <span className="lp-gradient-text bg-clip-text text-transparent">interview session.</span>
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.12 }}
+              className="mt-5 max-w-md text-sm leading-relaxed text-[var(--lp-muted-foreground)]"
+            >
+              The digital sanctuary for high-growth professionals. Prepare with AI-driven insights in a distraction-free
+              environment.
+            </motion.p>
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, delay: 0.15 }}
+            className="auth-laptop-scene relative z-10 mt-12 flex flex-1 items-end pb-4"
+          >
+            <div className="auth-laptop-glow" aria-hidden />
+            <AuthAnimatedLaptop />
+          </motion.div>
+        </div>
+
+        {/* Right — form (flatter, slightly lighter than left) */}
+        <div className="auth-split-right relative flex flex-col justify-center px-6 py-12 sm:px-10 lg:px-14 xl:px-20">
+          <div
+            className="pointer-events-none absolute inset-0 lg:border-l lg:border-white/[0.07]"
+            aria-hidden
+          />
+          <div className="relative z-10 mx-auto w-full max-w-md">
+            <div className="mb-2 lg:hidden">
+              <p className="text-lg font-bold" style={{ color: "#99f6e4" }}>
+                Hirely
+              </p>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45 }}
+            >
+              <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                {isLogin ? "Welcome Back" : "Create your account"}
+              </h2>
+              <p className="mt-2 text-sm text-[var(--lp-muted-foreground)]">
+                {isLogin ? "Sign in to continue your journey." : "Start your interview prep in minutes."}
+              </p>
+            </motion.div>
+
+            <div className="mt-8 grid grid-cols-2 gap-3">
+              <button type="button" className="auth-social-btn" onClick={() => alert("Google Auth coming soon!")}>
+                <IconBrandGoogle className="h-4 w-4 opacity-90" />
+                Google
+              </button>
+              <button type="button" className="auth-social-btn" onClick={() => alert("LinkedIn Auth coming soon!")}>
+                <IconBrandLinkedin className="h-4 w-4 opacity-90" />
+                LinkedIn
+              </button>
+            </div>
+
+            <div className="relative my-8">
+              <div className="absolute inset-0 flex items-center" aria-hidden>
+                <div className="w-full border-t" style={{ borderColor: "var(--lp-border)" }} />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="label-caps bg-[var(--auth-bg-right)] px-3 text-[var(--lp-muted-foreground)]">
+                  or use email
+                </span>
+              </div>
+            </div>
 
             {error && (
-                <div className="mt-4 p-3 rounded bg-red-50 border border-red-100 text-red-600 text-sm">
-                    {error}
-                </div>
+              <div
+                className="mb-4 rounded-xl border px-4 py-3 text-sm"
+                style={{
+                  background: "rgba(248, 113, 113, 0.08)",
+                  borderColor: "rgba(248, 113, 113, 0.25)",
+                  color: "var(--lp-danger)",
+                }}
+              >
+                {error}
+              </div>
             )}
             {msg && (
-                <div className="mt-4 p-3 rounded bg-green-50 border border-green-100 text-green-600 text-sm">
-                    {msg}
-                </div>
+              <div
+                className="mb-4 rounded-xl border px-4 py-3 text-sm"
+                style={{
+                  background: "rgba(52, 211, 153, 0.08)",
+                  borderColor: "rgba(52, 211, 153, 0.25)",
+                  color: "var(--lp-success)",
+                }}
+              >
+                {msg}
+              </div>
             )}
 
-            <form className="my-8" onSubmit={handleSubmit}>
-                
-                <LabelInputContainer className="mb-4">
-                <Label htmlFor="email">Email Address</Label>
-                <Input 
-                    id="email" 
-                    placeholder="you@example.com" 
-                    type="email" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
+            <form className="space-y-5" onSubmit={handleSubmit}>
+              {!isLogin && (
+                <LabelInputContainer>
+                  <Label htmlFor="name">Full name</Label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    autoComplete="name"
+                    placeholder="Your name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="auth-input"
+                    required={!isLogin}
+                  />
+                </LabelInputContainer>
+              )}
+
+              <LabelInputContainer>
+                <Label htmlFor="email">Email address</Label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="name@company.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="auth-input"
+                  required
                 />
-                </LabelInputContainer>
-                
-                <LabelInputContainer className="mb-4">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                    <Input 
-                        id="password" 
-                        placeholder="••••••••" 
-                        type={isVisible ? "text" : "password"} 
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        className="pr-10"
-                    />
+              </LabelInputContainer>
+
+              <LabelInputContainer>
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="password">Password</Label>
+                  {isLogin && (
                     <button
-                        type="button"
-                        onClick={() => setIsVisible(!isVisible)}
-                        className="absolute right-3 top-3 text-slate-500 hover:text-slate-700"
+                      type="button"
+                      onClick={handleForgotPassword}
+                      className="text-xs font-medium text-[var(--lp-muted-foreground)] transition-colors hover:text-[var(--lp-primary-light)]"
                     >
-                        {isVisible ? <EyeOff size={18} /> : <Eye size={18} />}
+                      Forgot password?
                     </button>
+                  )}
                 </div>
+                <div className="relative">
+                  <input
+                    id="password"
+                    name="password"
+                    type={isVisible ? "text" : "password"}
+                    autoComplete={isLogin ? "current-password" : "new-password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="auth-input pr-12"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setIsVisible(!isVisible)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--lp-muted-foreground)] transition-colors hover:text-[var(--lp-card-foreground)]"
+                    aria-label={isVisible ? "Hide password" : "Show password"}
+                  >
+                    {isVisible ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </LabelInputContainer>
+
+              {!isLogin && (
+                <LabelInputContainer>
+                  <Label htmlFor="confirmPassword">Confirm password</Label>
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="auth-input"
+                    required={!isLogin}
+                  />
                 </LabelInputContainer>
+              )}
 
-                {!isLogin && (
-                    <LabelInputContainer className="mb-8">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
-                    <Input 
-                        id="confirmPassword" 
-                        placeholder="••••••••" 
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                    />
-                    </LabelInputContainer>
-                )}
-
-                <button
-                className="bg-slate-900 hover:bg-slate-800 no-underline group cursor-pointer relative shadow-lg shadow-slate-900/20 rounded-full p-px text-sm font-semibold leading-6 text-white inline-block w-full disabled:opacity-70 disabled:cursor-not-allowed transition-all"
-                type="submit"
-                disabled={loading}
-                >
+              <button className="auth-primary-btn" type="submit" disabled={loading}>
                 {loading ? (
-                    <div className="relative flex space-x-2 items-center z-10 rounded-full bg-slate-950 py-2.5 px-4 ring-1 ring-white/10 justify-center">
-                        <Loader2 className="animate-spin" size={18} />
-                        <span>Please wait</span>
-                    </div>
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Please wait
+                  </span>
+                ) : isLogin ? (
+                  "Sign In"
                 ) : (
-                    <>
-                        <span className="absolute inset-0 overflow-hidden rounded-full">
-                            <span className="absolute inset-0 rounded-full bg-[image:radial-gradient(75%_100%_at_50%_0%,rgba(56,189,248,0.6)_0%,rgba(56,189,248,0)_75%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                        </span>
-                        <div className="relative flex space-x-2 items-center z-10 rounded-full bg-slate-950 py-2.5 px-4 ring-1 ring-white/10 justify-center">
-                            <span>{isLogin ? "Sign In" : "Sign Up"}</span>
-                            <svg
-                                fill="none"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                width="16"
-                                xmlns="http://www.w3.org/2000/svg"
-                            >
-                                <path
-                                    d="M10.75 8.75L14.25 12L10.75 15.25"
-                                    stroke="currentColor"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="1.5"
-                                />
-                            </svg>
-                        </div>
-                        <span className="absolute -bottom-0 left-[1.125rem] h-px w-[calc(100%-2.25rem)] bg-gradient-to-r from-emerald-400/0 via-emerald-400/90 to-emerald-400/0 transition-opacity duration-500 group-hover:opacity-40" />
-                    </>
+                  "Create account"
                 )}
-                </button>
+              </button>
 
-                <div className="bg-gradient-to-r from-transparent via-slate-300 to-transparent my-8 h-[1px] w-full" />
-
-                <div className="flex flex-col space-y-4">
+              <p className="text-center text-sm text-[var(--lp-muted-foreground)]">
+                {isLogin ? "Don't have an account? " : "Already have an account? "}
                 <button
-                    className="relative group/btn flex space-x-2 items-center justify-start px-4 w-full text-slate-900 rounded-md h-10 font-medium shadow-sm bg-white hover:bg-slate-50 border border-slate-200 transition-colors"
-                    type="button"
-                    onClick={() => alert("Github Auth coming soon!")}
+                  type="button"
+                  onClick={() => {
+                    setIsLogin(!isLogin);
+                    setError(null);
+                    setMsg(null);
+                  }}
+                  className="font-semibold text-white underline-offset-4 transition-colors hover:text-[var(--lp-primary-light)] hover:underline"
                 >
-                    <IconBrandGithub className="h-4 w-4 text-slate-800" />
-                    <span className="text-slate-700 text-sm">
-                    GitHub
-                    </span>
+                  {isLogin ? "Create an account" : "Sign in"}
                 </button>
-                <button
-                    className="relative group/btn flex space-x-2 items-center justify-start px-4 w-full text-slate-900 rounded-md h-10 font-medium shadow-sm bg-white hover:bg-slate-50 border border-slate-200 transition-colors"
-                    type="button"
-                    onClick={() => alert("Google Auth coming soon!")}
-                >
-                    <IconBrandGoogle className="h-4 w-4 text-slate-800" />
-                    <span className="text-slate-700 text-sm">
-                    Google
-                    </span>
-                </button>
-                <button
-                    className="relative group/btn flex space-x-2 items-center justify-start px-4 w-full text-slate-900 rounded-md h-10 font-medium shadow-sm bg-white hover:bg-slate-50 border border-slate-200 transition-colors"
-                    type="button"
-                    onClick={() => alert("LinkedIn Auth coming soon!")}
-                >
-                    <IconBrandLinkedin className="h-4 w-4 text-slate-800" />
-                    <span className="text-slate-700 text-sm">
-                    LinkedIn
-                    </span>
-                </button>
-                </div>
-
-                <p className="text-center mt-8 text-sm text-slate-600">
-                    {isLogin ? "Don't have an account? " : "Already have an account? "}
-                    <button onClick={() => setIsLogin(!isLogin)} className="text-slate-900 font-bold hover:underline" type="button">
-                        {isLogin ? 'Sign Up' : 'Sign In'}
-                    </button>
-                </p>
+              </p>
             </form>
+
+            <div className="mt-12 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
+              <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--lp-muted-foreground)]">
+                <span>Trusted by</span>
+                <span className="flex items-center gap-2 text-[var(--lp-muted-foreground)]">
+                  <Rocket className="h-4 w-4" aria-hidden />
+                  <Shield className="h-4 w-4" aria-hidden />
+                  <Sparkles className="h-4 w-4" aria-hidden />
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="pointer-events-none absolute bottom-6 right-6 flex items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-[var(--lp-muted-foreground)]"
+            style={{
+              borderColor: "var(--lp-glass-border)",
+              background: "var(--lp-glass)",
+            }}
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/60 opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+            </span>
+            System online
+          </div>
         </div>
-      </motion.div>
-    </AuroraBackground>
+      </div>
+    </div>
   );
 }
-
-// --- HELPER COMPONENTS ---
 
 const LabelInputContainer = ({
   children,
@@ -227,41 +359,16 @@ const LabelInputContainer = ({
   children: React.ReactNode;
   className?: string;
 }) => {
-  return (
-    <div className={cn("flex flex-col space-y-2 w-full", className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn("flex flex-col space-y-2 w-full", className)}>{children}</div>;
 };
 
 const Label = React.forwardRef<HTMLLabelElement, React.LabelHTMLAttributes<HTMLLabelElement>>(
-    ({ className, ...props }, ref) => (
+  ({ className, ...props }, ref) => (
     <label
-        ref={ref}
-        className={cn(
-        "text-sm font-medium text-slate-900 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-        className
-        )}
-        {...props}
+      ref={ref}
+      className={cn("text-xs font-medium leading-none text-[var(--lp-muted-foreground)]", className)}
+      {...props}
     />
-));
-Label.displayName = "Label";
-
-const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
-  ({ className, type, ...props }, ref) => {
-    return (
-      <div className="relative w-full">
-        <input
-          type={type}
-          className={cn(
-            "flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200",
-            className
-          )}
-          ref={ref}
-          {...props}
-        />
-      </div>
-    );
-  }
+  ),
 );
-Input.displayName = "Input";
+Label.displayName = "Label";

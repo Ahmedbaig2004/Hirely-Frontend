@@ -1,155 +1,296 @@
 "use client";
 
 import Link from "next/link";
-import { Brain, Zap, Sparkles, ArrowRight, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
-import { FlipWords } from "@/components/ui/flip-words";
-import { EncryptedText } from "@/components/ui/encrypted-text";
-
-const flipWords = ["Reimagined.", "Elevated.", "Mastered.", "Perfected."];
-
-const features = [
-  { icon: Brain,    label: "AI-Powered Analysis",  accent: "var(--md-sys-color-primary)" },
-  { icon: Zap,      label: "Real-time Feedback",   accent: "var(--md-sys-color-tertiary)" },
-  { icon: Sparkles, label: "Adaptive Questions",   accent: "#10B981" },
-];
+import { HeroVisual } from "./HeroVisual";
 
 export function HeroSection() {
-  const scrollToHowItWorks = () => {
-    document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" });
-  };
-
   return (
     <section
       id="hero"
-      className="relative h-screen flex flex-col items-center justify-center text-center px-6 overflow-hidden"
+      style={{
+        position: "relative",
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "hidden",
+      }}
     >
-      {/* Eyebrow */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: 0.6, ease: "easeOut" }}
-        className="flex items-center gap-2 mb-7"
-      >
-        <div
-          className="w-1.5 h-1.5 rounded-full"
-          style={{
-            backgroundColor: "var(--md-sys-color-tertiary)",
-            boxShadow: "0 0 8px var(--md-sys-color-tertiary)",
-          }}
-        />
-        <span className="label-caps">AI Interview Platform</span>
-      </motion.div>
+      {/* 3D Canvas Background */}
+      <HeroVisual />
 
-      {/* Headline */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="mb-6"
-      >
-        <h1 className="text-5xl md:text-6xl xl:text-7xl font-bold leading-[1.05] tracking-tight text-on-surface">
-          Your Interview,
-        </h1>
-        <h1 className="text-5xl md:text-6xl xl:text-7xl font-bold leading-[1.05] tracking-tight">
-          <FlipWords
-            words={flipWords}
-            duration={3500}
-            className="text-primary"
-          />
-        </h1>
-      </motion.div>
-
-      {/* Tagline */}
-      <motion.p
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.35, duration: 0.6 }}
-        className="text-sm mb-9 max-w-sm"
-      >
-        <EncryptedText
-          text="Upload your resume. Describe the role. Face a real AI interviewer."
-          className="font-mono"
-          encryptedClassName="text-on-surface/10"
-          revealedClassName="text-on-surface-variant font-light tracking-wide opacity-60"
-          revealDelayMs={40}
-        />
-      </motion.p>
-
-      {/* Feature chips */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.45, duration: 0.5 }}
-        className="flex flex-wrap justify-center gap-3 mb-10"
-      >
-        {features.map(({ icon: Icon, label, accent }, i) => (
-          <motion.div
-            key={label}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 + i * 0.1, duration: 0.5 }}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl glass-card"
-          >
-            <Icon size={13} style={{ color: accent }} />
-            <span className="text-xs font-medium text-on-surface-variant opacity-70">{label}</span>
-          </motion.div>
-        ))}
-      </motion.div>
-
-      {/* CTAs */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.7, duration: 0.5 }}
-        className="flex flex-col sm:flex-row items-center gap-4"
-      >
-        <Link
-          href="/start"
-          className="btn-violet rounded-full px-8 py-3.5 text-sm font-semibold inline-flex items-center gap-2"
-        >
-          Start Your Interview
-          <ArrowRight size={16} />
-        </Link>
-        <button
-          onClick={scrollToHowItWorks}
-          className="glass-card rounded-full px-6 py-3.5 text-sm transition-all duration-200 inline-flex items-center gap-2 text-on-surface-variant hover:text-on-surface"
-        >
-          See How It Works
-          <ChevronDown size={16} />
-        </button>
-      </motion.div>
-
-      {/* Bottom fade — prevents "peeking" of next section */}
+      {/* Content overlay */}
       <div
-        className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
         style={{
-          background: "linear-gradient(to bottom, transparent, var(--md-sys-color-background))",
+          position: "relative",
+          zIndex: 2,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          textAlign: "center",
+          padding: "120px 24px 40px",
+          maxWidth: 800,
+          width: "100%",
         }}
-      />
+      >
+        {/* Top badges */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+          style={{ display: "flex", gap: 10, marginBottom: 40, flexWrap: "wrap", justifyContent: "center" }}
+        >
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "5px 14px",
+              borderRadius: 999,
+              background: "rgba(59, 130, 246, 0.1)",
+              border: "1px solid rgba(59, 130, 246, 0.2)",
+              fontSize: 11,
+              fontWeight: 600,
+              color: "#93c5fd",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+            }}
+          >
+            Prototype v0.1
+          </span>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "5px 14px",
+              borderRadius: 999,
+              background: "rgba(34, 211, 238, 0.08)",
+              border: "1px solid rgba(34, 211, 238, 0.18)",
+              fontSize: 11,
+              fontWeight: 600,
+              color: "#67e8f9",
+              letterSpacing: "0.04em",
+            }}
+          >
+            Resume + JD anchored
+          </span>
+        </motion.div>
 
-      {/* Scroll indicator — pinned to bottom of hero */}
-      <motion.button
-        onClick={scrollToHowItWorks}
+        {/* Headline */}
+        <motion.h1
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          style={{
+            fontSize: "clamp(40px, 6vw, 72px)",
+            fontWeight: 300,
+            lineHeight: 1.12,
+            color: "#e2e8f0",
+            marginBottom: 24,
+            letterSpacing: "-0.02em",
+            fontFamily: "Georgia, 'Times New Roman', serif",
+          }}
+        >
+          The room before
+          <br />
+          <span className="lp-gradient-text" style={{ fontStyle: "italic" }}>
+            the room.
+          </span>
+        </motion.h1>
+
+        {/* Subtitle */}
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7, duration: 0.6 }}
+          style={{
+            fontSize: "clamp(14px, 1.8vw, 17px)",
+            color: "#94a3b8",
+            lineHeight: 1.7,
+            maxWidth: 540,
+            marginBottom: 40,
+          }}
+        >
+          HIRELY generates interview questions from your resume and target
+          job description, then walks you through a session that feels like
+          the real loop.
+        </motion.p>
+
+        {/* CTA Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9, duration: 0.5 }}
+          style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 48, flexWrap: "wrap", justifyContent: "center" }}
+        >
+          <Link
+            href="/start"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "13px 28px",
+              borderRadius: 999,
+              background: "linear-gradient(135deg, #2563eb, #3b82f6)",
+              color: "#fff",
+              fontSize: 14,
+              fontWeight: 600,
+              textDecoration: "none",
+              boxShadow: "0 4px 20px rgba(59, 130, 246, 0.3), 0 0 40px -10px rgba(59, 130, 246, 0.4)",
+              transition: "transform 0.2s, box-shadow 0.3s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px) scale(1.02)";
+              e.currentTarget.style.boxShadow = "0 8px 30px rgba(59, 130, 246, 0.45), 0 0 60px -10px rgba(59, 130, 246, 0.5)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "";
+              e.currentTarget.style.boxShadow = "0 4px 20px rgba(59, 130, 246, 0.3), 0 0 40px -10px rgba(59, 130, 246, 0.4)";
+            }}
+          >
+            See what a session looks like
+          </Link>
+          <Link
+            href="/pricing"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              padding: "13px 24px",
+              borderRadius: 999,
+              background: "transparent",
+              border: "1px solid rgba(255,255,255,0.12)",
+              color: "#e2e8f0",
+              fontSize: 14,
+              fontWeight: 500,
+              textDecoration: "none",
+              transition: "border-color 0.3s, background 0.3s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
+              e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+              e.currentTarget.style.background = "transparent";
+            }}
+          >
+            View pricing
+          </Link>
+          <a
+            href="https://github.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 7,
+              padding: "13px 24px",
+              borderRadius: 999,
+              background: "transparent",
+              border: "1px solid rgba(255,255,255,0.12)",
+              color: "#e2e8f0",
+              fontSize: 14,
+              fontWeight: 500,
+              textDecoration: "none",
+              transition: "border-color 0.3s, background 0.3s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
+              e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+              e.currentTarget.style.background = "transparent";
+            }}
+          >
+            <svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+            </svg>
+            GitHub
+          </a>
+        </motion.div>
+
+        {/* Bottom nav links */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2, duration: 0.6 }}
+          style={{
+            display: "flex",
+            gap: 32,
+            alignItems: "center",
+            flexWrap: "wrap",
+            justifyContent: "center",
+          }}
+        >
+          {[
+            { label: "How it works", href: "#how-it-works" },
+            { label: "Capabilities", href: "#features" },
+            { label: "Testimonials", href: "#testimonials" },
+          ].map((link) => (
+            <a
+              key={link.label}
+              href={link.href}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                fontSize: 13,
+                color: "#94a3b8",
+                textDecoration: "none",
+                transition: "color 0.2s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "#e2e8f0"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "#94a3b8"; }}
+            >
+              {link.label}
+              <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </a>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* Scroll indicator */}
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.3, duration: 0.7 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 group cursor-pointer"
-        aria-label="Scroll down"
+        transition={{ delay: 1.6, duration: 0.5 }}
+        style={{
+          position: "absolute",
+          bottom: 28,
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 2,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 8,
+        }}
       >
-        <span className="text-[10px] tracking-widest uppercase text-on-surface-variant opacity-40 group-hover:opacity-70 transition-opacity duration-200">
-          Discover More
+        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.2em", color: "#64748b", textTransform: "uppercase" }}>
+          Scroll to explore
         </span>
-        <motion.div
-          animate={{ y: [0, 6, 0] }}
-          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <ChevronDown
-            size={18}
-            className="text-on-surface-variant opacity-40 group-hover:text-primary group-hover:opacity-100 transition-all duration-200"
-          />
-        </motion.div>
-      </motion.button>
+        <div style={{ width: 1, height: 24, background: "linear-gradient(to bottom, #64748b, transparent)" }} />
+      </motion.div>
+
+      {/* Bottom gradient fade into next section */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 120,
+          background: "linear-gradient(to bottom, transparent, var(--lp-background))",
+          pointerEvents: "none",
+          zIndex: 1,
+        }}
+      />
     </section>
   );
 }
