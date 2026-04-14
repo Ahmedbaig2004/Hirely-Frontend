@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, LogOut } from "lucide-react";
+import { LayoutDashboard, LogOut, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { supabase } from "@/lib/supabaseClient";
@@ -138,13 +138,32 @@ export function Navbar() {
                 borderRadius: 999,
                 fontSize: 12,
                 fontWeight: 500,
-                color: "#94a3b8",
+                color: pathname === "/dashboard" ? "#e2e8f0" : "#94a3b8",
                 textDecoration: "none",
                 transition: "color 0.2s",
               }}
             >
               <LayoutDashboard size={13} />
               <span>Dashboard</span>
+            </Link>
+            <Link
+              href="/dashboard/analytics"
+              className="hidden md:flex"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 12px",
+                borderRadius: 999,
+                fontSize: 12,
+                fontWeight: 500,
+                color: pathname === "/dashboard/analytics" ? "#e2e8f0" : "#94a3b8",
+                textDecoration: "none",
+                transition: "color 0.2s",
+              }}
+            >
+              <BarChart3 size={13} />
+              <span>Analytics</span>
             </Link>
             <button
               onClick={handleSignOut}

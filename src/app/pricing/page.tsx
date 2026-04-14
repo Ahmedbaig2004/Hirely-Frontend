@@ -71,7 +71,13 @@ export default function PricingPage() {
   const isLoggedIn = !!user;
 
   return (
-    <div className="lp-page relative min-h-screen overflow-x-hidden bg-background text-foreground">
+    <div
+      className="lp-page relative min-h-screen overflow-x-hidden"
+      style={{
+        background: "var(--lp-background)",
+        color: "var(--lp-foreground)",
+      }}
+    >
       <Navbar />
 
       <main className="relative z-10 flex flex-col pt-24">

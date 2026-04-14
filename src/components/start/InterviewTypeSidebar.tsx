@@ -56,17 +56,17 @@ export function InterviewTypeSidebar({ selected, onSelect }: Props) {
             <div className="flex items-center gap-3 mb-1">
               <Icon
                 size={16}
-                className={isActive ? "text-violet-400" : "text-white/40"}
+                className={isActive ? "text-violet-400" : "lp-muted"}
               />
               <span
                 className={`text-sm font-semibold ${
-                  isActive ? "text-white/90" : "text-white/60"
+                  isActive ? "lp-hi" : "lp-body"
                 }`}
               >
                 {label}
               </span>
             </div>
-            <p className="text-xs text-white/35 leading-snug pl-7">
+            <p className="text-xs lp-dim leading-snug pl-7">
               {description}
             </p>
           </button>

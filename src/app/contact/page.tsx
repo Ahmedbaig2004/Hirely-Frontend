@@ -38,7 +38,13 @@ export default function ContactPage() {
     "mt-1.5 block w-full rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm shadow-sm backdrop-blur transition placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/35";
 
   return (
-    <div className="lp-page relative min-h-screen overflow-x-hidden bg-background text-foreground">
+    <div
+      className="lp-page relative min-h-screen overflow-x-hidden"
+      style={{
+        background: "var(--lp-background)",
+        color: "var(--lp-foreground)",
+      }}
+    >
       <Navbar />
 
       <div className="relative mx-auto max-w-2xl px-4 pb-24 pt-28 sm:py-28">

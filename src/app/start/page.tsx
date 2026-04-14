@@ -6,7 +6,7 @@ import axios from "axios";
 import { useInterviewStore, InterviewType } from "@/stores/useInterviewStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { FileUpload } from "@/components/ui/file-upload";
-import { MeshGradient } from "@/components/ui/mesh-gradient";
+import LpBackground from "@/components/landing/LpBackground";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 import { InterviewTypeSidebar } from "@/components/start/InterviewTypeSidebar";
@@ -187,10 +187,16 @@ export default function StartPage() {
   })();
 
   return (
-    <div className="relative min-h-screen bg-background text-on-surface overflow-hidden">
-      <MeshGradient />
+    <div
+      className="lp-page relative min-h-screen overflow-hidden"
+      style={{
+        background: "var(--lp-background)",
+        color: "var(--lp-foreground)",
+      }}
+    >
+      <LpBackground />
 
-      <div className="relative z-10 min-h-screen flex flex-col">
+      <div className="relative z-[2] min-h-screen flex flex-col">
         <Navbar />
 
         <main className="flex-1 flex flex-col items-center justify-center px-6 py-8 pt-28">
@@ -343,8 +349,8 @@ export default function StartPage() {
                                     onClick={() => setConfig({ ...config, difficulty: d })}
                                     className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
                                       config.difficulty === d
-                                        ? "glass-card border border-violet-500/40 text-white/90 shadow-[0_0_20px_rgba(124,58,237,0.15)]"
-                                        : "glass-card border border-transparent text-white/40 hover:text-white/70"
+                                        ? "glass-card border border-violet-500/40 lp-hi shadow-[0_0_20px_rgba(124,58,237,0.15)]"
+                                        : "glass-card border border-transparent lp-muted hover:lp-body"
                                     }`}
                                   >
                                     {d}
@@ -363,8 +369,8 @@ export default function StartPage() {
                                     onClick={() => setConfig({ ...config, questionCount: n })}
                                     className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
                                       config.questionCount === n
-                                        ? "glass-card border border-violet-500/40 text-white/90 shadow-[0_0_20px_rgba(124,58,237,0.15)]"
-                                        : "glass-card border border-transparent text-white/40 hover:text-white/70"
+                                        ? "glass-card border border-violet-500/40 lp-hi shadow-[0_0_20px_rgba(124,58,237,0.15)]"
+                                        : "glass-card border border-transparent lp-muted hover:lp-body"
                                     }`}
                                   >
                                     {n}
@@ -387,7 +393,7 @@ export default function StartPage() {
                                     }
                                   }}
                                   placeholder="e.g. 7"
-                                  className="w-20 rounded-xl px-3 py-2 text-sm outline-none text-white/90 text-center"
+                                  className="w-20 rounded-xl px-3 py-2 text-sm outline-none lp-hi text-center"
                                   style={{
                                     background: "var(--md-sys-color-surface-container-low)",
                                     border: "1px solid var(--md-sys-color-outline-variant)",
@@ -420,8 +426,8 @@ export default function StartPage() {
                                     onClick={() => setConfig({ ...config, difficulty: d })}
                                     className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
                                       config.difficulty === d
-                                        ? "glass-card border border-violet-500/40 text-white/90 shadow-[0_0_20px_rgba(124,58,237,0.15)]"
-                                        : "glass-card border border-transparent text-white/40 hover:text-white/70"
+                                        ? "glass-card border border-violet-500/40 lp-hi shadow-[0_0_20px_rgba(124,58,237,0.15)]"
+                                        : "glass-card border border-transparent lp-muted hover:lp-body"
                                     }`}
                                   >
                                     {d}
@@ -440,8 +446,8 @@ export default function StartPage() {
                                     onClick={() => setConfig({ ...config, questionCount: n })}
                                     className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
                                       config.questionCount === n
-                                        ? "glass-card border border-violet-500/40 text-white/90 shadow-[0_0_20px_rgba(124,58,237,0.15)]"
-                                        : "glass-card border border-transparent text-white/40 hover:text-white/70"
+                                        ? "glass-card border border-violet-500/40 lp-hi shadow-[0_0_20px_rgba(124,58,237,0.15)]"
+                                        : "glass-card border border-transparent lp-muted hover:lp-body"
                                     }`}
                                   >
                                     {n}
@@ -464,7 +470,7 @@ export default function StartPage() {
                                     }
                                   }}
                                   placeholder="e.g. 7"
-                                  className="w-20 rounded-xl px-3 py-2 text-sm outline-none text-white/90 text-center"
+                                  className="w-20 rounded-xl px-3 py-2 text-sm outline-none lp-hi text-center"
                                   style={{
                                     background: "var(--md-sys-color-surface-container-low)",
                                     border: "1px solid var(--md-sys-color-outline-variant)",
@@ -495,8 +501,8 @@ export default function StartPage() {
                                 onClick={() => setInterviewerVoice(v)}
                                 className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
                                   interviewerVoice === v
-                                    ? "glass-card border border-violet-500/40 text-white/90 shadow-[0_0_20px_rgba(124,58,237,0.15)]"
-                                    : "glass-card border border-transparent text-white/40 hover:text-white/70"
+                                    ? "glass-card border border-violet-500/40 lp-hi shadow-[0_0_20px_rgba(124,58,237,0.15)]"
+                                    : "glass-card border border-transparent lp-muted hover:lp-body"
                                 }`}
                               >
                                 {v === "female" ? "Female" : "Male"}
@@ -531,7 +537,7 @@ export default function StartPage() {
                 transition={{ duration: 0.3 }}
                 className="flex flex-col items-center justify-center w-full max-w-sm text-center"
               >
-                <h2 className="text-2xl font-bold text-white/90 mb-2">Preparing your interview</h2>
+                <h2 className="text-2xl font-bold lp-hi mb-2">Preparing your interview</h2>
                 <p className="label-caps mb-10">This usually takes about 15 seconds</p>
 
                 <div className="w-full space-y-4">
@@ -553,12 +559,12 @@ export default function StartPage() {
                         ) : (
                           <Icon
                             size={18}
-                            className={`shrink-0 ${isActive ? "text-violet-400 animate-pulse" : "text-white/20"}`}
+                            className={`shrink-0 ${isActive ? "text-violet-400 animate-pulse" : "lp-faint"}`}
                           />
                         )}
                         <span
                           className={`text-sm font-medium ${
-                            isDone ? "text-emerald-400" : isActive ? "text-white/90" : "text-white/20"
+                            isDone ? "text-emerald-400" : isActive ? "lp-hi" : "lp-faint"
                           }`}
                         >
                           {label}
@@ -587,7 +593,7 @@ export default function StartPage() {
                   {/* Header */}
                   <div className="flex items-center gap-3 mb-6">
                     <CheckCircle size={22} className="text-emerald-400 shrink-0" />
-                    <h2 className="text-xl font-bold text-white/90">
+                    <h2 className="text-xl font-bold lp-hi">
                       {interviewType === "job-specific"
                         ? "Resume Analysis Complete"
                         : "Interview Ready"}
@@ -602,7 +608,7 @@ export default function StartPage() {
                         <span className={`text-6xl font-black ${getScoreColor(analysisData.gapAnalysis.matchScore)}`}>
                           {analysisData.gapAnalysis.matchScore}%
                         </span>
-                        <p className="text-white/40 text-xs mt-1">
+                        <p className="lp-muted text-xs mt-1">
                           {analysisData.gapAnalysis.matchScore >= 70
                             ? "Strong fit for this role"
                             : analysisData.gapAnalysis.matchScore >= 50
@@ -611,12 +617,12 @@ export default function StartPage() {
                         </p>
                       </div>
 
-                      <div className="h-px bg-white/[0.06] mb-5" />
+                      <div className="h-px lp-surface-md mb-5" />
 
                       {analysisData.candidateSummary && (
                         <div className="mb-5">
                           <span className="label-caps block mb-2">Candidate Summary</span>
-                          <p className="glass-card p-4 rounded-xl text-white/60 text-sm leading-relaxed">
+                          <p className="glass-card p-4 rounded-xl lp-body text-sm leading-relaxed">
                             {analysisData.candidateSummary}
                           </p>
                         </div>
@@ -653,7 +659,7 @@ export default function StartPage() {
                   {/* Technical / Behavioral: simple ready card */}
                   {interviewType !== "job-specific" && (
                     <div className="mb-6">
-                      <p className="glass-card p-4 rounded-xl text-white/60 text-sm leading-relaxed">
+                      <p className="glass-card p-4 rounded-xl lp-body text-sm leading-relaxed">
                         {interviewType === "technical"
                           ? `Your ${config.questionCount}-question ${config.difficulty} ${config.stack} interview is ready. Good luck!`
                           : `Your ${config.questionCount}-question ${config.difficulty} behavioral interview is ready. Use the STAR method for your answers. Good luck!`}
@@ -682,7 +688,7 @@ export default function StartPage() {
                 className="flex flex-col items-center gap-4"
               >
                 <Loader2 size={36} className="text-violet-400 animate-spin" />
-                <p className="text-white/60 text-sm">Preparing your interview...</p>
+                <p className="lp-body text-sm">Preparing your interview...</p>
               </motion.div>
             )}
 

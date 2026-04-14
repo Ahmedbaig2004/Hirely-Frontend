@@ -1,11 +1,21 @@
 "use client";
 
 import InterviewPanel from "@/components/InterviewPanel";
+import LpBackground from "@/components/landing/LpBackground";
 
 export default function InterviewPage() {
   return (
-    <div className="relative min-h-screen bg-background text-on-surface overflow-hidden">
-      <InterviewPanel />
+    <div
+      className="lp-page relative min-h-screen overflow-hidden"
+      style={{
+        background: "var(--lp-background)",
+        color: "var(--lp-foreground)",
+      }}
+    >
+      <LpBackground />
+      <div className="relative z-[2]">
+        <InterviewPanel />
+      </div>
     </div>
   );
 }

@@ -12,7 +12,7 @@ import {
   FileText, AlertTriangle, ChevronDown
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MeshGradient } from "@/components/ui/mesh-gradient";
+import LpBackground from "@/components/landing/LpBackground";
 
 // Frontend label override — always shows latest human-friendly names
 // regardless of what's baked into stored DB JSON
@@ -74,24 +74,31 @@ export default function InterviewDetail() {
 
   if (loading || !data) {
     return (
-      <main className="min-h-screen bg-background p-8 font-sans">
-        <div className="max-w-5xl mx-auto">
-          <div className="h-6 w-32 bg-surface-container rounded mb-6 animate-pulse"></div>
+      <main
+        className="lp-page relative min-h-screen p-8 font-sans overflow-hidden"
+        style={{
+          background: "var(--lp-background)",
+          color: "var(--lp-foreground)",
+        }}
+      >
+        <LpBackground />
+        <div className="relative z-[2] max-w-5xl mx-auto">
+          <div className="h-6 w-32 lp-surface-md rounded mb-6 animate-pulse"></div>
           <div className="glass-card p-8 rounded-2xl mb-8">
             <div className="flex flex-col md:flex-row justify-between md:items-start mb-6 gap-4">
               <div className="flex-1">
-                <div className="h-8 w-48 bg-surface-container rounded mb-2 animate-pulse"></div>
-                <div className="h-4 w-64 bg-surface-container rounded animate-pulse"></div>
+                <div className="h-8 w-48 lp-surface-hi rounded mb-2 animate-pulse"></div>
+                <div className="h-4 w-64 lp-surface-md rounded animate-pulse"></div>
               </div>
-              <div className="h-20 w-48 bg-surface-container rounded-xl animate-pulse"></div>
+              <div className="h-20 w-48 lp-surface-hi rounded-xl animate-pulse"></div>
             </div>
             <div className="mb-8">
-              <div className="h-4 w-32 bg-surface-container rounded mb-2 animate-pulse"></div>
-              <div className="h-24 bg-surface-container-low rounded-lg animate-pulse"></div>
+              <div className="h-4 w-32 lp-surface-md rounded mb-2 animate-pulse"></div>
+              <div className="h-24 lp-surface-lo rounded-lg animate-pulse"></div>
             </div>
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="h-48 bg-surface-container-low rounded-xl animate-pulse"></div>
-              <div className="h-48 bg-surface-container-low rounded-xl animate-pulse"></div>
+              <div className="h-48 lp-surface-lo rounded-xl animate-pulse"></div>
+              <div className="h-48 lp-surface-lo rounded-xl animate-pulse"></div>
             </div>
           </div>
         </div>
@@ -102,10 +109,16 @@ export default function InterviewDetail() {
   const feedback = data.finalFeedback || {};
 
   return (
-    <main className="relative min-h-screen bg-background p-8 font-sans overflow-hidden">
-      <MeshGradient />
+    <main
+      className="lp-page relative min-h-screen p-8 font-sans overflow-hidden"
+      style={{
+        background: "var(--lp-background)",
+        color: "var(--lp-foreground)",
+      }}
+    >
+      <LpBackground />
       <motion.div
-        className="relative z-10 max-w-5xl mx-auto"
+        className="relative z-[2] max-w-5xl mx-auto"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
@@ -324,16 +337,6 @@ export default function InterviewDetail() {
                   How interviewers typically perceive your vocal patterns
                 </p>
               </div>
-              <div className="flex items-center gap-4">
-                {feedback.scores?.voice != null && (
-                  <div className="flex flex-col items-center gap-1">
-                    <CircularProgress value={feedback.scores.voice} size={88} />
-                    <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wide opacity-40">
-                      Perception Score
-                    </span>
-                  </div>
-                )}
-              </div>
             </div>
 
             {/* SHAP-driven coaching — final summary + 3 improvements + 2 strengths */}
@@ -381,7 +384,7 @@ export default function InterviewDetail() {
               const statusStyles: Record<string, { border: string; text: string; bg: string }> = {
                 "Helped Your Score":    { border: "border-emerald-500/50", text: "text-emerald-400", bg: "bg-emerald-500/10" },
                 "Held Back Your Score": { border: "border-amber-500/50",   text: "text-amber-400",   bg: "bg-amber-500/10" },
-                "Minimal Impact":       { border: "border-white/10",       text: "text-white/40",     bg: "bg-white/5" },
+                "Minimal Impact":       { border: "lp-border-sub",       text: "lp-muted",     bg: "lp-surface-lo" },
                 // WPM pace fallback labels
                 "Good":                 { border: "border-emerald-500/50", text: "text-emerald-400", bg: "bg-emerald-500/10" },
                 "Needs Improvement":    { border: "border-amber-500/50",   text: "text-amber-400",   bg: "bg-amber-500/10" },
@@ -392,15 +395,15 @@ export default function InterviewDetail() {
                   {/* Final Summary */}
                   {finalSummary && (
                     <div className="glass-card p-4 rounded-xl border border-violet-500/20">
-                      <p className="text-sm font-semibold text-white/90 leading-relaxed mb-2">{finalSummary.opening}</p>
+                      <p className="text-sm font-semibold lp-hi leading-relaxed mb-2">{finalSummary.opening}</p>
                       {finalSummary.focus_note && (
-                        <p className="text-xs text-white/55 leading-relaxed mb-1">{finalSummary.focus_note}</p>
+                        <p className="text-xs lp-body leading-relaxed mb-1">{finalSummary.focus_note}</p>
                       )}
                       {finalSummary.best_trait && (
                         <p className="text-xs text-violet-400/80 leading-relaxed font-medium">{finalSummary.best_trait}</p>
                       )}
                       {finalSummary.reminder && (
-                        <p className="text-[11px] text-white/30 leading-relaxed mt-2 italic">{finalSummary.reminder}</p>
+                        <p className="text-[11px] lp-dim leading-relaxed mt-2 italic">{finalSummary.reminder}</p>
                       )}
                     </div>
                   )}
@@ -422,17 +425,17 @@ export default function InterviewDetail() {
                             >
                               <div className="flex items-center gap-1.5 mb-1.5">
                                 <span className={styles.text}>{categoryIcons[key] ?? <Activity size={13} />}</span>
-                                <span className="text-xs font-bold text-white/80">{cat.label}</span>
+                                <span className="text-xs font-bold lp-hi">{cat.label}</span>
                                 <div className="flex items-center gap-1 ml-auto">
                                   {cat.impact_pct > 0 && cat.status !== "Minimal Impact" && (
-                                    <span className="text-[9px] text-white/25">~{cat.impact_pct}%</span>
+                                    <span className="text-[9px] lp-faint">~{cat.impact_pct}%</span>
                                   )}
                                   <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${styles.bg} ${styles.text} font-semibold`}>
                                     {cat.status}
                                   </span>
                                 </div>
                               </div>
-                              <p className="text-[11px] text-white/40 leading-relaxed">{cat.top_driver?.tip}</p>
+                              <p className="text-[11px] lp-muted leading-relaxed">{cat.top_driver?.tip}</p>
                             </motion.div>
                           );
                         })}
@@ -458,12 +461,12 @@ export default function InterviewDetail() {
                                 {VOICE_FEATURE_LABELS[item.feature] || item.label}
                               </span>
                               {item.category && item.category !== "Other" && (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/5 text-white/30 font-medium">
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full lp-surface-lo lp-dim font-medium">
                                   {item.category}
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-white/60 mt-1 leading-relaxed">{item.explanation}</p>
+                            <p className="text-xs lp-body mt-1 leading-relaxed">{item.explanation}</p>
                           </motion.div>
                         ))}
                       </div>
@@ -488,12 +491,12 @@ export default function InterviewDetail() {
                                 {VOICE_FEATURE_LABELS[item.feature] || item.label}
                               </span>
                               {item.category && item.category !== "Other" && (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/5 text-white/30 font-medium">
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full lp-surface-lo lp-dim font-medium">
                                   {item.category}
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-white/60 mt-1 leading-relaxed">{item.explanation}</p>
+                            <p className="text-xs lp-body mt-1 leading-relaxed">{item.explanation}</p>
                           </motion.div>
                         ))}
                       </div>
@@ -748,16 +751,6 @@ export default function InterviewDetail() {
                 >
                   <BarChart3 size={12} className="mr-1" /> {turn.difficulty ?? "Medium"}
                 </span>
-                {turn.voiceAnalysis && turn.voiceAnalysis.status === "completed" && (
-                  <span
-                    className={`flex items-center text-xs font-bold px-2 py-1 rounded border ${getConfidenceBadgeStyle(
-                      turn.voiceAnalysis.confidenceLabelText
-                    )}`}
-                  >
-                    <Zap size={12} className="mr-1" />
-                    {turn.voiceAnalysis.confidenceLabelText || "N/A"} Confidence
-                  </span>
-                )}
                 {turn.voiceAnalysis?.wordsPerMinute != null && (
                   <span
                     className="flex items-center text-xs font-bold px-2 py-1 rounded border"

@@ -1141,10 +1141,10 @@ export default function InterviewPanel() {
                   <AlertTriangle size={22} className="text-rose-400" />
                 </div>
 
-                <h3 className="text-lg font-semibold text-white/90 text-center mb-2">
+                <h3 className="text-lg font-semibold lp-hi text-center mb-2">
                   Exit Interview?
                 </h3>
-                <p className="text-sm text-white/50 text-center mb-7 leading-relaxed">
+                <p className="text-sm lp-muted text-center mb-7 leading-relaxed">
                   Your progress will be lost and this session cannot be resumed.
                 </p>
 

@@ -11,7 +11,13 @@ function CheckoutContent() {
   const plan = searchParams.get("plan") ?? "pro";
 
   return (
-    <div className="lp-page relative min-h-screen bg-background text-foreground">
+    <div
+      className="lp-page relative min-h-screen"
+      style={{
+        background: "var(--lp-background)",
+        color: "var(--lp-foreground)",
+      }}
+    >
       <Navbar />
       <main className="mx-auto flex max-w-lg flex-col items-center gap-6 px-6 pb-24 pt-32 text-center">
         <h1 className="text-2xl font-bold tracking-tight">Checkout</h1>
@@ -42,7 +48,13 @@ export default function CheckoutPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-background text-muted-foreground">
+        <div
+          className="lp-page flex min-h-screen items-center justify-center"
+          style={{
+            background: "var(--lp-background)",
+            color: "var(--lp-muted-foreground)",
+          }}
+        >
           Loading…
         </div>
       }

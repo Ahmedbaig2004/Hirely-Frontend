@@ -149,11 +149,11 @@ function FeatureCard({ feature, index }: { feature: typeof features[0]; index: n
           {feature.icon}
         </div>
 
-        {/* Title */}
+        {/* Title — always light: section bg is permanently dark (#111827) */}
         <h3 style={{
           fontSize: 16,
           fontWeight: 700,
-          color: "var(--lp-foreground)",
+          color: "#e2e8f0",
           marginBottom: 8,
         }}>
           {feature.title}
@@ -162,7 +162,7 @@ function FeatureCard({ feature, index }: { feature: typeof features[0]; index: n
         {/* Description */}
         <p style={{
           fontSize: 14,
-          color: "var(--lp-muted-foreground)",
+          color: "#94a3b8",
           lineHeight: 1.65,
           margin: 0,
           textAlign: "justify",

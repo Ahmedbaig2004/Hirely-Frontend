@@ -9,7 +9,7 @@ import SignOutButton from "@/components/logOutButton";
 import { LoaderFour } from "@/components/ui/loader";
 import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
-import { MeshGradient } from "@/components/ui/mesh-gradient";
+import LpBackground from "@/components/landing/LpBackground";
 import { Navbar } from "@/components/landing/Navbar";
 
 interface InterviewFeedback {
@@ -149,7 +149,7 @@ function InterviewCard({
               </button>
               <button
                 onClick={() => setConfirmDelete(false)}
-                className="text-xs text-white/40 hover:text-white/70 transition-colors px-1.5 py-1"
+                className="text-xs lp-muted hover:lp-body transition-colors px-1.5 py-1"
               >
                 Cancel
               </button>
@@ -157,7 +157,7 @@ function InterviewCard({
           ) : (
             <button
               onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
-              className="p-1.5 rounded-lg text-white/20 hover:text-rose-400 hover:bg-rose-500/10 transition-all duration-150"
+              className="p-1.5 rounded-lg lp-faint hover:text-rose-400 hover:bg-rose-500/10 transition-all duration-150"
               title="Delete interview"
             >
               <Trash2 size={15} />
@@ -286,7 +286,10 @@ export default function Dashboard() {
 
   if (!user) {
     return (
-      <div className="dark flex h-screen w-full items-center justify-center bg-background">
+      <div
+        className="lp-page dark flex h-screen w-full items-center justify-center"
+        style={{ background: "var(--lp-background)" }}
+      >
         <LoaderFour />
       </div>
     );
@@ -300,7 +303,7 @@ export default function Dashboard() {
       </div>
       <div className="flex gap-3">
         <SignOutButton />
-        <button onClick={() => router.push("/")} className="btn-violet flex items-center gap-2">
+        <button onClick={() => router.push("/")} className="btn-violet flex items-center gap-2 rounded-lg px-4 py-2">
           <Zap size={16} />
           New Interview
         </button>
@@ -310,10 +313,16 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <main className="relative min-h-screen bg-background overflow-hidden">
-        <MeshGradient />
+      <main
+        className="lp-page relative min-h-screen overflow-hidden"
+        style={{
+          background: "var(--lp-background)",
+          color: "var(--lp-foreground)",
+        }}
+      >
+        <LpBackground />
         <Navbar />
-        <div className="relative z-10 max-w-4xl mx-auto px-8 pt-32 pb-8">
+        <div className="relative z-[2] max-w-4xl mx-auto px-8 pt-32 pb-8">
           <Header />
           <div className="grid gap-4">
             {[1, 2, 3].map((i) => (
@@ -332,11 +341,17 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="relative min-h-screen bg-background overflow-hidden">
-      <MeshGradient />
+    <main
+      className="lp-page relative min-h-screen overflow-hidden"
+      style={{
+        background: "var(--lp-background)",
+        color: "var(--lp-foreground)",
+      }}
+    >
+      <LpBackground />
       <Navbar />
       <motion.div
-        className="relative z-10 max-w-4xl mx-auto px-8 pt-32 pb-8"
+        className="relative z-[2] max-w-4xl mx-auto px-8 pt-32 pb-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
@@ -404,7 +419,7 @@ export default function Dashboard() {
                   ? "Start your first interview to see results here"
                   : "Try a different filter or start a new interview"}
               </p>
-              <button onClick={() => router.push("/")} className="btn-violet flex items-center gap-2">
+              <button onClick={() => router.push("/")} className="btn-violet flex items-center gap-2 rounded-lg px-4 py-2">
                 <Zap size={16} />
                 {interviews.length === 0 ? "Start your first interview" : "New Interview"}
               </button>

@@ -413,6 +413,30 @@
                 0px 0px 0px 1px rgba(25, 28, 33, 0.08);
   }
 
+  /* ── Adaptive LP text colours ──────────────────────────────────
+     Use instead of text-white/X so the page is readable in light mode.
+     Mapping: /90→lp-hi  /80→lp-hi  /60→lp-body  /55→lp-body
+              /50→lp-muted /45→lp-muted /40→lp-muted
+              /35→lp-dim   /30→lp-dim
+              /25→lp-faint /20→lp-faint                             */
+  .lp-hi    { color: var(--lp-text-hi); }
+  .lp-body  { color: var(--lp-text-body); }
+  .lp-sub   { color: var(--lp-text-sub); }
+  .lp-muted { color: var(--lp-text-muted); }
+  .lp-dim   { color: var(--lp-text-dim); }
+  .lp-faint { color: var(--lp-text-faint); }
+
+  /* Hover variants */
+  .hover\:lp-hi:hover    { color: var(--lp-text-hi); }
+  .hover\:lp-body:hover  { color: var(--lp-text-body); }
+  .hover\:lp-muted:hover { color: var(--lp-text-muted); }
+
+  /* Adaptive surface backgrounds (for skeletons, dividers, etc.) */
+  .lp-surface-lo { background-color: var(--lp-surface-lo); }
+  .lp-surface-md { background-color: var(--lp-surface-md); }
+  .lp-surface-hi { background-color: var(--lp-surface-hi); }
+  .lp-border-sub { border-color: var(--lp-border-sub); }
+
   /* Light mode: use surface-container tokens */
   .glass-card {
     background: var(--md-sys-color-surface-container-low);
@@ -437,26 +461,31 @@
     border: 1px solid rgba(255, 255, 255, 0.09);
   }
 
-  /* Primary CTA button */
-  /* Light mode: solid teal gradient (no fade to light) */
+  /* Primary CTA button — colours, glow and base layout only. Callers must
+     supply their own padding and border-radius via Tailwind (e.g. rounded-lg px-4 py-2). */
   .btn-violet {
-    background: linear-gradient(135deg, #0a5e4e 0%, #107b67 100%);
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
     color: #ffffff;
-    box-shadow: 0 2px 12px rgba(16, 107, 87, 0.18);
+    box-shadow: 0 2px 12px rgba(124, 58, 237, 0.25);
     transition: box-shadow 0.3s ease, transform 0.2s ease;
   }
   .btn-violet:hover:not(:disabled) {
-    box-shadow: 0 6px 22px rgba(16, 107, 87, 0.30);
+    box-shadow: 0 6px 24px rgba(124, 58, 237, 0.45);
     transform: translateY(-1px);
   }
-  /* Dark mode: light teal → dark teal depth gradient */
+  /* Dark mode: slightly brighter violet */
   :is(.dark *) .btn-violet {
-    background: linear-gradient(135deg, rgb(135, 214, 189) 0%, rgb(0, 81, 65) 100%);
-    color: rgb(0, 56, 44);
-    box-shadow: 0 4px 24px rgba(135, 214, 189, 0.30);
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.35);
   }
   :is(.dark *) .btn-violet:hover:not(:disabled) {
-    box-shadow: 0 8px 40px rgba(135, 214, 189, 0.45);
+    box-shadow: 0 8px 36px rgba(139, 92, 246, 0.55);
     transform: translateY(-1px);
   }
 
@@ -525,7 +554,8 @@ main {
     @apply border-outline-variant outline-outline/50;
   }
   body {
-    @apply bg-background text-on-surface;
+    background: var(--lp-background);
+    color: var(--lp-foreground);
   }
 }
 
@@ -557,6 +587,18 @@ main {
   --lp-glow-cyan: rgba(6, 182, 212, 0.18);
   --lp-grid-color: rgba(37, 99, 235, 0.06);
   --lp-cursor-glow: rgba(37, 99, 235, 0.12);
+  /* Adaptive text — swap from white-based to dark-based in light mode */
+  --lp-text-hi:    rgba(15, 23, 42, 0.90);
+  --lp-text-body:  rgba(15, 23, 42, 0.70);
+  --lp-text-sub:   rgba(15, 23, 42, 0.58);
+  --lp-text-muted: rgba(15, 23, 42, 0.45);
+  --lp-text-dim:   rgba(15, 23, 42, 0.35);
+  --lp-text-faint: rgba(15, 23, 42, 0.30);
+  /* Adaptive surfaces */
+  --lp-surface-lo: rgba(15, 23, 42, 0.05);
+  --lp-surface-md: rgba(15, 23, 42, 0.08);
+  --lp-surface-hi: rgba(15, 23, 42, 0.11);
+  --lp-border-sub: rgba(15, 23, 42, 0.09);
 }
 
 .dark {
@@ -582,6 +624,18 @@ main {
   --lp-glow-cyan: rgba(34, 211, 238, 0.1);
   --lp-grid-color: rgba(59, 130, 246, 0.04);
   --lp-cursor-glow: rgba(59, 130, 246, 0.15);
+  /* Adaptive text — matches white/X opacity pattern in dark mode */
+  --lp-text-hi:    rgba(226, 232, 240, 0.90);
+  --lp-text-body:  rgba(226, 232, 240, 0.70);
+  --lp-text-sub:   rgba(226, 232, 240, 0.58);
+  --lp-text-muted: rgba(226, 232, 240, 0.45);
+  --lp-text-dim:   rgba(226, 232, 240, 0.35);
+  --lp-text-faint: rgba(226, 232, 240, 0.25);
+  /* Adaptive surfaces */
+  --lp-surface-lo: rgba(255, 255, 255, 0.04);
+  --lp-surface-md: rgba(255, 255, 255, 0.06);
+  --lp-surface-hi: rgba(255, 255, 255, 0.08);
+  --lp-border-sub: rgba(255, 255, 255, 0.07);
 }
 
 /* ─── Landing Page Keyframes ─── */
