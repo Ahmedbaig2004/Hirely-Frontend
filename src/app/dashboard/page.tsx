@@ -21,7 +21,8 @@ interface InterviewFeedback {
 
 interface Interview {
   id: string;
-  jobDescription: string;
+  jobDescription: string | null;
+  interviewType?: string;
   finalScore: number;
   finalFeedback?: InterviewFeedback | null;
   createdAt: string;
@@ -112,8 +113,13 @@ function InterviewCard({
           <div className="flex-1 min-w-0 mr-4">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <h2 className="font-bold text-lg text-on-surface truncate opacity-90">
-                {item.jobDescription.substring(0, 50)}
-                {item.jobDescription.length > 50 ? "…" : ""}
+                {item.jobDescription
+                  ? item.jobDescription.substring(0, 50) + (item.jobDescription.length > 50 ? "…" : "")
+                  : item.interviewType === "TECHNICAL"
+                  ? "Technical Interview"
+                  : item.interviewType === "BEHAVIORAL"
+                  ? "Behavioral Interview"
+                  : "Interview"}
               </h2>
               <DecisionBadge decision={fb?.decision} />
             </div>
@@ -226,12 +232,27 @@ function InterviewCard({
   );
 }
 
+type FilterType = "all" | "JOB_SPECIFIC" | "TECHNICAL" | "BEHAVIORAL";
+
+const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "JOB_SPECIFIC", label: "Job-Specific" },
+  { value: "TECHNICAL", label: "Technical" },
+  { value: "BEHAVIORAL", label: "Behavioral" },
+];
+
 export default function Dashboard() {
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<FilterType>("all");
   const { user } = useAuthStore();
   const router = useRouter();
+
+  const filteredInterviews =
+    filter === "all"
+      ? interviews
+      : interviews.filter((iv) => (iv.interviewType ?? "JOB_SPECIFIC") === filter);
 
   const handleDelete = async (id: string) => {
     try {
@@ -322,8 +343,38 @@ export default function Dashboard() {
       >
         <Header />
 
+        {/* Interview type filter */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {FILTER_OPTIONS.map((opt) => {
+            const isActive = filter === opt.value;
+            const count =
+              opt.value === "all"
+                ? interviews.length
+                : interviews.filter((iv) => (iv.interviewType ?? "JOB_SPECIFIC") === opt.value).length;
+            return (
+              <button
+                key={opt.value}
+                onClick={() => setFilter(opt.value)}
+                className="glass-card rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200"
+                style={
+                  isActive
+                    ? {
+                        borderColor: "rgba(124,58,237,0.4)",
+                        boxShadow: "0 0 20px rgba(124,58,237,0.15)",
+                        color: "rgba(255,255,255,0.95)",
+                      }
+                    : { color: "rgba(255,255,255,0.5)" }
+                }
+              >
+                {opt.label}
+                <span className="ml-2 opacity-50">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+
         <div className="grid gap-4">
-          {interviews.map((item, i) => (
+          {filteredInterviews.map((item, i) => (
             <InterviewCard
               key={item.id}
               item={item}
@@ -335,7 +386,7 @@ export default function Dashboard() {
             />
           ))}
 
-          {interviews.length === 0 && (
+          {filteredInterviews.length === 0 && (
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -343,11 +394,19 @@ export default function Dashboard() {
               className="flex flex-col items-center justify-center py-20 text-center"
             >
               <Inbox size={48} className="text-on-surface-variant mb-4 opacity-25" />
-              <p className="text-on-surface-variant text-lg font-medium mb-2 opacity-55">No interviews yet</p>
-              <p className="text-on-surface-variant text-sm mb-6 opacity-30">Start your first interview to see results here</p>
+              <p className="text-on-surface-variant text-lg font-medium mb-2 opacity-55">
+                {interviews.length === 0
+                  ? "No interviews yet"
+                  : `No ${FILTER_OPTIONS.find((o) => o.value === filter)?.label} interviews`}
+              </p>
+              <p className="text-on-surface-variant text-sm mb-6 opacity-30">
+                {interviews.length === 0
+                  ? "Start your first interview to see results here"
+                  : "Try a different filter or start a new interview"}
+              </p>
               <button onClick={() => router.push("/")} className="btn-violet flex items-center gap-2">
                 <Zap size={16} />
-                Start your first interview
+                {interviews.length === 0 ? "Start your first interview" : "New Interview"}
               </button>
             </motion.div>
           )}

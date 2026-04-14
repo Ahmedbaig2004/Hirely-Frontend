@@ -3,12 +3,13 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { useInterviewStore } from "@/stores/useInterviewStore";
+import { useInterviewStore, InterviewType } from "@/stores/useInterviewStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { FileUpload } from "@/components/ui/file-upload";
 import { MeshGradient } from "@/components/ui/mesh-gradient";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
+import { InterviewTypeSidebar } from "@/components/start/InterviewTypeSidebar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Zap, FileText, Sparkles, BarChart, MessageSquare,
@@ -20,15 +21,28 @@ import "react-toastify/dist/ReactToastify.css";
 type StartStage = "form" | "loading" | "analysis" | "launching";
 
 interface AnalysisData {
-  candidateSummary: string;
-  gapAnalysis: { matchScore: number; missingSkills: string[]; feedback: string };
+  candidateSummary: string | null;
+  gapAnalysis: { matchScore: number; missingSkills: string[]; feedback: string } | null;
 }
 
-const LOADING_STEPS = [
+const STACKS = [
+  "React", "Node.js", "Python", "Java", "Go",
+  "TypeScript", "SQL", "C++", "AWS / Cloud", "Android", "iOS",
+];
+
+const DIFFICULTIES = ["Easy", "Medium", "Hard"] as const;
+const QUESTION_COUNTS = [5, 8, 10] as const;
+
+const JOB_SPECIFIC_LOADING_STEPS = [
   { label: "Parsing your resume...",             Icon: FileText      },
   { label: "Identifying skills & experience...", Icon: Sparkles      },
   { label: "Comparing with job requirements...", Icon: BarChart      },
   { label: "Generating interview questions...",  Icon: MessageSquare },
+];
+
+const GENERIC_LOADING_STEPS = [
+  { label: "Preparing interview context...",    Icon: Sparkles      },
+  { label: "Generating interview questions...", Icon: MessageSquare },
 ];
 
 function getScoreColor(score: number) {
@@ -40,10 +54,22 @@ function getScoreColor(score: number) {
 export default function StartPage() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { setSessionId, setQuestion, setFirstQuestionAudio } = useInterviewStore();
+  const {
+    setSessionId,
+    setQuestion,
+    setFirstQuestionAudio,
+    interviewType,
+    setInterviewType,
+    config,
+    setConfig,
+    interviewerVoice,
+    setInterviewerVoice,
+  } = useInterviewStore();
 
+  // Job-Specific fields
   const [file, setFile] = useState<File | null>(null);
   const [jd, setJd] = useState("We need a Senior React Developer...");
+
   const [stage, setStage] = useState<StartStage>("form");
   const [loadingStep, setLoadingStep] = useState(0);
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
@@ -63,14 +89,22 @@ export default function StartPage() {
     setFile(files.length > 0 ? files[0] : null);
   };
 
+  const handleTypeSelect = (type: InterviewType) => {
+    setInterviewType(type);
+    setStage("form");
+  };
+
+  const loadingSteps =
+    interviewType === "job-specific" ? JOB_SPECIFIC_LOADING_STEPS : GENERIC_LOADING_STEPS;
+
   const tryAdvanceToAnalysis = (currentStep: number) => {
-    if (apiDoneRef.current && currentStep >= 2) {
+    if (apiDoneRef.current && currentStep >= loadingSteps.length - 1) {
       if (intervalRef.current) clearInterval(intervalRef.current);
       const result = apiResultRef.current;
       setAnalysisData(result.analysis);
       setSessionId(result.sessionId);
       setQuestion(result.firstQuestion.question);
-      if (result.audio) setFirstQuestionAudio(result.audio);
+      if (result.audio) setFirstQuestionAudio(result.audio, result.audioMime);
       setStage("analysis");
     }
   };
@@ -81,7 +115,19 @@ export default function StartPage() {
       router.push("/auth");
       return;
     }
-    if (!file) return toast.error("Please upload a resume first.");
+
+    // Validate per type
+    if (interviewType === "job-specific") {
+      if (!file) return toast.error("Please upload a resume first.");
+      if (!jd.trim()) return toast.error("Please enter a job description.");
+    } else if (interviewType === "technical") {
+      if (!config.stack) return toast.error("Please select a stack.");
+      if (!config.difficulty) return toast.error("Please select a difficulty.");
+      if (!config.questionCount) return toast.error("Please select number of questions.");
+    } else if (interviewType === "behavioral") {
+      if (!config.difficulty) return toast.error("Please select a difficulty.");
+      if (!config.questionCount) return toast.error("Please select number of questions.");
+    }
 
     apiDoneRef.current = false;
     apiResultRef.current = null;
@@ -90,16 +136,30 @@ export default function StartPage() {
     setLoadingStep(0);
 
     intervalRef.current = setInterval(() => {
-      const next = Math.min(loadingStepRef.current + 1, LOADING_STEPS.length - 1);
+      const next = Math.min(loadingStepRef.current + 1, loadingSteps.length - 1);
       loadingStepRef.current = next;
       setLoadingStep(next);
       tryAdvanceToAnalysis(next);
     }, 800);
 
     const formData = new FormData();
-    formData.append("resume", file);
-    formData.append("jobDescription", jd);
     formData.append("userId", user?.id ?? "");
+    formData.append("interviewerVoice", interviewerVoice);
+
+    if (interviewType === "job-specific") {
+      formData.append("interviewType", "JOB_SPECIFIC");
+      formData.append("resume", file!);
+      formData.append("jobDescription", jd);
+    } else if (interviewType === "technical") {
+      formData.append("interviewType", "TECHNICAL");
+      formData.append("stack", config.stack!);
+      formData.append("difficulty", config.difficulty!);
+      formData.append("questionCount", String(config.questionCount!));
+    } else if (interviewType === "behavioral") {
+      formData.append("interviewType", "BEHAVIORAL");
+      formData.append("difficulty", config.difficulty!);
+      formData.append("questionCount", String(config.questionCount!));
+    }
 
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
@@ -118,6 +178,13 @@ export default function StartPage() {
     setStage("launching");
     setTimeout(() => router.push("/interview"), 1200);
   };
+
+  const isSubmitDisabled = (() => {
+    if (interviewType === "job-specific") return !file || !jd.trim();
+    if (interviewType === "technical") return !config.stack || !config.difficulty || !config.questionCount;
+    if (interviewType === "behavioral") return !config.difficulty || !config.questionCount;
+    return true;
+  })();
 
   return (
     <div className="relative min-h-screen bg-background text-on-surface overflow-hidden">
@@ -150,7 +217,7 @@ export default function StartPage() {
                     Set Up Your Interview
                   </h1>
                   <p className="text-sm text-on-surface-variant mt-2 opacity-55">
-                    Upload your resume and paste the job description to get started.
+                    Choose your interview type and configure your session.
                   </p>
                 </motion.div>
 
@@ -158,75 +225,297 @@ export default function StartPage() {
                   initial={{ opacity: 0, y: 40, scale: 0.97 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ delay: 0.2, duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
-                  className="w-full max-w-md relative"
+                  className="w-full max-w-3xl"
                 >
-                  <div
-                    className="absolute inset-0 rounded-2xl blur-[60px] opacity-10 pointer-events-none"
-                    style={{ background: "radial-gradient(circle, var(--md-sys-color-primary) 0%, transparent 70%)" }}
-                  />
+                  {/* Layout: sidebar left + form right */}
+                  <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6 items-start">
 
-                  <div className="relative rounded-2xl glass-card-raised p-7">
-                    <div className="flex items-center justify-between mb-6">
-                      <div>
-                        <h2 className="text-base font-semibold text-on-surface tracking-tight opacity-90">
-                          Start your session
-                        </h2>
-                        <p className="text-xs text-on-surface-variant mt-0.5 opacity-40">Takes less than 60 seconds</p>
-                      </div>
+                    {/* Sidebar */}
+                    <InterviewTypeSidebar
+                      selected={interviewType}
+                      onSelect={handleTypeSelect}
+                    />
+
+                    {/* Form card */}
+                    <div className="relative">
                       <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                        style={{
-                          background: "color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)",
-                          border: "1px solid color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent)",
-                        }}
-                      >
-                        <Zap size={14} style={{ color: "var(--md-sys-color-primary)" }} />
-                      </div>
-                    </div>
-
-                    <div className="h-px mb-6 bg-outline-variant opacity-40" />
-
-                    <div className="mb-5">
-                      <label className="label-caps block mb-2">Job Description</label>
-                      <textarea
-                        className="w-full rounded-xl px-4 py-3 text-sm outline-none resize-none text-on-surface"
-                        style={{
-                          background: "var(--md-sys-color-surface-container-low)",
-                          border: "1px solid var(--md-sys-color-outline-variant)",
-                          minHeight: "88px",
-                          transition: "border 0.2s, box-shadow 0.2s",
-                        }}
-                        onFocus={(e) => {
-                          e.currentTarget.style.border = "1px solid color-mix(in srgb, var(--md-sys-color-primary) 60%, transparent)";
-                          e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent)";
-                        }}
-                        onBlur={(e) => {
-                          e.currentTarget.style.border = "1px solid var(--md-sys-color-outline-variant)";
-                          e.currentTarget.style.boxShadow = "none";
-                        }}
-                        rows={3}
-                        value={jd}
-                        onChange={(e) => setJd(e.target.value)}
-                        placeholder="We're looking for a Senior React Developer..."
+                        className="absolute inset-0 rounded-2xl blur-[60px] opacity-10 pointer-events-none"
+                        style={{ background: "radial-gradient(circle, var(--md-sys-color-primary) 0%, transparent 70%)" }}
                       />
-                    </div>
 
-                    <div className="mb-6">
-                      <label className="label-caps block mb-2">Resume (PDF)</label>
-                      <div className="dark rounded-xl overflow-hidden">
-                        <FileUpload onChange={handleFileUpload} />
+                      <div className="relative rounded-2xl glass-card-raised p-7">
+                        <div className="flex items-center justify-between mb-6">
+                          <div>
+                            <h2 className="text-base font-semibold text-on-surface tracking-tight opacity-90">
+                              Start your session
+                            </h2>
+                            <p className="text-xs text-on-surface-variant mt-0.5 opacity-40">
+                              Takes less than 60 seconds
+                            </p>
+                          </div>
+                          <div
+                            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                            style={{
+                              background: "color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)",
+                              border: "1px solid color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent)",
+                            }}
+                          >
+                            <Zap size={14} style={{ color: "var(--md-sys-color-primary)" }} />
+                          </div>
+                        </div>
+
+                        <div className="h-px mb-6 bg-outline-variant opacity-40" />
+
+                        {/* ── JOB-SPECIFIC FIELDS ── */}
+                        {interviewType === "job-specific" && (
+                          <>
+                            <div className="mb-5">
+                              <label className="label-caps block mb-2">Job Description</label>
+                              <textarea
+                                className="w-full rounded-xl px-4 py-3 text-sm outline-none resize-none text-on-surface"
+                                style={{
+                                  background: "var(--md-sys-color-surface-container-low)",
+                                  border: "1px solid var(--md-sys-color-outline-variant)",
+                                  minHeight: "88px",
+                                  transition: "border 0.2s, box-shadow 0.2s",
+                                }}
+                                onFocus={(e) => {
+                                  e.currentTarget.style.border = "1px solid color-mix(in srgb, var(--md-sys-color-primary) 60%, transparent)";
+                                  e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent)";
+                                }}
+                                onBlur={(e) => {
+                                  e.currentTarget.style.border = "1px solid var(--md-sys-color-outline-variant)";
+                                  e.currentTarget.style.boxShadow = "none";
+                                }}
+                                rows={3}
+                                value={jd}
+                                onChange={(e) => setJd(e.target.value)}
+                                placeholder="We're looking for a Senior React Developer..."
+                              />
+                            </div>
+                            <div className="mb-6">
+                              <label className="label-caps block mb-2">Resume (PDF)</label>
+                              <div className="dark rounded-xl overflow-hidden">
+                                <FileUpload onChange={handleFileUpload} />
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        {/* ── TECHNICAL FIELDS ── */}
+                        {interviewType === "technical" && (
+                          <>
+                            <div className="mb-5">
+                              <label className="label-caps block mb-2">Stack / Technology</label>
+                              <select
+                                value={config.stack ?? ""}
+                                onChange={(e) => setConfig({ ...config, stack: e.target.value })}
+                                className="w-full rounded-xl px-4 py-3 text-sm outline-none text-on-surface"
+                                style={{
+                                  background: "var(--md-sys-color-surface-container-low)",
+                                  border: "1px solid var(--md-sys-color-outline-variant)",
+                                  transition: "border 0.2s, box-shadow 0.2s",
+                                  appearance: "none",
+                                }}
+                                onFocus={(e) => {
+                                  e.currentTarget.style.border = "1px solid color-mix(in srgb, var(--md-sys-color-primary) 60%, transparent)";
+                                  e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent)";
+                                }}
+                                onBlur={(e) => {
+                                  e.currentTarget.style.border = "1px solid var(--md-sys-color-outline-variant)";
+                                  e.currentTarget.style.boxShadow = "none";
+                                }}
+                              >
+                                <option value="" disabled>Select a stack...</option>
+                                {STACKS.map((s) => (
+                                  <option key={s} value={s}>{s}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="mb-5">
+                              <label className="label-caps block mb-2">Difficulty</label>
+                              <div className="flex gap-2">
+                                {DIFFICULTIES.map((d) => (
+                                  <button
+                                    key={d}
+                                    type="button"
+                                    onClick={() => setConfig({ ...config, difficulty: d })}
+                                    className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
+                                      config.difficulty === d
+                                        ? "glass-card border border-violet-500/40 text-white/90 shadow-[0_0_20px_rgba(124,58,237,0.15)]"
+                                        : "glass-card border border-transparent text-white/40 hover:text-white/70"
+                                    }`}
+                                  >
+                                    {d}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="mb-6">
+                              <label className="label-caps block mb-2">Number of Questions</label>
+                              <div className="flex gap-2 mb-2">
+                                {QUESTION_COUNTS.map((n) => (
+                                  <button
+                                    key={n}
+                                    type="button"
+                                    onClick={() => setConfig({ ...config, questionCount: n })}
+                                    className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
+                                      config.questionCount === n
+                                        ? "glass-card border border-violet-500/40 text-white/90 shadow-[0_0_20px_rgba(124,58,237,0.15)]"
+                                        : "glass-card border border-transparent text-white/40 hover:text-white/70"
+                                    }`}
+                                  >
+                                    {n}
+                                  </button>
+                                ))}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="label-caps whitespace-nowrap">Custom (1–10):</span>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={10}
+                                  value={config.questionCount ?? ""}
+                                  onChange={(e) => {
+                                    const v = parseInt(e.target.value, 10);
+                                    if (!e.target.value) {
+                                      setConfig({ ...config, questionCount: undefined });
+                                    } else if (v >= 1 && v <= 10) {
+                                      setConfig({ ...config, questionCount: v });
+                                    }
+                                  }}
+                                  placeholder="e.g. 7"
+                                  className="w-20 rounded-xl px-3 py-2 text-sm outline-none text-white/90 text-center"
+                                  style={{
+                                    background: "var(--md-sys-color-surface-container-low)",
+                                    border: "1px solid var(--md-sys-color-outline-variant)",
+                                    transition: "border 0.2s, box-shadow 0.2s",
+                                  }}
+                                  onFocus={(e) => {
+                                    e.currentTarget.style.border = "1px solid color-mix(in srgb, var(--md-sys-color-primary) 60%, transparent)";
+                                    e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent)";
+                                  }}
+                                  onBlur={(e) => {
+                                    e.currentTarget.style.border = "1px solid var(--md-sys-color-outline-variant)";
+                                    e.currentTarget.style.boxShadow = "none";
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        {/* ── BEHAVIORAL FIELDS ── */}
+                        {interviewType === "behavioral" && (
+                          <>
+                            <div className="mb-5">
+                              <label className="label-caps block mb-2">Difficulty</label>
+                              <div className="flex gap-2">
+                                {DIFFICULTIES.map((d) => (
+                                  <button
+                                    key={d}
+                                    type="button"
+                                    onClick={() => setConfig({ ...config, difficulty: d })}
+                                    className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
+                                      config.difficulty === d
+                                        ? "glass-card border border-violet-500/40 text-white/90 shadow-[0_0_20px_rgba(124,58,237,0.15)]"
+                                        : "glass-card border border-transparent text-white/40 hover:text-white/70"
+                                    }`}
+                                  >
+                                    {d}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="mb-6">
+                              <label className="label-caps block mb-2">Number of Questions</label>
+                              <div className="flex gap-2 mb-2">
+                                {QUESTION_COUNTS.map((n) => (
+                                  <button
+                                    key={n}
+                                    type="button"
+                                    onClick={() => setConfig({ ...config, questionCount: n })}
+                                    className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
+                                      config.questionCount === n
+                                        ? "glass-card border border-violet-500/40 text-white/90 shadow-[0_0_20px_rgba(124,58,237,0.15)]"
+                                        : "glass-card border border-transparent text-white/40 hover:text-white/70"
+                                    }`}
+                                  >
+                                    {n}
+                                  </button>
+                                ))}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="label-caps whitespace-nowrap">Custom (1–10):</span>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={10}
+                                  value={config.questionCount ?? ""}
+                                  onChange={(e) => {
+                                    const v = parseInt(e.target.value, 10);
+                                    if (!e.target.value) {
+                                      setConfig({ ...config, questionCount: undefined });
+                                    } else if (v >= 1 && v <= 10) {
+                                      setConfig({ ...config, questionCount: v });
+                                    }
+                                  }}
+                                  placeholder="e.g. 7"
+                                  className="w-20 rounded-xl px-3 py-2 text-sm outline-none text-white/90 text-center"
+                                  style={{
+                                    background: "var(--md-sys-color-surface-container-low)",
+                                    border: "1px solid var(--md-sys-color-outline-variant)",
+                                    transition: "border 0.2s, box-shadow 0.2s",
+                                  }}
+                                  onFocus={(e) => {
+                                    e.currentTarget.style.border = "1px solid color-mix(in srgb, var(--md-sys-color-primary) 60%, transparent)";
+                                    e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent)";
+                                  }}
+                                  onBlur={(e) => {
+                                    e.currentTarget.style.border = "1px solid var(--md-sys-color-outline-variant)";
+                                    e.currentTarget.style.boxShadow = "none";
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        {/* ── VOICE PICKER (all types) ── */}
+                        <div className="mb-5">
+                          <label className="label-caps block mb-2">Interviewer Voice</label>
+                          <div className="flex gap-2">
+                            {(["female", "male"] as const).map((v) => (
+                              <button
+                                key={v}
+                                type="button"
+                                onClick={() => setInterviewerVoice(v)}
+                                className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
+                                  interviewerVoice === v
+                                    ? "glass-card border border-violet-500/40 text-white/90 shadow-[0_0_20px_rgba(124,58,237,0.15)]"
+                                    : "glass-card border border-transparent text-white/40 hover:text-white/70"
+                                }`}
+                              >
+                                {v === "female" ? "Female" : "Male"}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={startInterview}
+                          disabled={isSubmitDisabled}
+                          className="w-full rounded-xl py-3.5 text-sm font-semibold btn-violet disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
+                        >
+                          Start Interview
+                        </button>
+
+                        <p className="text-center mt-4 label-caps">Powered by Gemini AI</p>
                       </div>
                     </div>
-
-                    <button
-                      onClick={startInterview}
-                      disabled={!file || !jd.trim()}
-                      className="w-full rounded-xl py-3.5 text-sm font-semibold btn-violet disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
-                    >
-                      Start Interview
-                    </button>
-
-                    <p className="text-center mt-4 label-caps">Powered by Gemini AI</p>
                   </div>
                 </motion.div>
               </motion.div>
@@ -242,11 +531,11 @@ export default function StartPage() {
                 transition={{ duration: 0.3 }}
                 className="flex flex-col items-center justify-center w-full max-w-sm text-center"
               >
-                <h2 className="text-2xl font-bold text-white/90 mb-2">Analyzing your profile</h2>
+                <h2 className="text-2xl font-bold text-white/90 mb-2">Preparing your interview</h2>
                 <p className="label-caps mb-10">This usually takes about 15 seconds</p>
 
                 <div className="w-full space-y-4">
-                  {LOADING_STEPS.map(({ label, Icon }, i) => {
+                  {loadingSteps.map(({ label, Icon }, i) => {
                     const isDone = i < loadingStep;
                     const isActive = i === loadingStep;
                     return (
@@ -298,63 +587,80 @@ export default function StartPage() {
                   {/* Header */}
                   <div className="flex items-center gap-3 mb-6">
                     <CheckCircle size={22} className="text-emerald-400 shrink-0" />
-                    <h2 className="text-xl font-bold text-white/90">Resume Analysis Complete</h2>
+                    <h2 className="text-xl font-bold text-white/90">
+                      {interviewType === "job-specific"
+                        ? "Resume Analysis Complete"
+                        : "Interview Ready"}
+                    </h2>
                   </div>
 
-                  {/* Match Score */}
-                  <div className="text-center mb-6">
-                    <span className="label-caps block mb-1">Match Score</span>
-                    <span className={`text-6xl font-black ${getScoreColor(analysisData.gapAnalysis.matchScore)}`}>
-                      {analysisData.gapAnalysis.matchScore}%
-                    </span>
-                    <p className="text-white/40 text-xs mt-1">
-                      {analysisData.gapAnalysis.matchScore >= 70
-                        ? "Strong fit for this role"
-                        : analysisData.gapAnalysis.matchScore >= 50
-                        ? "Moderate fit — some gaps identified"
-                        : "Significant gaps — interview will target these areas"}
-                    </p>
-                  </div>
-
-                  <div className="h-px bg-white/[0.06] mb-5" />
-
-                  {/* Candidate Summary */}
-                  <div className="mb-5">
-                    <span className="label-caps block mb-2">Candidate Summary</span>
-                    <p className="glass-card p-4 rounded-xl text-white/60 text-sm leading-relaxed">
-                      {analysisData.candidateSummary}
-                    </p>
-                  </div>
-
-                  {/* Skills Gap */}
-                  <div className="mb-5">
-                    <span className="label-caps block mb-2">Skills Gap</span>
-                    {analysisData.gapAnalysis.missingSkills.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {analysisData.gapAnalysis.missingSkills.map((skill, i) => (
-                          <span
-                            key={i}
-                            className="glass-card px-2 py-1 text-amber-300 text-xs font-semibold rounded border border-amber-500/20"
-                          >
-                            {skill}
-                          </span>
-                        ))}
+                  {/* Job-Specific: show gap analysis */}
+                  {interviewType === "job-specific" && analysisData.gapAnalysis && (
+                    <>
+                      <div className="text-center mb-6">
+                        <span className="label-caps block mb-1">Match Score</span>
+                        <span className={`text-6xl font-black ${getScoreColor(analysisData.gapAnalysis.matchScore)}`}>
+                          {analysisData.gapAnalysis.matchScore}%
+                        </span>
+                        <p className="text-white/40 text-xs mt-1">
+                          {analysisData.gapAnalysis.matchScore >= 70
+                            ? "Strong fit for this role"
+                            : analysisData.gapAnalysis.matchScore >= 50
+                            ? "Moderate fit — some gaps identified"
+                            : "Significant gaps — interview will target these areas"}
+                        </p>
                       </div>
-                    ) : (
-                      <p className="text-emerald-400 text-sm flex items-center gap-2">
-                        <CheckCircle size={14} /> No major gaps found
-                      </p>
-                    )}
-                  </div>
 
-                  {/* Gap Feedback */}
-                  {analysisData.gapAnalysis.feedback && (
-                    <p className="text-amber-400/80 text-sm leading-relaxed mb-6">
-                      {analysisData.gapAnalysis.feedback}
-                    </p>
+                      <div className="h-px bg-white/[0.06] mb-5" />
+
+                      {analysisData.candidateSummary && (
+                        <div className="mb-5">
+                          <span className="label-caps block mb-2">Candidate Summary</span>
+                          <p className="glass-card p-4 rounded-xl text-white/60 text-sm leading-relaxed">
+                            {analysisData.candidateSummary}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="mb-5">
+                        <span className="label-caps block mb-2">Skills Gap</span>
+                        {analysisData.gapAnalysis.missingSkills.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {analysisData.gapAnalysis.missingSkills.map((skill, i) => (
+                              <span
+                                key={i}
+                                className="glass-card px-2 py-1 text-amber-300 text-xs font-semibold rounded border border-amber-500/20"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-emerald-400 text-sm flex items-center gap-2">
+                            <CheckCircle size={14} /> No major gaps found
+                          </p>
+                        )}
+                      </div>
+
+                      {analysisData.gapAnalysis.feedback && (
+                        <p className="text-amber-400/80 text-sm leading-relaxed mb-6">
+                          {analysisData.gapAnalysis.feedback}
+                        </p>
+                      )}
+                    </>
                   )}
 
-                  {/* CTA */}
+                  {/* Technical / Behavioral: simple ready card */}
+                  {interviewType !== "job-specific" && (
+                    <div className="mb-6">
+                      <p className="glass-card p-4 rounded-xl text-white/60 text-sm leading-relaxed">
+                        {interviewType === "technical"
+                          ? `Your ${config.questionCount}-question ${config.difficulty} ${config.stack} interview is ready. Good luck!`
+                          : `Your ${config.questionCount}-question ${config.difficulty} behavioral interview is ready. Use the STAR method for your answers. Good luck!`}
+                      </p>
+                    </div>
+                  )}
+
                   <button
                     onClick={handleStartInterview}
                     className="btn-violet w-full flex items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold"

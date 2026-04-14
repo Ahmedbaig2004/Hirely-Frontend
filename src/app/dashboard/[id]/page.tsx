@@ -124,7 +124,13 @@ export default function InterviewDetail() {
             <div>
               <h1 className="text-3xl font-extrabold text-on-surface tracking-tight opacity-90">Interview Report</h1>
               <p className="text-on-surface-variant text-sm mt-1 opacity-50">
-                {data.jobDescription.substring(0, 60)}... • {new Date(data.createdAt).toLocaleDateString()}
+                {data.jobDescription
+                  ? data.jobDescription.substring(0, 60) + "..."
+                  : data.interviewType === "TECHNICAL"
+                  ? "Technical Interview"
+                  : data.interviewType === "BEHAVIORAL"
+                  ? "Behavioral Interview"
+                  : "Interview"} • {new Date(data.createdAt).toLocaleDateString()}
               </p>
             </div>
             <div className="flex items-center gap-4 glass-card p-3 rounded-xl">
@@ -349,15 +355,37 @@ export default function InterviewDetail() {
               });
 
               const allItems = Object.values(byFeature).sort((a: any, b: any) => b.impact_magnitude - a.impact_magnitude);
-              const improvements = allItems.filter((s: any) => s.direction === "decreased").slice(0, 3);
-              const strengths = allItems.filter((s: any) => s.direction === "increased").slice(0, 2);
+              // Backend already filters by significance (0.015 threshold) and uncaps strengths
+              const improvements = allItems.filter((s: any) => s.direction === "decreased");
+              const strengths = allItems.filter((s: any) => s.direction === "increased");
+
+              // Extract ui_sync category sentiments (already sent by backend)
+              const uiSync = voiceTurns
+                .map((t: any) => t.voiceAnalysis?.rawFeatures?.ui_sync)
+                .find((u: any) => u?.categories);
 
               // Final summary: use the first turn that has it
               const finalSummary = voiceTurns
                 .map((t: any) => t.voiceAnalysis?.rawFeatures?.finalSummary)
                 .find((s: any) => s?.opening);
 
-              if (improvements.length === 0 && strengths.length === 0 && !finalSummary) return null;
+              if (improvements.length === 0 && strengths.length === 0 && !finalSummary && !uiSync) return null;
+
+              const categoryIcons: Record<string, React.ReactNode> = {
+                energy: <Zap size={13} />,
+                fluency: <Activity size={13} />,
+                clarity: <Gauge size={13} />,
+                pace: <Mic size={13} />,
+              };
+
+              const statusStyles: Record<string, { border: string; text: string; bg: string }> = {
+                "Helped Your Score":    { border: "border-emerald-500/50", text: "text-emerald-400", bg: "bg-emerald-500/10" },
+                "Held Back Your Score": { border: "border-amber-500/50",   text: "text-amber-400",   bg: "bg-amber-500/10" },
+                "Minimal Impact":       { border: "border-white/10",       text: "text-white/40",     bg: "bg-white/5" },
+                // WPM pace fallback labels
+                "Good":                 { border: "border-emerald-500/50", text: "text-emerald-400", bg: "bg-emerald-500/10" },
+                "Needs Improvement":    { border: "border-amber-500/50",   text: "text-amber-400",   bg: "bg-amber-500/10" },
+              };
 
               return (
                 <div className="space-y-4 mb-5">
@@ -377,6 +405,41 @@ export default function InterviewDetail() {
                     </div>
                   )}
 
+                  {/* Category Overview — 4 boxes from ui_sync */}
+                  {uiSync?.categories && (
+                    <div>
+                      <span className="label-caps text-violet-400/70 mb-2 block">Category Overview</span>
+                      <div className="grid grid-cols-2 gap-3">
+                        {Object.entries(uiSync.categories as Record<string, any>).map(([key, cat]: [string, any]) => {
+                          const styles = statusStyles[cat.status] ?? statusStyles["Minimal Impact"];
+                          return (
+                            <motion.div
+                              key={key}
+                              initial={{ opacity: 0, y: 8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className={`glass-card p-3 rounded-xl border-l-4 ${styles.border}`}
+                            >
+                              <div className="flex items-center gap-1.5 mb-1.5">
+                                <span className={styles.text}>{categoryIcons[key] ?? <Activity size={13} />}</span>
+                                <span className="text-xs font-bold text-white/80">{cat.label}</span>
+                                <div className="flex items-center gap-1 ml-auto">
+                                  {cat.impact_pct > 0 && cat.status !== "Minimal Impact" && (
+                                    <span className="text-[9px] text-white/25">~{cat.impact_pct}%</span>
+                                  )}
+                                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${styles.bg} ${styles.text} font-semibold`}>
+                                    {cat.status}
+                                  </span>
+                                </div>
+                              </div>
+                              <p className="text-[11px] text-white/40 leading-relaxed">{cat.top_driver?.tip}</p>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Priority Improvements */}
                   {improvements.length > 0 && (
                     <div>
@@ -390,9 +453,16 @@ export default function InterviewDetail() {
                             transition={{ delay: i * 0.07, duration: 0.3 }}
                             className="glass-card p-3 rounded-xl border-l-4 border-rose-500/50"
                           >
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400/70">
-                              {VOICE_FEATURE_LABELS[item.feature] || item.label}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400/70">
+                                {VOICE_FEATURE_LABELS[item.feature] || item.label}
+                              </span>
+                              {item.category && item.category !== "Other" && (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/5 text-white/30 font-medium">
+                                  {item.category}
+                                </span>
+                              )}
+                            </div>
                             <p className="text-xs text-white/60 mt-1 leading-relaxed">{item.explanation}</p>
                           </motion.div>
                         ))}
@@ -413,9 +483,16 @@ export default function InterviewDetail() {
                             transition={{ delay: i * 0.07 + 0.21, duration: 0.3 }}
                             className="glass-card p-3 rounded-xl border-l-4 border-emerald-500/50"
                           >
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400/70">
-                              {VOICE_FEATURE_LABELS[item.feature] || item.label}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400/70">
+                                {VOICE_FEATURE_LABELS[item.feature] || item.label}
+                              </span>
+                              {item.category && item.category !== "Other" && (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/5 text-white/30 font-medium">
+                                  {item.category}
+                                </span>
+                              )}
+                            </div>
                             <p className="text-xs text-white/60 mt-1 leading-relaxed">{item.explanation}</p>
                           </motion.div>
                         ))}

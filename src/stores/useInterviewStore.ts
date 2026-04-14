@@ -1,6 +1,14 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
+export type InterviewType = "job-specific" | "technical" | "behavioral";
+
+export interface InterviewConfig {
+  stack?: string;
+  difficulty?: "Easy" | "Medium" | "Hard";
+  questionCount?: number;
+}
+
 interface InterviewState {
   sessionId: string | null;
   currentQuestion: string | null;
@@ -8,17 +16,28 @@ interface InterviewState {
   transcript: string;
   feedback: string | null;
   firstQuestionAudio: string | null;
+  firstQuestionAudioMime: string | null;
 
-  // 1. NEW: TTS State & Action
+  // Interview type + config
+  interviewType: InterviewType;
+  config: InterviewConfig;
+  setInterviewType: (type: InterviewType) => void;
+  setConfig: (config: InterviewConfig) => void;
+
+  // TTS State & Actions
   isTtsEnabled: boolean;
   toggleTts: () => void;
+
+  // Voice selection
+  interviewerVoice: "male" | "female";
+  setInterviewerVoice: (v: "male" | "female") => void;
 
   setSessionId: (id: string) => void;
   setQuestion: (text: string) => void;
   setLoading: (status: boolean) => void;
   setTranscript: (text: string) => void;
   setFeedback: (text: string) => void;
-  setFirstQuestionAudio: (audio: string | null) => void;
+  setFirstQuestionAudio: (audio: string | null, mime?: string | null) => void;
   resetSession: () => void;
 }
 
@@ -31,19 +50,26 @@ export const useInterviewStore = create<InterviewState>()(
       transcript: '',
       feedback: null,
       firstQuestionAudio: null,
+      firstQuestionAudioMime: null,
 
-      // 2. NEW: Initialize TTS (Default to TRUE)
-      isTtsEnabled: true, 
+      interviewType: "job-specific" as InterviewType,
+      config: {} as InterviewConfig,
+      setInterviewType: (type) => set({ interviewType: type, config: {} }),
+      setConfig: (config) => set({ config }),
+
+      isTtsEnabled: true,
+      interviewerVoice: "female" as "male" | "female",
 
       setSessionId: (id) => set({ sessionId: id }),
       setQuestion: (text) => set({ currentQuestion: text }),
       setLoading: (status) => set({ loading: status }),
       setTranscript: (text) => set({ transcript: text }),
       setFeedback: (text) => set({ feedback: text }),
-      setFirstQuestionAudio: (audio) => set({ firstQuestionAudio: audio }),
+      setFirstQuestionAudio: (audio, mime = null) =>
+        set({ firstQuestionAudio: audio, firstQuestionAudioMime: mime }),
 
-      // 3. NEW: Implement Toggle Action
       toggleTts: () => set((state) => ({ isTtsEnabled: !state.isTtsEnabled })),
+      setInterviewerVoice: (v) => set({ interviewerVoice: v }),
 
       resetSession: () =>
         set({
@@ -51,6 +77,7 @@ export const useInterviewStore = create<InterviewState>()(
           currentQuestion: null,
           feedback: null,
           firstQuestionAudio: null,
+          firstQuestionAudioMime: null,
           transcript: "",
           loading: false,
         }),

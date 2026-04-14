@@ -47,6 +47,7 @@ export default function InterviewPanel() {
     setQuestion,
     setFeedback,
     firstQuestionAudio,
+    firstQuestionAudioMime,
     setFirstQuestionAudio,
     isTtsEnabled,
     toggleTts,
@@ -104,7 +105,7 @@ export default function InterviewPanel() {
     if (firstQuestionAudio && isTtsEnabled) {
       setIsAIThinking(true);
       setCurrentAudioData(firstQuestionAudio);
-      playAudio(firstQuestionAudio);
+      playAudio(firstQuestionAudio, firstQuestionAudioMime);
     } else {
       setFirstQuestionAudio(null);
       setCurrentAudioData(null);
@@ -142,8 +143,10 @@ export default function InterviewPanel() {
     prevRecordingState.current = isRecording;
   }, [isRecording]);
 
-  const playAudio = async (base64String: string) => {
+  const playAudio = async (base64String: string, mime?: string | null) => {
     if (!audioRef.current || !isTtsEnabled) return;
+
+    const audioMime = mime || "audio/mpeg";
 
     try {
       // 1. Force stop any previous audio
@@ -151,7 +154,7 @@ export default function InterviewPanel() {
       audioRef.current.currentTime = 0;
 
       // 2. Set new source
-      audioRef.current.src = `data:audio/mp3;base64,${base64String}`;
+      audioRef.current.src = `data:${audioMime};base64,${base64String}`;
 
       // 3. Setup Listeners
       audioRef.current.onended = () => {
@@ -255,7 +258,7 @@ export default function InterviewPanel() {
       const backendUrl =
         process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
       const res = await axios.post(`${backendUrl}/api/submit-answer`, formData);
-      const { nextQuestion, isFinished, audio, transcript } = res.data;
+      const { nextQuestion, isFinished, audio, audioMime, transcript } = res.data;
       setHasAudioTurns(true);
 
       // Sync audio transcript into chat history so switching to chat shows full conversation
@@ -283,7 +286,7 @@ export default function InterviewPanel() {
       else setCurrentAudioData(null);
 
       if (audio && isTtsEnabled) {
-        playAudio(audio);
+        playAudio(audio, audioMime);
       } else {
         resetRecorder();
         setIsAIThinking(false);
