@@ -7,7 +7,7 @@ const footerLinks = {
     { label: "Features", href: "#features" },
     { label: "Pricing", href: "/pricing" },
     { label: "How It Works", href: "#how-it-works" },
-    { label: "FAQ", href: "#faq" },
+    { label: "FAQ", href: "/contact#faq" },
   ],
   Company: [
     { label: "About", href: "/about" },
@@ -16,10 +16,10 @@ const footerLinks = {
     { label: "Contact", href: "#" },
   ],
   Resources: [
-    { label: "Documentation", href: "#" },
-    { label: "Interview Tips", href: "#" },
-    { label: "Resume Guide", href: "#" },
-    { label: "Community", href: "#" },
+    { label: "Help Center", href: "/help" },
+    { label: "Settings", href: "/settings" },
+    { label: "Documentation", href: "/help#getting-started" },
+    { label: "Interview Tips", href: "/help" },
   ],
   Legal: [
     { label: "Privacy Policy", href: "#" },
@@ -31,6 +31,7 @@ const footerLinks = {
 export function Footer() {
   return (
     <footer
+      className="relative z-[60] isolate"
       style={{
         background: "#0d1220",
         borderTop: "1px solid rgba(255,255,255,0.04)",

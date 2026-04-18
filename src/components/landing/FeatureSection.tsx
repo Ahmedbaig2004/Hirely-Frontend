@@ -1,13 +1,14 @@
 "use client";
 
-import { useRef, useCallback, useState } from "react";
-import { motion } from "framer-motion";
+import { useId, useRef, useCallback, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 
 /* ─── Feature cards data ─── */
 const features = [
   {
     title: "Smart Resume Parsing",
-    description: "AI extracts skills, experience, and qualifications to personalize every interview session automatically.",
+    description:
+      "AI extracts skills, experience, and qualifications to personalize every interview session automatically.",
     gradient: "linear-gradient(135deg, #2563eb, #3b82f6)",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -19,11 +20,11 @@ const features = [
       </svg>
     ),
     accentColor: "#3b82f6",
-    topBorder: "#3b82f6",
   },
   {
     title: "Adaptive AI Interviewer",
-    description: "Dynamic questions that respond to your answers — strong responses unlock harder follow-ups, just like a real interview.",
+    description:
+      "Dynamic questions that respond to your answers — strong responses unlock harder follow-ups, just like a real interview.",
     gradient: "linear-gradient(135deg, #7c3aed, #a78bfa)",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -33,11 +34,11 @@ const features = [
       </svg>
     ),
     accentColor: "#a78bfa",
-    topBorder: "#a78bfa",
   },
   {
     title: "Technical Evaluation",
-    description: "Evaluate coding knowledge, system design reasoning, and problem-solving depth with AI-graded accuracy.",
+    description:
+      "Evaluate coding knowledge, system design reasoning, and problem-solving depth with AI-graded accuracy.",
     gradient: "linear-gradient(135deg, #0891b2, #22d3ee)",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -46,11 +47,11 @@ const features = [
       </svg>
     ),
     accentColor: "#22d3ee",
-    topBorder: "#22d3ee",
   },
   {
     title: "Voice & Confidence",
-    description: "Real-time speech analysis — filler words, pauses, pitch variation — to help you sound polished and confident.",
+    description:
+      "Real-time speech analysis — filler words, pauses, pitch variation — to help you sound polished and confident.",
     gradient: "linear-gradient(135deg, #ea580c, #f97316)",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -60,11 +61,11 @@ const features = [
       </svg>
     ),
     accentColor: "#f97316",
-    topBorder: "#f97316",
   },
   {
     title: "Detailed Reports",
-    description: "Comprehensive scorecards with visual breakdowns, strengths, weaknesses, and prioritized improvement tips.",
+    description:
+      "Comprehensive scorecards with visual breakdowns, strengths, weaknesses, and prioritized improvement tips.",
     gradient: "linear-gradient(135deg, #db2777, #f472b6)",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -74,11 +75,11 @@ const features = [
       </svg>
     ),
     accentColor: "#f472b6",
-    topBorder: "#f472b6",
   },
   {
     title: "Progress Tracking",
-    description: "Track your improvement session over session. See trends, compare scores, and focus on areas that matter most.",
+    description:
+      "Track your improvement session over session. See trends, compare scores, and focus on areas that matter most.",
     gradient: "linear-gradient(135deg, #059669, #34d399)",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -86,87 +87,235 @@ const features = [
       </svg>
     ),
     accentColor: "#34d399",
-    topBorder: "#34d399",
   },
 ];
 
-/* ─── Single Feature Card ─── */
-function FeatureCard({ feature, index }: { feature: typeof features[0]; index: number }) {
+/** Each card gets a distinct slanted / cut silhouette (2D, not a uniform rounded rect). */
+const CARD_CLIPS = [
+  "polygon(0% 6%, 100% 0%, 100% 100%, 5% 100%)",
+  "polygon(3% 0%, 100% 4%, 97% 100%, 0% 96%)",
+  "polygon(0% 0%, 94% 5%, 100% 94%, 6% 100%)",
+  "polygon(5% 0%, 100% 0%, 96% 100%, 0% 92%)",
+  "polygon(0% 4%, 100% 0%, 100% 100%, 4% 96%)",
+  "polygon(2% 2%, 98% 0%, 100% 98%, 0% 100%)",
+];
+
+/** Bento: 12-col grid, staggered rows — breaks the “same square grid” rhythm. */
+const BENTO_PLACES: { col: string; row: number; y: number; z: number; rot: number }[] = [
+  { col: "1 / 7", row: 1, y: 0, z: 2, rot: -0.6 },
+  { col: "7 / 13", row: 1, y: 52, z: 1, rot: 0.7 },
+  { col: "1 / 7", row: 2, y: -12, z: 1, rot: 0.5 },
+  { col: "7 / 13", row: 2, y: 48, z: 2, rot: -0.55 },
+  { col: "1 / 7", row: 3, y: 4, z: 2, rot: -0.45 },
+  { col: "7 / 13", row: 3, y: 44, z: 1, rot: 0.65 },
+];
+
+/** Extra offset before `whileInView` — cards slide in from their side’s corner (left / right × top / bottom). */
+const SLIDE_FROM_CORNER: { x: number; y: number }[] = [
+  { x: -120, y: -56 }, // 0 left column — top-left
+  { x: 120, y: -56 }, // 1 right — top-right
+  { x: -120, y: 64 }, // 2 left — bottom-left
+  { x: 120, y: 64 }, // 3 right — bottom-right
+  { x: -120, y: -48 }, // 4 left — top-left
+  { x: 120, y: 56 }, // 5 right — bottom-right
+];
+
+function FeaturePlane2D({ uid }: { uid: string }) {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+      <svg className="absolute left-1/2 top-0 h-[120%] w-[140%] -translate-x-1/2 opacity-[0.45]" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id={`${uid}-a`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.35" />
+            <stop offset="50%" stopColor="#a78bfa" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.15" />
+          </linearGradient>
+          <linearGradient id={`${uid}-b`} x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0%" stopColor="#f472b6" stopOpacity="0.12" />
+            <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.18" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M-80 120 C200 40 400 200 600 100 S1000 20 1280 180"
+          fill="none"
+          stroke={`url(#${uid}-a)`}
+          strokeWidth="1.25"
+          className="lp-features-ribbon"
+        />
+        <path
+          d="M-40 420 Q300 360 600 440 T1220 400"
+          fill="none"
+          stroke={`url(#${uid}-b)`}
+          strokeWidth="1"
+          className="lp-features-ribbon"
+          style={{ animationDelay: "-8s" }}
+        />
+        <path
+          d="M100 640 Q500 560 900 620"
+          fill="none"
+          stroke="rgba(167,139,250,0.15)"
+          strokeWidth="0.75"
+          strokeDasharray="6 12"
+          className="lp-features-ribbon"
+          style={{ animationDuration: "32s" }}
+        />
+      </svg>
+
+      <svg className="lp-features-hex-a absolute -right-[8%] top-[12%] h-48 w-48 opacity-25" viewBox="0 0 100 100" aria-hidden>
+        <polygon points="50,5 95,28 95,72 50,95 5,72 5,28" fill="none" stroke="rgba(34,211,238,0.35)" strokeWidth="0.6" />
+      </svg>
+      <svg className="lp-features-hex-b absolute -left-[4%] bottom-[18%] h-40 w-40 opacity-20" viewBox="0 0 100 100" aria-hidden>
+        <polygon points="50,5 95,28 95,72 50,95 5,72 5,28" fill="none" stroke="rgba(167,139,250,0.3)" strokeWidth="0.5" />
+      </svg>
+
+      <svg className="lp-features-tri absolute left-[12%] top-[22%] h-24 w-24 opacity-30" viewBox="0 0 100 100" aria-hidden>
+        <polygon points="50,12 88,82 12,82" fill="none" stroke="rgba(59,130,246,0.25)" strokeWidth="1" />
+      </svg>
+      <svg className="lp-features-tri absolute bottom-[28%] right-[18%] h-20 w-20 opacity-25" viewBox="0 0 100 100" style={{ animationDelay: "1.2s" }} aria-hidden>
+        <polygon points="50,12 88,82 12,82" fill="none" stroke="rgba(244,114,182,0.22)" strokeWidth="1" />
+      </svg>
+
+      <div
+        className="absolute inset-0 opacity-[0.07]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='52' viewBox='0 0 60 52' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 4 L56 18 L56 46 L30 60 L4 46 L4 18 Z' fill='none' stroke='%2367e8f9' stroke-width='0.5'/%3E%3C/svg%3E")`,
+          backgroundSize: "60px 52px",
+        }}
+      />
+    </div>
+  );
+}
+
+function FeatureCard({
+  feature,
+  index,
+  clip,
+  place,
+}: {
+  feature: (typeof features)[0];
+  index: number;
+  clip: string;
+  place: (typeof BENTO_PLACES)[0];
+}) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (reduceMotion) return;
     const card = cardRef.current;
     if (!card) return;
     const rect = card.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;
-    card.style.transform = `perspective(800px) rotateX(${y * -6}deg) rotateY(${x * 6}deg) translateY(-8px) scale(1.02)`;
-  }, []);
+    card.style.transform = `translate(${x * 10}px, ${y * 8}px) rotate(${place.rot + x * 3}deg) scale(1.015)`;
+  }, [place.rot, reduceMotion]);
 
   const handleMouseLeave = useCallback(() => {
     const card = cardRef.current;
-    if (card) card.style.transform = "";
+    if (card) {
+      card.style.transform = "";
+    }
     setHovered(false);
   }, []);
 
+  const corner = SLIDE_FROM_CORNER[index] ?? { x: 0, y: 0 };
+  const rest = { x: 0, y: place.y, rotate: place.rot, opacity: 1 };
+  const from = reduceMotion
+    ? rest
+    : {
+        x: corner.x,
+        y: place.y + corner.y,
+        rotate: place.rot * 2.8,
+        opacity: 0,
+      };
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.15 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
+      className="lp-features-card-slot"
+      initial={from}
+      whileInView={rest}
+      viewport={{ once: true, amount: 0.08, margin: "0px 0px -12% 0px" }}
+      transition={{
+        duration: 0.72,
+        delay: index * 0.06,
+        ease: [0.16, 1, 0.3, 1],
+        opacity: { duration: 0.45, delay: index * 0.06 },
+      }}
+      style={{
+        gridColumn: place.col,
+        gridRow: place.row,
+        zIndex: place.z,
+      }}
     >
       <div
         ref={cardRef}
         onMouseMove={handleMouseMove}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={handleMouseLeave}
-        className="lp-glass-card"
         style={{
-          borderRadius: 16,
+          clipPath: clip,
           padding: 28,
-          transition: "transform 0.2s ease-out, box-shadow 0.4s ease, border-color 0.4s ease",
-          borderTop: `2px solid ${feature.topBorder}30`,
+          minHeight: "100%",
           cursor: "default",
-          height: "100%",
+          position: "relative",
+          background: "linear-gradient(145deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          boxShadow: hovered
+            ? `0 24px 48px rgba(0,0,0,0.35), 0 0 0 1px ${feature.accentColor}35, inset 0 1px 0 rgba(255,255,255,0.1)`
+            : "0 16px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
+          transition: "box-shadow 0.35s ease, border-color 0.35s ease",
+          backdropFilter: "blur(18px) saturate(1.35)",
+          WebkitBackdropFilter: "blur(18px) saturate(1.35)",
         }}
       >
-        {/* Icon */}
-        <div style={{
-          width: 44,
-          height: 44,
-          borderRadius: 12,
-          background: feature.gradient,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          marginBottom: 18,
-          transition: "transform 0.3s, box-shadow 0.3s",
-          transform: hovered ? "scale(1.1)" : "scale(1)",
-          boxShadow: hovered ? `0 4px 20px ${feature.accentColor}40` : "none",
-        }}>
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            clipPath: clip,
+            background: `linear-gradient(135deg, ${feature.accentColor}12 0%, transparent 55%)`,
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          style={{
+            width: 52,
+            height: 52,
+            clipPath: index % 3 === 0 ? "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)" : "polygon(15% 0%, 85% 0%, 100% 50%, 85% 100%, 15% 100%, 0% 50%)",
+            background: feature.gradient,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 18,
+            transition: "transform 0.35s ease, box-shadow 0.35s ease",
+            transform: hovered ? "scale(1.06) rotate(-4deg)" : "scale(1)",
+            boxShadow: hovered ? `0 8px 28px ${feature.accentColor}45` : `0 4px 16px ${feature.accentColor}22`,
+          }}
+        >
           {feature.icon}
         </div>
 
-        {/* Title — always light: section bg is permanently dark (#111827) */}
-        <h3 style={{
-          fontSize: 16,
-          fontWeight: 700,
-          color: "#e2e8f0",
-          marginBottom: 8,
-        }}>
+        <h3
+          style={{
+            fontSize: 17,
+            fontWeight: 700,
+            color: "#f1f5f9",
+            marginBottom: 10,
+            letterSpacing: "-0.02em",
+          }}
+        >
           {feature.title}
         </h3>
-
-        {/* Description */}
-        <p style={{
-          fontSize: 14,
-          color: "#94a3b8",
-          lineHeight: 1.65,
-          margin: 0,
-          textAlign: "justify",
-        }}>
+        <p
+          style={{
+            fontSize: 14,
+            color: "#94a3b8",
+            lineHeight: 1.65,
+            margin: 0,
+          }}
+        >
           {feature.description}
         </p>
       </div>
@@ -174,117 +323,84 @@ function FeatureCard({ feature, index }: { feature: typeof features[0]; index: n
   );
 }
 
-/* ─── Background Shapes ─── */
-function BackgroundElements() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-      {/* Grid overlay */}
-      <div style={{
-        position: "absolute",
-        inset: 0,
-        backgroundImage: `
-          linear-gradient(var(--lp-grid-color) 1px, transparent 1px),
-          linear-gradient(90deg, var(--lp-grid-color) 1px, transparent 1px)
-        `,
-        backgroundSize: "48px 48px",
-        animation: "lp-grid-drift 12s linear infinite",
-        opacity: 0.4,
-      }} />
-      {/* Glow patches */}
-      <div style={{
-        position: "absolute", top: "10%", left: "20%",
-        width: 400, height: 400, borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%)",
-        filter: "blur(80px)",
-        animation: "lp-pulse-slow 6s ease-in-out infinite",
-      }} />
-      <div style={{
-        position: "absolute", bottom: "10%", right: "15%",
-        width: 350, height: 350, borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(167,139,250,0.05) 0%, transparent 70%)",
-        filter: "blur(80px)",
-        animation: "lp-pulse-slow 8s ease-in-out 2s infinite",
-      }} />
-      {/* Floating shapes */}
-      {[
-        { top: "15%", left: "8%", size: 80, opacity: 0.04, dur: 16 },
-        { top: "60%", right: "6%", size: 60, opacity: 0.03, dur: 20 },
-        { top: "35%", left: "75%", size: 100, opacity: 0.03, dur: 22 },
-      ].map((s, i) => (
-        <div
-          key={i}
-          style={{
-            position: "absolute",
-            top: s.top,
-            left: (s as { left?: string }).left,
-            right: (s as { right?: string }).right,
-            width: s.size,
-            height: s.size,
-            borderRadius: i % 2 === 0 ? 16 : "50%",
-            border: "1px solid rgba(255,255,255,0.04)",
-            opacity: s.opacity,
-            animation: `lp-particle-float ${s.dur}s ease-in-out infinite`,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-/* ═══════════════════════════
-   FEATURE SECTION
-═══════════════════════════ */
 export function FeatureSection() {
+  const uid = useId().replace(/:/g, "");
+
   return (
     <section
       id="features"
+      className="lp-features-section scroll-mt-24"
       style={{
         position: "relative",
-        background: "linear-gradient(180deg, #111827 0%, #162236 100%)",
-        padding: "60px 24px",
+        background: "linear-gradient(165deg, #070b14 0%, #0f172a 38%, #0c1220 100%)",
+        padding: "clamp(72px, 12vw, 120px) clamp(20px, 4vw, 48px) clamp(88px, 14vw, 140px)",
         overflow: "hidden",
       }}
     >
-      <BackgroundElements />
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 90% 50% at 15% 20%, rgba(34,211,238,0.07), transparent 50%), radial-gradient(ellipse 70% 45% at 85% 75%, rgba(167,139,250,0.06), transparent 55%)",
+        }}
+      />
+      <FeaturePlane2D uid={uid} />
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", position: "relative", zIndex: 2 }}>
-        {/* Header */}
+      <div style={{ maxWidth: 1120, margin: "0 auto", position: "relative", zIndex: 2 }}>
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 28 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.6 }}
-          style={{ textAlign: "center", marginBottom: 64 }}
+          viewport={{ once: true, amount: 0.25 }}
+          transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+          style={{ marginBottom: "clamp(48px, 8vw, 72px)", textAlign: "left" }}
         >
-          <h2 style={{
-            fontSize: "clamp(30px, 5vw, 48px)",
-            fontWeight: 800,
-            color: "#e2e8f0",
-            lineHeight: 1.2,
-            marginBottom: 16,
-          }}>
-            Built for Real{" "}
-            <span className="lp-gradient-text">Hiring Decisions</span>
+          <div
+            style={{
+              display: "inline-block",
+              marginBottom: 14,
+              padding: "6px 14px",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              color: "#67e8f9",
+              border: "1px solid rgba(103,232,249,0.25)",
+              clipPath: "polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))",
+              background: "rgba(103,232,249,0.06)",
+            }}
+          >
+            Product surface
+          </div>
+          <h2
+            style={{
+              fontSize: "clamp(30px, 5vw, 50px)",
+              fontWeight: 800,
+              color: "#f8fafc",
+              lineHeight: 1.08,
+              marginBottom: 16,
+              maxWidth: 720,
+            }}
+          >
+            Built for real{" "}
+            <span className="lp-gradient-text" style={{ fontStyle: "italic" }}>
+              hiring decisions
+            </span>
           </h2>
-          <p style={{
-            fontSize: 16,
-            color: "#94a3b8",
-            maxWidth: 560,
-            margin: "0 auto",
-            lineHeight: 1.7,
-          }}>
-            Every feature is designed to replicate and improve upon the real interview experience.
+          <p
+            style={{
+              fontSize: 17,
+              color: "#94a3b8",
+              maxWidth: 520,
+              lineHeight: 1.75,
+            }}
+          >
+            Every feature is designed to replicate and improve upon the real interview experience — laid out as a flowing surface, not another uniform grid.
           </p>
         </motion.div>
 
-        {/* Grid */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-          gap: 20,
-        }}>
+        <div className="lp-features-bento">
           {features.map((feature, i) => (
-            <FeatureCard key={feature.title} feature={feature} index={i} />
+            <FeatureCard key={feature.title} feature={feature} index={i} clip={CARD_CLIPS[i]!} place={BENTO_PLACES[i]!} />
           ))}
         </div>
       </div>

@@ -1,77 +1,112 @@
 "use client";
 
+import { useId, useMemo } from "react";
 import {
-  RadarChart, Radar, PolarGrid, PolarAngleAxis,
-  Tooltip, ResponsiveContainer, PolarRadiusAxis,
+  PolarAngleAxis,
+  PolarGrid,
+  PolarRadiusAxis,
+  Radar,
+  RadarChart,
+  ResponsiveContainer,
+  Tooltip,
 } from "recharts";
-import { TOOLTIP_STYLE, CHART_COLORS, GRID_COLOR } from "./chartTheme";
+import { motion, useReducedMotion } from "framer-motion";
+import {
+  CHART_COLORS,
+  TICK_STYLE,
+  TOOLTIP_STYLE,
+  CHART_ANIM_MS,
+} from "./chartTheme";
 
-interface Modality {
+type ModalityPayload = {
   technical: number | null;
   delivery: number | null;
   voice: number | null;
   contentQuality: number | null;
   combined: number | null;
-}
+};
 
-interface Props {
-  modality: Modality;
-}
-
-const AXIS_LABELS: { key: keyof Modality; label: string }[] = [
-  { key: "technical",     label: "Technical" },
-  { key: "contentQuality",label: "Content" },
-  { key: "delivery",      label: "Delivery" },
-  { key: "voice",         label: "Voice" },
-  { key: "combined",      label: "Combined" },
-];
-
-const NO_DATA = (
-  <div className="flex items-center justify-center h-[320px] lp-muted text-sm">
-    No modality data available
-  </div>
-);
+type Props = {
+  modality: ModalityPayload;
+};
 
 export function ModalityRadar({ modality }: Props) {
-  // Only include axes that have non-null values
-  const axes = AXIS_LABELS.filter(({ key }) => modality[key] !== null);
-  if (axes.length === 0) return NO_DATA;
+  const uid = useId().replace(/:/g, "");
+  const reduceMotion = useReducedMotion();
+  const animMs = reduceMotion ? 0 : CHART_ANIM_MS;
 
-  const data = axes.map(({ key, label }) => ({
-    subject: label,
-    value: modality[key] as number,
-    fullMark: 100,
-  }));
+  const chartData = useMemo(
+    () => [
+      { subject: "Technical", score: Math.round(modality.technical ?? 0) },
+      { subject: "Content", score: Math.round(modality.contentQuality ?? 0) },
+      { subject: "Delivery", score: Math.round(modality.delivery ?? 0) },
+      { subject: "Voice", score: Math.round(modality.voice ?? 0) },
+      { subject: "Combined", score: Math.round(modality.combined ?? 0) },
+    ],
+    [modality],
+  );
 
   return (
-    <ResponsiveContainer width="100%" height={320}>
-      <RadarChart data={data} margin={{ top: 16, right: 24, bottom: 16, left: 24 }}>
-        <PolarGrid stroke={GRID_COLOR} />
-        <PolarAngleAxis
-          dataKey="subject"
-          tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 11 }}
-        />
-        <PolarRadiusAxis
-          angle={30}
-          domain={[0, 100]}
-          tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 9 }}
-          axisLine={false}
-        />
-        <Tooltip
-          contentStyle={TOOLTIP_STYLE}
-          formatter={(value) => [`${value ?? "—"}`, "Score"]}
-          labelStyle={{ color: "rgba(255,255,255,0.5)" }}
-        />
-        <Radar
-          name="Score"
-          dataKey="value"
-          stroke={CHART_COLORS.violetLight}
-          fill={CHART_COLORS.violet}
-          fillOpacity={0.22}
-          strokeWidth={2}
-          dot={{ r: 3, fill: CHART_COLORS.violetLight, strokeWidth: 0 }}
-        />
-      </RadarChart>
-    </ResponsiveContainer>
+    <motion.div
+      className="h-[260px] w-full"
+      initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <RadarChart
+          cx="50%"
+          cy="52%"
+          outerRadius="72%"
+          data={chartData}
+          margin={{ top: 8, right: 8, bottom: 8, left: 8 }}
+        >
+          <defs>
+            <linearGradient id={`radarFill-${uid}`} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor={CHART_COLORS.violetLight} stopOpacity={0.55} />
+              <stop offset="100%" stopColor={CHART_COLORS.violet} stopOpacity={0.18} />
+            </linearGradient>
+            <linearGradient id={`radarStroke-${uid}`} x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#DDD6FE" />
+              <stop offset="100%" stopColor={CHART_COLORS.violetLight} />
+            </linearGradient>
+          </defs>
+          <PolarGrid
+            stroke="rgba(255,255,255,0.12)"
+            strokeDasharray="3 6"
+            gridType="polygon"
+          />
+          <PolarAngleAxis dataKey="subject" tick={TICK_STYLE} tickLine={false} />
+          <PolarRadiusAxis
+            angle={90}
+            domain={[0, 100]}
+            tick={false}
+            axisLine={false}
+            tickCount={5}
+          />
+          <Tooltip
+            contentStyle={TOOLTIP_STYLE}
+            formatter={(value) => [`${value ?? "—"}`, "Score"]}
+          />
+          <Radar
+            name="Score"
+            dataKey="score"
+            stroke={`url(#radarStroke-${uid})`}
+            strokeWidth={2.5}
+            fill={`url(#radarFill-${uid})`}
+            fillOpacity={1}
+            dot={{
+              r: 4,
+              fill: "#fff",
+              stroke: CHART_COLORS.violet,
+              strokeWidth: 2,
+            }}
+            isAnimationActive={animMs > 0}
+            animationDuration={animMs}
+            animationEasing="ease-out"
+          />
+        </RadarChart>
+      </ResponsiveContainer>
+    </motion.div>
   );
 }

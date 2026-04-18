@@ -1,15 +1,12 @@
 "use client";
 
-import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { EnhanceSection } from "@/components/landing/EnhanceSection";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { FeatureSection } from "@/components/landing/FeatureSection";
 import { StatsSection } from "@/components/landing/StatsSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
-import { FAQSection } from "@/components/landing/FAQSection";
 import { CTASection } from "@/components/landing/CTASection";
-import { Footer } from "@/components/landing/Footer";
 import LpBackground, { PageCursorGlow } from "@/components/landing/LpBackground";
 
 export default function Home() {
@@ -25,17 +22,18 @@ export default function Home() {
     >
       <PageCursorGlow />
       <LpBackground />
-      <div style={{ position: "relative", zIndex: 2 }}>
-        <Navbar />
+      <div id="landing-scroll-content" style={{ position: "relative", zIndex: 2 }}>
         <HeroSection />
-        <EnhanceSection />
-        <HowItWorks />
-        <FeatureSection />
-        <StatsSection />
-        <TestimonialsSection />
-        <FAQSection />
-        <CTASection />
-        <Footer />
+        <div className="relative isolate">
+          <div className="relative z-[1]">
+            <EnhanceSection />
+            <HowItWorks />
+            <FeatureSection />
+            <StatsSection />
+            <TestimonialsSection />
+            <CTASection />
+          </div>
+        </div>
       </div>
     </main>
   );

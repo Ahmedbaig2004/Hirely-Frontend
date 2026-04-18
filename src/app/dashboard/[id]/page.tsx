@@ -77,7 +77,7 @@ export default function InterviewDetail() {
       <main
         className="lp-page relative min-h-screen p-8 font-sans overflow-hidden"
         style={{
-          background: "var(--lp-background)",
+          background: "transparent",
           color: "var(--lp-foreground)",
         }}
       >
@@ -112,7 +112,7 @@ export default function InterviewDetail() {
     <main
       className="lp-page relative min-h-screen p-8 font-sans overflow-hidden"
       style={{
-        background: "var(--lp-background)",
+        background: "transparent",
         color: "var(--lp-foreground)",
       }}
     >

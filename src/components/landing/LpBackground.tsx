@@ -117,5 +117,17 @@ export function AmbientOrbs() {
  * use of <PageCursorGlow />.
  */
 export default function LpBackground() {
-  return <AmbientOrbs />;
+  return (
+    <div
+      aria-hidden
+      style={{
+        position: "absolute",
+        inset: 0,
+        zIndex: 0,
+        pointerEvents: "none",
+      }}
+    >
+      <AmbientOrbs />
+    </div>
+  );
 }

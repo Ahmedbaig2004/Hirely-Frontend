@@ -4,6 +4,11 @@ import "./globals.css";
 import AuthProvider from "../components/AuthProvider";
 import { ThemeProvider } from "../components/ThemeProvider";
 import { ThemedToastContainer } from "../components/ThemedToastContainer";
+import { Navbar } from "../components/landing/Navbar";
+import { Footer } from "../components/landing/Footer";
+import { PreloaderProvider } from "../components/landing/PreloaderContext";
+import { LandingPreloader } from "../components/landing/Preloader";
+import { GlobalSubpageBackdrop } from "../components/backgrounds/GlobalSubpageBackdrop";
 import "react-toastify/dist/ReactToastify.css";
 
 const geistSans = Geist({
@@ -28,10 +33,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased relative min-h-screen`}>
         <ThemeProvider>
           <AuthProvider>
-            {children}
+            <PreloaderProvider>
+              <GlobalSubpageBackdrop />
+              <Navbar />
+              <LandingPreloader />
+              {children}
+              <Footer />
+            </PreloaderProvider>
           </AuthProvider>
           <ThemedToastContainer />
         </ThemeProvider>

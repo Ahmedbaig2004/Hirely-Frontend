@@ -13,14 +13,21 @@ export const CHART_COLORS = {
 
 export const AXIS_COLOR = "rgba(255,255,255,0.35)";
 export const GRID_COLOR = "rgba(255,255,255,0.07)";
+/** Lighter grid for “premium” charts — less visual noise */
+export const GRID_FAINT = "rgba(255,255,255,0.045)";
+
+/** Deep analytics chart motion (Recharts) */
+export const CHART_ANIM_MS = 1500;
+export const CHART_ANIM_EASE = "ease-out" as const;
 
 export const TOOLTIP_STYLE: CSSProperties = {
   background: "rgba(8,8,16,0.97)",
-  border: "1px solid rgba(124,58,237,0.4)",
+  border: "1px solid rgba(124,58,237,0.45)",
   borderRadius: 12,
   backdropFilter: "blur(24px)",
-  color: "rgba(255,255,255,0.85)",
+  color: "rgba(255,255,255,0.9)",
   fontSize: 12,
+  boxShadow: "0 0 24px rgba(124,58,237,0.15), 0 8px 32px rgba(0,0,0,0.35)",
 };
 
 export const TICK_STYLE = {

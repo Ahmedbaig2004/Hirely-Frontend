@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { IconBrandGoogle, IconBrandLinkedin } from "@tabler/icons-react";
 import { Eye, EyeOff, Loader2, Rocket, Shield, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
-
 export default function AuthPage() {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -88,7 +87,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="auth-page lp-page relative min-h-screen w-full overflow-x-hidden bg-[var(--auth-bg-right)] text-[var(--lp-foreground)]">
+    <div className="auth-page lp-page relative min-h-screen w-full overflow-x-hidden bg-transparent text-[var(--lp-foreground)]">
       <div className="grid min-h-screen w-full lg:grid-cols-2">
         {/* Left — branding (deeper + gradient vs. right panel) */}
         <div className="auth-split-left relative hidden flex-col justify-between overflow-hidden px-10 py-12 lg:flex lg:px-14 xl:px-16">

@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { getScoreCellColor, getScoreCellBorder } from "@/lib/scoreColors";
 
 interface TopicRow {
@@ -30,6 +30,8 @@ const NO_DATA = (
 );
 
 export function TopicHeatmap({ topicHeatmap }: Props) {
+  const reduceMotion = useReducedMotion();
+
   if (!topicHeatmap || topicHeatmap.length === 0) return NO_DATA;
 
   return (
@@ -63,16 +65,23 @@ export function TopicHeatmap({ topicHeatmap }: Props) {
                 const score = row[diff];
                 return (
                   <td key={diff} className="py-2 px-3 text-center">
-                    <span
-                      className="inline-flex items-center justify-center w-14 h-9 rounded-lg text-sm font-bold transition-all"
+                    <motion.span
+                      className="inline-flex items-center justify-center w-14 h-9 rounded-lg text-sm font-bold cursor-default"
                       style={{
                         background: getScoreCellColor(score),
                         border: `1px solid ${getScoreCellBorder(score)}`,
                         color: score !== null ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.2)",
+                        boxShadow: score !== null ? "0 0 0 0 rgba(124,58,237,0)" : undefined,
                       }}
+                      whileHover={
+                        reduceMotion || score === null
+                          ? undefined
+                          : { scale: 1.06, boxShadow: "0 0 20px rgba(124,58,237,0.35)" }
+                      }
+                      transition={{ type: "spring", stiffness: 400, damping: 22 }}
                     >
                       {score !== null ? score : "—"}
-                    </span>
+                    </motion.span>
                   </td>
                 );
               })}

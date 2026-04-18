@@ -8,8 +8,6 @@ import {
   BarChart3, TrendingUp, Trophy, MessageSquare,
   Percent, ArrowLeft, Zap,
 } from "lucide-react";
-import LpBackground from "@/components/landing/LpBackground";
-import { Navbar } from "@/components/landing/Navbar";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { AnalyticsSkeleton } from "@/components/analytics/AnalyticsSkeleton";
 import { FilterBar, type AnalyticsFilters } from "@/components/analytics/FilterBar";
@@ -274,27 +272,25 @@ export default function AnalyticsPage() {
     <main
       className="lp-page relative min-h-screen overflow-hidden"
       style={{
-        background: "var(--lp-background)",
+        background: "transparent",
         color: "var(--lp-foreground)",
       }}
     >
-      <LpBackground />
-      <Navbar />
       <motion.div
-        className="relative z-[2] max-w-6xl mx-auto px-6 pt-32 pb-16"
+        className="relative z-[2] mx-auto max-w-6xl px-6 pb-16 pt-32"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-black lp-hi">Analytics</h1>
-            <p className="lp-muted text-sm mt-1">Insights across all your interviews</p>
+            <p className="lp-muted mt-1 text-sm">Insights across all your interviews</p>
           </div>
           <button
             onClick={() => router.push("/dashboard")}
-            className="flex items-center gap-2 lp-muted hover:lp-hi transition-colors text-sm"
+            className="flex items-center gap-2 text-sm lp-muted transition-colors hover:lp-hi"
           >
             <ArrowLeft size={15} />
             History

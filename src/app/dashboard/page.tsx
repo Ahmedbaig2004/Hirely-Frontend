@@ -5,12 +5,10 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Calendar, ChevronDown, CheckCircle, XCircle, ArrowRight, Inbox, Zap, Trash2 } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
-import SignOutButton from "@/components/logOutButton";
 import { LoaderFour } from "@/components/ui/loader";
 import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
-import LpBackground from "@/components/landing/LpBackground";
-import { Navbar } from "@/components/landing/Navbar";
+import { PersonalDashboardExperience } from "@/components/dashboard/PersonalDashboardExperience";
 
 interface InterviewFeedback {
   decision?: string;
@@ -246,6 +244,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");
+  const [dashSection, setDashSection] = useState<"overview" | "sessions">("overview");
   const { user } = useAuthStore();
   const router = useRouter();
 
@@ -288,145 +287,114 @@ export default function Dashboard() {
     return (
       <div
         className="lp-page dark flex h-screen w-full items-center justify-center"
-        style={{ background: "var(--lp-background)" }}
+        style={{ background: "transparent" }}
       >
         <LoaderFour />
       </div>
     );
   }
 
-  const Header = () => (
-    <div className="flex justify-between items-center mb-8">
-      <div>
-        <h1 className="text-3xl font-bold text-on-surface opacity-90">Your Interviews</h1>
-        <p className="text-on-surface-variant text-sm mt-1 opacity-50">Welcome back, {user?.email}</p>
+  const sessionsBlock = (
+    <>
+      <div className="flex flex-wrap gap-2 mb-6">
+        {FILTER_OPTIONS.map((opt) => {
+          const isActive = filter === opt.value;
+          const count =
+            opt.value === "all"
+              ? interviews.length
+              : interviews.filter((iv) => (iv.interviewType ?? "JOB_SPECIFIC") === opt.value).length;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setFilter(opt.value)}
+              className="glass-card rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200"
+              style={
+                isActive
+                  ? {
+                      borderColor: "rgba(124,58,237,0.4)",
+                      boxShadow: "0 0 20px rgba(124,58,237,0.15)",
+                      color: "rgba(255,255,255,0.95)",
+                    }
+                  : { color: "rgba(255,255,255,0.5)" }
+              }
+            >
+              {opt.label}
+              <span className="ml-2 opacity-50">{count}</span>
+            </button>
+          );
+        })}
       </div>
-      <div className="flex gap-3">
-        <SignOutButton />
-        <button onClick={() => router.push("/")} className="btn-violet flex items-center gap-2 rounded-lg px-4 py-2">
-          <Zap size={16} />
-          New Interview
-        </button>
-      </div>
-    </div>
-  );
 
-  if (loading) {
-    return (
-      <main
-        className="lp-page relative min-h-screen overflow-hidden"
-        style={{
-          background: "var(--lp-background)",
-          color: "var(--lp-foreground)",
-        }}
-      >
-        <LpBackground />
-        <Navbar />
-        <div className="relative z-[2] max-w-4xl mx-auto px-8 pt-32 pb-8">
-          <Header />
-          <div className="grid gap-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-surface-container p-6 rounded-xl border border-outline-variant animate-pulse">
-                <div className="h-6 w-3/4 bg-surface-container-high rounded mb-4"></div>
-                <div className="flex items-center gap-4">
-                  <div className="h-4 w-32 bg-surface-container-high rounded"></div>
-                  <div className="h-4 w-24 bg-surface-container-high rounded"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </main>
-    );
-  }
+      <div className="grid gap-4">
+        {filteredInterviews.map((item, i) => (
+          <InterviewCard
+            key={item.id}
+            item={item}
+            index={i}
+            expanded={expandedId === item.id}
+            onToggle={() => setExpandedId(expandedId === item.id ? null : item.id)}
+            onNavigate={() => router.push(`/dashboard/${item.id}`)}
+            onDelete={() => handleDelete(item.id)}
+          />
+        ))}
+
+        {filteredInterviews.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="flex flex-col items-center justify-center py-20 text-center"
+          >
+            <Inbox size={48} className="text-on-surface-variant mb-4 opacity-25" />
+            <p className="text-on-surface-variant text-lg font-medium mb-2 opacity-55">
+              {interviews.length === 0
+                ? "No interviews yet"
+                : `No ${FILTER_OPTIONS.find((o) => o.value === filter)?.label} interviews`}
+            </p>
+            <p className="text-on-surface-variant text-sm mb-6 opacity-30">
+              {interviews.length === 0
+                ? "Start your first interview to see results here"
+                : "Try a different filter or start a new interview"}
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push("/start")}
+              className="btn-violet flex items-center gap-2 rounded-lg px-4 py-2"
+            >
+              <Zap size={16} />
+              {interviews.length === 0 ? "Start your first interview" : "New Interview"}
+            </button>
+          </motion.div>
+        )}
+      </div>
+    </>
+  );
 
   return (
     <main
       className="lp-page relative min-h-screen overflow-hidden"
       style={{
-        background: "var(--lp-background)",
+        background: "transparent",
         color: "var(--lp-foreground)",
       }}
     >
-      <LpBackground />
-      <Navbar />
-      <motion.div
-        className="relative z-[2] max-w-4xl mx-auto px-8 pt-32 pb-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4 }}
-      >
-        <Header />
-
-        {/* Interview type filter */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          {FILTER_OPTIONS.map((opt) => {
-            const isActive = filter === opt.value;
-            const count =
-              opt.value === "all"
-                ? interviews.length
-                : interviews.filter((iv) => (iv.interviewType ?? "JOB_SPECIFIC") === opt.value).length;
-            return (
-              <button
-                key={opt.value}
-                onClick={() => setFilter(opt.value)}
-                className="glass-card rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200"
-                style={
-                  isActive
-                    ? {
-                        borderColor: "rgba(124,58,237,0.4)",
-                        boxShadow: "0 0 20px rgba(124,58,237,0.15)",
-                        color: "rgba(255,255,255,0.95)",
-                      }
-                    : { color: "rgba(255,255,255,0.5)" }
-                }
-              >
-                {opt.label}
-                <span className="ml-2 opacity-50">{count}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="grid gap-4">
-          {filteredInterviews.map((item, i) => (
-            <InterviewCard
-              key={item.id}
-              item={item}
-              index={i}
-              expanded={expandedId === item.id}
-              onToggle={() => setExpandedId(expandedId === item.id ? null : item.id)}
-              onNavigate={() => router.push(`/dashboard/${item.id}`)}
-              onDelete={() => handleDelete(item.id)}
-            />
-          ))}
-
-          {filteredInterviews.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="flex flex-col items-center justify-center py-20 text-center"
-            >
-              <Inbox size={48} className="text-on-surface-variant mb-4 opacity-25" />
-              <p className="text-on-surface-variant text-lg font-medium mb-2 opacity-55">
-                {interviews.length === 0
-                  ? "No interviews yet"
-                  : `No ${FILTER_OPTIONS.find((o) => o.value === filter)?.label} interviews`}
-              </p>
-              <p className="text-on-surface-variant text-sm mb-6 opacity-30">
-                {interviews.length === 0
-                  ? "Start your first interview to see results here"
-                  : "Try a different filter or start a new interview"}
-              </p>
-              <button onClick={() => router.push("/")} className="btn-violet flex items-center gap-2 rounded-lg px-4 py-2">
-                <Zap size={16} />
-                {interviews.length === 0 ? "Start your first interview" : "New Interview"}
-              </button>
-            </motion.div>
-          )}
-        </div>
-      </motion.div>
+      <div className="relative z-[2]">
+        <PersonalDashboardExperience
+          interviews={interviews}
+          loading={loading}
+          drillType={filter !== "all" ? filter : null}
+          onDrill={(type) => {
+            setFilter(type as FilterType);
+            setDashSection("sessions");
+          }}
+          onClearDrill={() => setFilter("all")}
+          section={dashSection}
+          onSectionChange={setDashSection}
+        >
+          {sessionsBlock}
+        </PersonalDashboardExperience>
+      </div>
     </main>
   );
 }

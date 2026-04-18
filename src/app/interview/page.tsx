@@ -2,13 +2,12 @@
 
 import InterviewPanel from "@/components/InterviewPanel";
 import LpBackground from "@/components/landing/LpBackground";
-
 export default function InterviewPage() {
   return (
     <div
       className="lp-page relative min-h-screen overflow-hidden"
       style={{
-        background: "var(--lp-background)",
+        background: "transparent",
         color: "var(--lp-foreground)",
       }}
     >

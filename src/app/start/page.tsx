@@ -1,16 +1,13 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useId } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useInterviewStore, InterviewType } from "@/stores/useInterviewStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { FileUpload } from "@/components/ui/file-upload";
-import LpBackground from "@/components/landing/LpBackground";
-import { Navbar } from "@/components/landing/Navbar";
-import { Footer } from "@/components/landing/Footer";
 import { InterviewTypeSidebar } from "@/components/start/InterviewTypeSidebar";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   Zap, FileText, Sparkles, BarChart, MessageSquare,
   CheckCircle, ChevronRight, Loader2,
@@ -44,6 +41,8 @@ const GENERIC_LOADING_STEPS = [
   { label: "Preparing interview context...",    Icon: Sparkles      },
   { label: "Generating interview questions...", Icon: MessageSquare },
 ];
+
+const SETUP_TITLE = "Set Up Your Interview";
 
 function getScoreColor(score: number) {
   if (score >= 70) return "text-emerald-400";
@@ -186,71 +185,220 @@ export default function StartPage() {
     return true;
   })();
 
+  const reduceMotion = useReducedMotion();
+  const heroStrokeId = `start-hero-stroke-${useId().replace(/:/g, "")}`;
+
+  const springIn = {
+    type: "spring" as const,
+    damping: 28,
+    stiffness: 260,
+    mass: 0.85,
+  };
+
+  const springSoft = {
+    type: "spring" as const,
+    damping: 32,
+    stiffness: 200,
+    mass: 0.9,
+  };
+
   return (
     <div
       className="lp-page relative min-h-screen overflow-hidden"
       style={{
-        background: "var(--lp-background)",
+        background: "transparent",
         color: "var(--lp-foreground)",
       }}
     >
-      <LpBackground />
-
       <div className="relative z-[2] min-h-screen flex flex-col">
-        <Navbar />
-
-        <main className="flex-1 flex flex-col items-center justify-center px-6 py-8 pt-28">
+        <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-8 pt-28 overflow-x-hidden">
           <AnimatePresence mode="wait">
 
             {/* ── STAGE: FORM ── */}
             {stage === "form" && (
               <motion.div
                 key="form"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -16 }}
-                transition={{ duration: 0.3 }}
-                className="w-full flex flex-col items-center"
+                initial={reduceMotion ? { opacity: 0 } : { opacity: 0, x: 48 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={
+                  reduceMotion
+                    ? { opacity: 0 }
+                    : { opacity: 0, x: -32, filter: "blur(8px)", transition: { duration: 0.25 } }
+                }
+                transition={reduceMotion ? { duration: 0.2 } : springIn}
+                className="relative z-[1] w-full max-w-6xl flex flex-col items-stretch"
+                style={{ perspective: reduceMotion ? undefined : 1400 }}
               >
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1, duration: 0.6 }}
-                  className="text-center mb-8"
+                {/* BI / AI platform hero atmosphere (inspired by dashboard hero treatments — e.g. Dribbble BI AI hero patterns) */}
+                <div
+                  className="pointer-events-none absolute -top-24 left-1/2 h-[min(520px,70vh)] w-[min(1100px,100vw)] -translate-x-1/2 overflow-visible"
+                  aria-hidden
                 >
-                  <span className="label-caps block mb-3">Ready to begin?</span>
-                  <h1 className="text-2xl md:text-3xl font-bold text-on-surface tracking-tight opacity-90">
-                    Set Up Your Interview
-                  </h1>
-                  <p className="text-sm text-on-surface-variant mt-2 opacity-55">
+                  <div
+                    className="absolute left-[8%] top-[12%] h-[280px] w-[280px] rounded-full opacity-[0.45] blur-[100px]"
+                    style={{
+                      background:
+                        "radial-gradient(circle at 30% 30%, rgba(34, 211, 238, 0.35), transparent 62%)",
+                    }}
+                  />
+                  <div
+                    className="absolute right-[6%] top-[22%] h-[320px] w-[320px] rounded-full opacity-[0.4] blur-[110px]"
+                    style={{
+                      background:
+                        "radial-gradient(circle at 70% 40%, rgba(139, 92, 246, 0.38), transparent 58%)",
+                    }}
+                  />
+                  <div
+                    className="absolute bottom-[8%] left-1/2 h-[200px] w-[70%] -translate-x-1/2 rounded-full opacity-[0.2] blur-[80px]"
+                    style={{
+                      background:
+                        "radial-gradient(ellipse at center, rgba(59, 130, 246, 0.35), transparent 65%)",
+                    }}
+                  />
+                  <svg
+                    className="absolute left-1/2 top-[18%] w-[min(720px,92vw)] -translate-x-1/2 opacity-[0.35]"
+                    viewBox="0 0 720 120"
+                    fill="none"
+                    aria-hidden
+                  >
+                    <path
+                      d="M0 96 C 120 24, 200 104, 360 56 S 560 8, 720 88"
+                      stroke={`url(#${heroStrokeId})`}
+                      strokeWidth="1.25"
+                      strokeLinecap="round"
+                      strokeDasharray="6 10"
+                    />
+                    <defs>
+                      <linearGradient id={heroStrokeId} x1="0" y1="0" x2="720" y2="0">
+                        <stop stopColor="rgba(34,211,238,0.5)" />
+                        <stop offset="0.5" stopColor="rgba(139,92,246,0.45)" />
+                        <stop offset="1" stopColor="rgba(59,130,246,0.35)" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+
+                {/* Hero copy — centered; motion uses motion.* tree so variants propagate */}
+                <motion.div
+                  initial="hidden"
+                  animate="show"
+                  variants={{
+                    hidden: {},
+                    show: {
+                      transition: reduceMotion
+                        ? { staggerChildren: 0, delayChildren: 0 }
+                        : { staggerChildren: 0.07, delayChildren: 0.04 },
+                    },
+                  }}
+                  className="relative z-[2] mb-10 flex w-full flex-col items-center text-center md:mb-14"
+                >
+                  <motion.span
+                    variants={{
+                      hidden: reduceMotion ? { opacity: 0 } : { opacity: 0, x: 56, filter: "blur(8px)" },
+                      show: reduceMotion
+                        ? { opacity: 1 }
+                        : { opacity: 1, x: 0, filter: "blur(0px)", transition: springSoft },
+                    }}
+                    className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-400/25 bg-gradient-to-r from-cyan-500/[0.12] via-white/[0.04] to-violet-500/[0.14] px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-100/95 shadow-[0_0_32px_-8px_rgba(34,211,238,0.35)] backdrop-blur-md"
+                  >
+                    Ready to begin?
+                  </motion.span>
+
+                  {/* motion.h1 required: plain <h1> breaks Framer variant inheritance to word spans */}
+                  <motion.h1
+                    className="max-w-[22ch] text-3xl font-semibold leading-[1.12] tracking-tight text-white drop-shadow-[0_0_42px_rgba(34,211,238,0.22)] md:text-5xl md:leading-[1.08]"
+                    variants={{
+                      hidden: {},
+                      show: {
+                        transition: reduceMotion
+                          ? {}
+                          : { staggerChildren: 0.055, delayChildren: 0.06 },
+                      },
+                    }}
+                  >
+                    {SETUP_TITLE.split(" ").map((word, i) => (
+                      <motion.span
+                        key={`${word}-${i}`}
+                        className="inline-block origin-center mr-[0.28em] last:mr-0"
+                        variants={{
+                          hidden: reduceMotion ? { opacity: 0 } : { opacity: 0, x: 72, rotateY: -12, filter: "blur(10px)" },
+                          show: reduceMotion
+                            ? { opacity: 1 }
+                            : {
+                                opacity: 1,
+                                x: 0,
+                                rotateY: 0,
+                                filter: "blur(0px)",
+                                transition: { ...springIn, delay: i * 0.02 },
+                              },
+                        }}
+                        style={reduceMotion ? undefined : { transformStyle: "preserve-3d" }}
+                      >
+                        {word}
+                      </motion.span>
+                    ))}
+                  </motion.h1>
+
+                  <motion.p
+                    variants={{
+                      hidden: reduceMotion ? { opacity: 0 } : { opacity: 0, x: 48, filter: "blur(6px)" },
+                      show: reduceMotion
+                        ? { opacity: 1 }
+                        : { opacity: 1, x: 0, filter: "blur(0px)", transition: { ...springSoft, delay: 0.08 } },
+                    }}
+                    className="mt-4 max-w-lg text-sm leading-relaxed text-slate-400/95 md:text-base"
+                  >
                     Choose your interview type and configure your session.
-                  </p>
+                  </motion.p>
+
+                  {/* Accent line — draws from center */}
+                  <motion.div
+                    variants={{
+                      hidden: { scaleX: 0, opacity: 0 },
+                      show: {
+                        scaleX: 1,
+                        opacity: 1,
+                        transition: reduceMotion ? { duration: 0.2 } : { delay: 0.35, duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+                      },
+                    }}
+                    className="mt-7 hidden h-px w-full max-w-md origin-center rounded-full md:block"
+                    style={{
+                      background:
+                        "linear-gradient(90deg, transparent, rgba(34,211,238,0.45), rgba(139,92,246,0.4), transparent)",
+                    }}
+                  />
                 </motion.div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 40, scale: 0.97 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ delay: 0.2, duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
-                  className="w-full max-w-3xl"
-                >
-                  {/* Layout: sidebar left + form right */}
-                  <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6 items-start">
-
-                    {/* Sidebar */}
+                <div className="relative z-[2] w-full rounded-[2rem] border border-white/[0.07] bg-slate-950/[0.35] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset,0_40px_100px_-48px_rgba(0,0,0,0.85)] backdrop-blur-xl sm:p-8">
+                <div className="w-full grid grid-cols-1 lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)] gap-8 lg:gap-10 items-start">
+                  {/* Sidebar — subtle counter-motion from left */}
+                  <motion.div
+                    initial={reduceMotion ? { opacity: 0 } : { opacity: 0, x: -56, filter: "blur(8px)" }}
+                    animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+                    transition={reduceMotion ? { duration: 0.25 } : { ...springIn, delay: 0.14 }}
+                    className="w-full lg:sticky lg:top-28 order-2 lg:order-1"
+                  >
                     <InterviewTypeSidebar
                       selected={interviewType}
                       onSelect={handleTypeSelect}
                     />
+                  </motion.div>
 
-                    {/* Form card */}
-                    <div className="relative">
+                  {/* Form card — primary panel from the right with depth */}
+                  <motion.div
+                    initial={reduceMotion ? { opacity: 0 } : { opacity: 0, x: 96, rotateY: -7, filter: "blur(12px)" }}
+                    animate={{ opacity: 1, x: 0, rotateY: 0, filter: "blur(0px)" }}
+                    transition={reduceMotion ? { duration: 0.3 } : { ...springIn, delay: 0.22 }}
+                    className="relative order-1 lg:order-2"
+                    style={reduceMotion ? undefined : { transformStyle: "preserve-3d" }}
+                  >
                       <div
-                        className="absolute inset-0 rounded-2xl blur-[60px] opacity-10 pointer-events-none"
-                        style={{ background: "radial-gradient(circle, var(--md-sys-color-primary) 0%, transparent 70%)" }}
+                        className="absolute inset-0 rounded-2xl blur-[60px] opacity-[0.12] pointer-events-none"
+                        style={{ background: "radial-gradient(circle, var(--md-sys-color-primary) 0%, transparent 72%)" }}
                       />
 
-                      <div className="relative rounded-2xl glass-card-raised p-7">
-                        <div className="flex items-center justify-between mb-6">
+                      <div className="relative rounded-3xl glass-card-raised border border-white/[0.09] p-6 shadow-[0_24px_80px_-24px_rgba(0,0,0,0.55),0_0_0_1px_rgba(255,255,255,0.04)_inset] sm:p-7">
+                        <div className="flex items-center justify-between mb-6 gap-3">
                           <div>
                             <h2 className="text-base font-semibold text-on-surface tracking-tight opacity-90">
                               Start your session
@@ -260,13 +408,13 @@ export default function StartPage() {
                             </p>
                           </div>
                           <div
-                            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                            className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 border border-emerald-400/25"
                             style={{
-                              background: "color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)",
-                              border: "1px solid color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent)",
+                              background: "color-mix(in srgb, rgb(52 211 153) 18%, transparent)",
+                              boxShadow: "0 0 24px color-mix(in srgb, rgb(52 211 153) 12%, transparent)",
                             }}
                           >
-                            <Zap size={14} style={{ color: "var(--md-sys-color-primary)" }} />
+                            <Zap size={15} className="text-emerald-400" aria-hidden />
                           </div>
                         </div>
 
@@ -521,9 +669,9 @@ export default function StartPage() {
 
                         <p className="text-center mt-4 label-caps">Powered by Gemini AI</p>
                       </div>
-                    </div>
-                  </div>
-                </motion.div>
+                  </motion.div>
+                </div>
+                </div>
               </motion.div>
             )}
 
@@ -694,8 +842,6 @@ export default function StartPage() {
 
           </AnimatePresence>
         </main>
-
-        <Footer />
       </div>
 
       <ToastContainer position="bottom-right" theme="dark" autoClose={3000} />

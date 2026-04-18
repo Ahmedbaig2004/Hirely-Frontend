@@ -7,9 +7,6 @@ import SectionWrapper from "@/components/ui/SectionWrapper";
 import FloatingShapes from "@/components/ui/FloatingShapes";
 import { fadeInUp, pageStagger, cardPop, staggerSpring } from "@/lib/motion";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { Navbar } from "@/components/landing/Navbar";
-import { Footer } from "@/components/landing/Footer";
-
 const plans = [
   {
     name: "Basic",
@@ -74,12 +71,10 @@ export default function PricingPage() {
     <div
       className="lp-page relative min-h-screen overflow-x-hidden"
       style={{
-        background: "var(--lp-background)",
+        background: "transparent",
         color: "var(--lp-foreground)",
       }}
     >
-      <Navbar />
-
       <main className="relative z-10 flex flex-col pt-24">
         <section className="relative py-20 sm:py-28">
           <FloatingShapes />
@@ -233,8 +228,6 @@ export default function PricingPage() {
           </motion.div>
         </SectionWrapper>
       </main>
-
-      <Footer />
     </div>
   );
 }
