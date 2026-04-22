@@ -326,7 +326,24 @@ export default function InterviewDetail() {
         )}
 
         {/* 5. VOCAL DELIVERY — Actionable metrics + honest framing */}
-        {feedback.voiceSummary && (
+        {feedback.voiceSummary && (() => {
+          const voiceTurnsForScore = data.turns.filter(
+            (t: any) => t.voiceAnalysis?.status === "completed" && typeof t.voiceAnalysis?.confidenceLevel === "number"
+          );
+          const perceptionPct = voiceTurnsForScore.length > 0
+            ? Math.round(
+                (voiceTurnsForScore.reduce((s: number, t: any) => s + t.voiceAnalysis.confidenceLevel, 0) /
+                  voiceTurnsForScore.length) * 100
+              )
+            : null;
+          const circleStroke =
+            perceptionPct == null ? "#64748b"
+              : perceptionPct >= 70 ? "#10B981"
+              : perceptionPct >= 50 ? "#F59E0B"
+              : "#EF4444";
+          const circumference = 2 * Math.PI * 36;
+          const offset = perceptionPct == null ? circumference : circumference * (1 - perceptionPct / 100);
+          return (
           <div className="glass-card p-6 rounded-xl border-l-4 border-primary mb-8">
             <div className="flex flex-wrap justify-between items-start mb-5 gap-4">
               <div>
@@ -337,6 +354,32 @@ export default function InterviewDetail() {
                   How interviewers typically perceive your vocal patterns
                 </p>
               </div>
+              {perceptionPct != null && (
+                <div className="flex items-center gap-3">
+                  <div className="relative w-[88px] h-[88px]">
+                    <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80">
+                      <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6" />
+                      <circle
+                        cx="40" cy="40" r="36" fill="none"
+                        stroke={circleStroke} strokeWidth="6" strokeLinecap="round"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={offset}
+                        style={{ filter: `drop-shadow(0 0 6px ${circleStroke}88)`, transition: "stroke-dashoffset 0.6s ease" }}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-xl font-black" style={{ color: circleStroke }}>{perceptionPct}</span>
+                      <span className="text-[8px] uppercase tracking-wider opacity-50">/ 100</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="label-caps text-violet-400/70">Perception Score</div>
+                    <div className="text-[10px] opacity-50 max-w-[140px] mt-1 leading-snug">
+                      Avg across {voiceTurnsForScore.length} voice turn{voiceTurnsForScore.length === 1 ? "" : "s"}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* SHAP-driven coaching — final summary + 3 improvements + 2 strengths */}
@@ -531,7 +574,8 @@ export default function InterviewDetail() {
               </details>
             )}
           </div>
-        )}
+          );
+        })()}
 
         {/* 6. DELIVERY ANALYSIS SUMMARY */}
         {(() => {
