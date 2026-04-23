@@ -30,8 +30,6 @@ type ProcessingStage =
   | "generating_report"
   | "done";
 
-type InterviewMode = "audio" | "chat" | "video";
-
 type ChatMessage = {
   role: "ai" | "user";
   content: string;
@@ -44,7 +42,9 @@ export default function InterviewPanel() {
   const {
     sessionId,
     currentQuestion,
+    questionCount,
     setQuestion,
+    setQuestionCount,
     setFeedback,
     firstQuestionAudio,
     firstQuestionAudioMime,
@@ -52,12 +52,14 @@ export default function InterviewPanel() {
     isTtsEnabled,
     toggleTts,
     resetSession,
+    interviewMode,
+    selectedMicId,
+    selectedCameraId,
   } = useInterviewStore();
 
   // 2. Local State
   const [isAIThinking, setIsAIThinking] = useState(false);
   const [hasSpoken, setHasSpoken] = useState(false);
-  const [questionCount, setQuestionCount] = useState(1);
 
   // Audio State
   const [currentAudioData, setCurrentAudioData] = useState<string | null>(null);
@@ -67,35 +69,49 @@ export default function InterviewPanel() {
   // Exit modal state
   const [showExitModal, setShowExitModal] = useState(false);
 
-  // Interview mode state
-  const [interviewMode, setInterviewMode] = useState<InterviewMode>("audio");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // Report Processing State
   const [isProcessingReport, setIsProcessingReport] = useState(false);
-  const [voiceProgress, setVoiceProgress] = useState({ completed: 0, total: 9 });
-  const [processingStage, setProcessingStage] = useState<ProcessingStage>("evaluating");
+  const [voiceProgress, setVoiceProgress] = useState({
+    completed: 0,
+    total: 9,
+  });
+  const [processingStage, setProcessingStage] =
+    useState<ProcessingStage>("evaluating");
 
   // Track whether any audio turns have been submitted (for smart finalization)
   const [hasAudioTurns, setHasAudioTurns] = useState(false);
 
   // Abort ref for voice polling — set to true on unmount to stop recursive setTimeout
   const pollingAbortRef = useRef(false);
+  const pollingTimerRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
-    return () => { pollingAbortRef.current = true; };
+    return () => {
+      pollingAbortRef.current = true;
+      if (pollingTimerRef.current) clearTimeout(pollingTimerRef.current);
+    };
   }, []);
 
   // 3. Hooks
   const {
     isRecording,
     volume,
+    isCameraReady,
     getAudioBlob,
     resetRecorder,
     stopRecordingManual,
-    isSwitchingModeRef,
-  } = useVoiceActivity(isAIThinking, interviewMode);
+    startVideoRecording,
+    stopVideoRecording,
+    setVideoPreviewElement,
+  } = useVoiceActivity(
+    isAIThinking,
+    interviewMode,
+    selectedMicId,
+    selectedCameraId,
+  );
   const prevRecordingState = useRef(false);
 
   // ─────────────────────────────────────────────────────────────
@@ -122,12 +138,19 @@ export default function InterviewPanel() {
   // Auto-scroll chat to bottom
   useEffect(() => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
     }
   }, [chatMessages]);
 
   useEffect(() => {
-    if (isRecording) setHasSpoken(true);
+    if (isRecording) {
+      setHasSpoken(true);
+      // Start video recording alongside audio when in video mode
+      if (interviewMode === "video") {
+        startVideoRecording();
+      }
+    }
   }, [isRecording]);
 
   useEffect(() => {
@@ -135,8 +158,7 @@ export default function InterviewPanel() {
       !isAIThinking &&
       prevRecordingState.current === true &&
       isRecording === false &&
-      interviewMode === "audio" &&
-      !isSwitchingModeRef.current
+      (interviewMode === "audio" || interviewMode === "video")
     ) {
       handleSubmission();
     }
@@ -153,8 +175,9 @@ export default function InterviewPanel() {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
 
-      // 2. Set new source
+      // 2. Set new source and explicitly load to prevent "interrupted by new load" warning
       audioRef.current.src = `data:${audioMime};base64,${base64String}`;
+      audioRef.current.load();
 
       // 3. Setup Listeners
       audioRef.current.onended = () => {
@@ -204,7 +227,7 @@ export default function InterviewPanel() {
       if (pollingAbortRef.current) return;
       try {
         const { data } = await axios.get(
-          `${backendUrl}/api/voice-progress/${sessionId}`
+          `${backendUrl}/api/voice-progress/${sessionId}`,
         );
         if (pollingAbortRef.current) return;
         setVoiceProgress({ completed: data.completed, total: data.total });
@@ -227,12 +250,12 @@ export default function InterviewPanel() {
             setTimeout(() => router.replace(`/dashboard/${sessionId}`), 2000);
           }
         } else {
-          setTimeout(poll, 2000);
+          pollingTimerRef.current = setTimeout(poll, 2000);
         }
       } catch (err) {
         if (pollingAbortRef.current) return;
         console.error("Polling error:", err);
-        setTimeout(poll, 3000); // retry on error with longer delay
+        pollingTimerRef.current = setTimeout(poll, 3000); // retry on error with longer delay
       }
     };
 
@@ -254,16 +277,29 @@ export default function InterviewPanel() {
     formData.append("sessionId", sessionId || "");
     formData.append("question", currentQuestion || "");
 
+    // In video mode, also attach the video blob
+    if (interviewMode === "video") {
+      const videoBlob = await stopVideoRecording();
+      if (videoBlob.size > 0) {
+        formData.append("video", videoBlob);
+        formData.append("answerMode", "video");
+      }
+    }
+
     try {
       const backendUrl =
         process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
       const res = await axios.post(`${backendUrl}/api/submit-answer`, formData);
-      const { nextQuestion, isFinished, audio, audioMime, transcript } = res.data;
+      const { nextQuestion, isFinished, audio, audioMime, transcript } =
+        res.data;
       setHasAudioTurns(true);
 
       // Sync audio transcript into chat history so switching to chat shows full conversation
       if (transcript) {
-        setChatMessages((prev) => [...prev, { role: "user", content: transcript }]);
+        setChatMessages((prev) => [
+          ...prev,
+          { role: "user", content: transcript },
+        ]);
       }
 
       if (isFinished) {
@@ -275,11 +311,14 @@ export default function InterviewPanel() {
       }
 
       setQuestion(nextQuestion?.question);
-      setQuestionCount((prev) => prev + 1);
+      setQuestionCount(questionCount + 1);
 
       // Add next AI question to chat history
       if (nextQuestion?.question) {
-        setChatMessages((prev) => [...prev, { role: "ai", content: nextQuestion.question }]);
+        setChatMessages((prev) => [
+          ...prev,
+          { role: "ai", content: nextQuestion.question },
+        ]);
       }
 
       if (audio) setCurrentAudioData(audio);
@@ -325,7 +364,10 @@ export default function InterviewPanel() {
 
     const userMessage = chatInput.trim();
     setChatInput("");
-    setChatMessages((prev) => [...prev, { role: "user", content: userMessage }]);
+    setChatMessages((prev) => [
+      ...prev,
+      { role: "user", content: userMessage },
+    ]);
     setIsAIThinking(true);
 
     try {
@@ -350,7 +392,9 @@ export default function InterviewPanel() {
           const backendUrl2 =
             process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
           try {
-            await axios.post(`${backendUrl2}/api/finalize-interview`, { sessionId });
+            await axios.post(`${backendUrl2}/api/finalize-interview`, {
+              sessionId,
+            });
             setProcessingStage("done");
             setTimeout(() => router.replace(`/dashboard/${sessionId}`), 1200);
           } catch (finalizeErr: any) {
@@ -363,7 +407,7 @@ export default function InterviewPanel() {
       }
 
       setQuestion(nextQuestion?.question);
-      setQuestionCount((prev) => prev + 1);
+      setQuestionCount(questionCount + 1);
       setChatMessages((prev) => [
         ...prev,
         { role: "ai", content: nextQuestion?.question },
@@ -374,28 +418,6 @@ export default function InterviewPanel() {
         err.response?.data?.error || err.message || "Failed to submit answer";
       toast.error(`Error: ${errorMsg}`);
       setIsAIThinking(false);
-    }
-  };
-
-  const handleModeSwitch = (newMode: InterviewMode) => {
-    if (newMode === interviewMode || isAIThinking) return;
-
-    // Switching FROM audio: cleanup is handled by useVoiceActivity's interviewMode effect
-    if (interviewMode === "audio") {
-      setHasSpoken(false);
-    }
-
-    setInterviewMode(newMode);
-
-    // Switching TO chat: ensure current question is in chat messages
-    if (newMode === "chat" && currentQuestion) {
-      setChatMessages((prev) => {
-        const lastAI = prev.filter((m) => m.role === "ai").pop();
-        if (lastAI?.content !== currentQuestion) {
-          return [...prev, { role: "ai", content: currentQuestion }];
-        }
-        return prev;
-      });
     }
   };
 
@@ -452,7 +474,6 @@ export default function InterviewPanel() {
 
     return (
       <div className="relative min-h-screen flex flex-col items-center justify-center px-6 z-10">
-
         {/* Ambient orb — violet while processing, emerald when done */}
         <div
           aria-hidden="true"
@@ -488,15 +509,25 @@ export default function InterviewPanel() {
           <div className="mb-10 text-center">
             <motion.div
               animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
-              transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+              transition={{
+                repeat: Infinity,
+                duration: 2.5,
+                ease: "easeInOut",
+              }}
               className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center"
               style={{
-                background: "color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)",
-                border: "1px solid color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent)",
-                boxShadow: "0 0 30px color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent)",
+                background:
+                  "color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)",
+                border:
+                  "1px solid color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent)",
+                boxShadow:
+                  "0 0 30px color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent)",
               }}
             >
-              <BrainCircuit size={26} style={{ color: "var(--md-sys-color-primary)" }} />
+              <BrainCircuit
+                size={26}
+                style={{ color: "var(--md-sys-color-primary)" }}
+              />
             </motion.div>
             <h2 className="text-xl font-semibold text-on-surface tracking-tight opacity-90">
               Building Your Report
@@ -527,13 +558,13 @@ export default function InterviewPanel() {
                       background: isCompleted
                         ? "rgba(16,185,129,0.15)"
                         : isActive
-                        ? "color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)"
-                        : "var(--md-sys-color-surface-container)",
+                          ? "color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)"
+                          : "var(--md-sys-color-surface-container)",
                       border: isCompleted
                         ? "1px solid rgba(16,185,129,0.4)"
                         : isActive
-                        ? "1px solid color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent)"
-                        : "1px solid var(--md-sys-color-outline-variant)",
+                          ? "1px solid color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent)"
+                          : "1px solid var(--md-sys-color-outline-variant)",
                       boxShadow: isActive
                         ? "0 0 12px color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent)"
                         : "none",
@@ -544,14 +575,24 @@ export default function InterviewPanel() {
                     ) : isActive ? (
                       <motion.div
                         animate={{ rotate: 360 }}
-                        transition={{ repeat: Infinity, duration: 1.4, ease: "linear" }}
+                        transition={{
+                          repeat: Infinity,
+                          duration: 1.4,
+                          ease: "linear",
+                        }}
                       >
-                        <Loader2 size={14} style={{ color: "var(--md-sys-color-primary)" }} />
+                        <Loader2
+                          size={14}
+                          style={{ color: "var(--md-sys-color-primary)" }}
+                        />
                       </motion.div>
                     ) : (
                       <div
                         className="w-1.5 h-1.5 rounded-full"
-                        style={{ background: "var(--md-sys-color-surface-container-high)" }}
+                        style={{
+                          background:
+                            "var(--md-sys-color-surface-container-high)",
+                        }}
                       />
                     )}
                   </div>
@@ -564,8 +605,8 @@ export default function InterviewPanel() {
                         color: isCompleted
                           ? "#10B981"
                           : isActive
-                          ? "#ffffff"
-                          : "var(--md-sys-color-on-surface-variant)",
+                            ? "#ffffff"
+                            : "var(--md-sys-color-on-surface-variant)",
                       }}
                     >
                       {stage.label}
@@ -582,35 +623,43 @@ export default function InterviewPanel() {
                     </p>
 
                     {/* Voice analysis progress bar */}
-                    {stage.key === "analyzing_voice" && (isActive || isCompleted) && (
-                      <div className="mt-2.5 flex items-center gap-2.5">
-                        <div
-                          className="flex-1 h-1 rounded-full overflow-hidden"
-                          style={{ background: "var(--md-sys-color-surface-container-high)" }}
-                        >
-                          <motion.div
-                            className="h-full rounded-full"
+                    {stage.key === "analyzing_voice" &&
+                      (isActive || isCompleted) && (
+                        <div className="mt-2.5 flex items-center gap-2.5">
+                          <div
+                            className="flex-1 h-1 rounded-full overflow-hidden"
                             style={{
-                              background: isCompleted
-                                ? "#10B981"
-                                : "linear-gradient(90deg, var(--md-sys-color-primary), var(--md-sys-color-tertiary))",
-                              boxShadow: isCompleted
-                                ? "none"
-                                : "0 0 8px color-mix(in srgb, var(--md-sys-color-primary) 50%, transparent)",
+                              background:
+                                "var(--md-sys-color-surface-container-high)",
                             }}
-                            initial={{ width: "0%" }}
-                            animate={{ width: `${isCompleted ? 100 : pct}%` }}
-                            transition={{ duration: 0.5, ease: "easeOut" }}
-                          />
+                          >
+                            <motion.div
+                              className="h-full rounded-full"
+                              style={{
+                                background: isCompleted
+                                  ? "#10B981"
+                                  : "linear-gradient(90deg, var(--md-sys-color-primary), var(--md-sys-color-tertiary))",
+                                boxShadow: isCompleted
+                                  ? "none"
+                                  : "0 0 8px color-mix(in srgb, var(--md-sys-color-primary) 50%, transparent)",
+                              }}
+                              initial={{ width: "0%" }}
+                              animate={{ width: `${isCompleted ? 100 : pct}%` }}
+                              transition={{ duration: 0.5, ease: "easeOut" }}
+                            />
+                          </div>
+                          <span
+                            className="text-xs font-mono shrink-0 tabular-nums"
+                            style={{
+                              color: isCompleted
+                                ? "#10B981"
+                                : "var(--md-sys-color-tertiary)",
+                            }}
+                          >
+                            {isCompleted ? "100" : pct}%
+                          </span>
                         </div>
-                        <span
-                          className="text-xs font-mono shrink-0 tabular-nums"
-                          style={{ color: isCompleted ? "#10B981" : "var(--md-sys-color-tertiary)" }}
-                        >
-                          {isCompleted ? "100" : pct}%
-                        </span>
-                      </div>
-                    )}
+                      )}
                   </div>
                 </motion.div>
               );
@@ -628,7 +677,6 @@ export default function InterviewPanel() {
 
   return (
     <div className="relative min-h-screen flex flex-col items-center z-10">
-
       {/* Dynamic ambient orb — color shifts with interview state */}
       <div
         aria-hidden="true"
@@ -647,8 +695,8 @@ export default function InterviewPanel() {
             background: isAIThinking
               ? "radial-gradient(circle, var(--md-sys-color-primary) 0%, transparent 60%)"
               : isRecording
-              ? "radial-gradient(circle, var(--md-sys-color-tertiary) 0%, transparent 60%)"
-              : "radial-gradient(circle, var(--md-sys-color-secondary) 0%, transparent 60%)",
+                ? "radial-gradient(circle, var(--md-sys-color-tertiary) 0%, transparent 60%)"
+                : "radial-gradient(circle, var(--md-sys-color-secondary) 0%, transparent 60%)",
           }}
         />
       </div>
@@ -656,10 +704,12 @@ export default function InterviewPanel() {
       {/* ── TOP BAR — glass pill ────────────────────────────── */}
       <div className="w-full flex justify-center pt-6 pb-0 relative z-10">
         <motion.div
+          key="interview-header"
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="flex items-center gap-6 px-5 py-2.5 rounded-full glass-card"
+          style={{ transform: "translateZ(0)", willChange: "transform" }}
         >
           {/* Question counter */}
           <div className="flex items-center gap-2">
@@ -679,7 +729,11 @@ export default function InterviewPanel() {
           <button
             onClick={toggleTts}
             className="flex items-center gap-1.5 transition-all duration-200"
-            style={{ color: isTtsEnabled ? "var(--md-sys-color-tertiary)" : "var(--md-sys-color-on-surface-variant)" }}
+            style={{
+              color: isTtsEnabled
+                ? "var(--md-sys-color-tertiary)"
+                : "var(--md-sys-color-on-surface-variant)",
+            }}
             aria-label={isTtsEnabled ? "Disable voice" : "Enable voice"}
           >
             {isTtsEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
@@ -707,89 +761,33 @@ export default function InterviewPanel() {
         </motion.div>
       </div>
 
-      {/* ── MODE SELECTOR — segmented control ────────────────── */}
-      <div className="w-full flex justify-center pt-3 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, duration: 0.4, ease: "easeOut" }}
-          className="flex items-center rounded-full p-1 gap-1"
-          style={{
-            background: "var(--md-sys-color-surface-container)",
-            border: "1px solid var(--md-sys-color-outline-variant)",
-          }}
-        >
-          {([
-            { id: "audio" as InterviewMode, label: "Audio", icon: <Mic size={14} /> },
-            { id: "chat" as InterviewMode, label: "Chat", icon: <MessageSquare size={14} /> },
-            { id: "video" as InterviewMode, label: "Video", icon: <Video size={14} />, disabled: true },
-          ]).map((mode) => {
-            const isActive = interviewMode === mode.id;
-            return (
-              <button
-                key={mode.id}
-                onClick={() => !mode.disabled && handleModeSwitch(mode.id)}
-                disabled={mode.disabled || isAIThinking}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200"
-                style={
-                  mode.disabled
-                    ? {
-                        color: "var(--md-sys-color-on-surface-variant)",
-                        opacity: 0.3,
-                        cursor: "not-allowed",
-                      }
-                    : isActive
-                    ? {
-                        background: "color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)",
-                        color: "var(--md-sys-color-primary)",
-                        border: "1px solid color-mix(in srgb, var(--md-sys-color-primary) 35%, transparent)",
-                        boxShadow: "0 0 12px color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent)",
-                      }
-                    : {
-                        color: "var(--md-sys-color-on-surface-variant)",
-                        border: "1px solid transparent",
-                      }
-                }
-              >
-                {mode.icon}
-                {mode.label}
-                {mode.disabled && (
-                  <span
-                    className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full ml-0.5"
-                    style={{
-                      background: "var(--md-sys-color-surface-container-high)",
-                      color: "var(--md-sys-color-on-surface-variant)",
-                      opacity: 0.6,
-                    }}
-                  >
-                    Soon
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </motion.div>
-      </div>
-
       {/* ── CENTER — Question text (Audio mode) ────────────── */}
       {interviewMode === "audio" && (
         <div className="flex-1 flex items-center justify-center w-full px-6 py-10 relative z-10">
           <div className="w-full max-w-2xl">
-            {currentQuestion && (
-              showKaraokeMode ? (
-                <div className="w-full [&_p]:!text-2xl [&_p]:md:!text-3xl [&_p]:!leading-relaxed">
+            <AnimatePresence mode="wait">
+              {currentQuestion && showKaraokeMode ? (
+                <motion.div
+                  key="karaoke"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="w-full [&_p]:!text-2xl [&_p]:md:!text-3xl [&_p]:!leading-relaxed"
+                >
                   <KaraokeText
                     text={currentQuestion}
                     isPlaying={isPlaying}
                     audioRef={audioRef as React.RefObject<HTMLAudioElement>}
                   />
-                </div>
-              ) : (
+                </motion.div>
+              ) : currentQuestion ? (
                 <motion.p
                   key={currentQuestion}
                   className="text-2xl md:text-3xl leading-relaxed font-medium text-center text-on-surface opacity-90"
                   initial="hidden"
                   animate="visible"
+                  exit={{ opacity: 0, transition: { duration: 0.15 } }}
                   variants={{
                     hidden: {},
                     visible: { transition: { staggerChildren: 0.04 } },
@@ -813,8 +811,8 @@ export default function InterviewPanel() {
                     </motion.span>
                   ))}
                 </motion.p>
-              )
-            )}
+              ) : null}
+            </AnimatePresence>
           </div>
         </div>
       )}
@@ -826,14 +824,20 @@ export default function InterviewPanel() {
           <div
             ref={chatContainerRef}
             className="flex-1 overflow-y-auto space-y-3 pr-1 scroll-smooth"
-            style={{ scrollbarWidth: "thin", scrollbarColor: "var(--md-sys-color-outline-variant) transparent" }}
+            style={{
+              scrollbarWidth: "thin",
+              scrollbarColor: "var(--md-sys-color-outline-variant) transparent",
+            }}
           >
             {chatMessages.map((msg, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: i === chatMessages.length - 1 ? 0.1 : 0 }}
+                transition={{
+                  duration: 0.3,
+                  delay: i === chatMessages.length - 1 ? 0.1 : 0,
+                }}
                 className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
@@ -842,13 +846,16 @@ export default function InterviewPanel() {
                     msg.role === "ai"
                       ? {
                           background: "var(--md-sys-color-surface-container)",
-                          border: "1px solid var(--md-sys-color-outline-variant)",
+                          border:
+                            "1px solid var(--md-sys-color-outline-variant)",
                           color: "var(--md-sys-color-on-surface)",
                           borderBottomLeftRadius: "6px",
                         }
                       : {
-                          background: "color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)",
-                          border: "1px solid color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent)",
+                          background:
+                            "color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)",
+                          border:
+                            "1px solid color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent)",
                           color: "var(--md-sys-color-on-surface)",
                           borderBottomRightRadius: "6px",
                         }
@@ -856,8 +863,14 @@ export default function InterviewPanel() {
                 >
                   {msg.role === "ai" && (
                     <div className="flex items-center gap-1.5 mb-1.5">
-                      <BrainCircuit size={12} style={{ color: "var(--md-sys-color-primary)" }} />
-                      <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--md-sys-color-primary)" }}>
+                      <BrainCircuit
+                        size={12}
+                        style={{ color: "var(--md-sys-color-primary)" }}
+                      />
+                      <span
+                        className="text-[10px] font-semibold uppercase tracking-wider"
+                        style={{ color: "var(--md-sys-color-primary)" }}
+                      >
                         Interviewer
                       </span>
                     </div>
@@ -924,7 +937,8 @@ export default function InterviewPanel() {
                 onInput={(e) => {
                   const target = e.target as HTMLTextAreaElement;
                   target.style.height = "auto";
-                  target.style.height = Math.min(target.scrollHeight, 120) + "px";
+                  target.style.height =
+                    Math.min(target.scrollHeight, 120) + "px";
                 }}
                 disabled={isAIThinking}
               />
@@ -937,10 +951,12 @@ export default function InterviewPanel() {
                     ? {
                         background: "var(--md-sys-color-primary)",
                         color: "var(--md-sys-color-on-primary)",
-                        boxShadow: "0 2px 8px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent)",
+                        boxShadow:
+                          "0 2px 8px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent)",
                       }
                     : {
-                        background: "var(--md-sys-color-surface-container-high)",
+                        background:
+                          "var(--md-sys-color-surface-container-high)",
                         color: "var(--md-sys-color-on-surface-variant)",
                         opacity: 0.4,
                         cursor: "not-allowed",
@@ -954,150 +970,212 @@ export default function InterviewPanel() {
         </div>
       )}
 
-      {/* ── BOTTOM DOCK — floating glass pill (Audio mode) ──── */}
-      {interviewMode === "audio" && (
-      <div className="w-full flex justify-center pb-10 relative z-10 px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5, ease: "easeOut" }}
-          className="flex flex-col items-center gap-5 px-8 py-6 rounded-2xl glass-card"
-          style={{
-            boxShadow: isRecording
-              ? "0 0 0 1px color-mix(in srgb, var(--md-sys-color-tertiary) 12%, transparent), 0 8px 40px rgba(0,0,0,0.4)"
-              : isAIThinking
-              ? "0 0 0 1px color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent), 0 8px 40px rgba(0,0,0,0.4)"
-              : "0 8px 40px rgba(0,0,0,0.3)",
-            transition: "box-shadow 0.8s ease",
-          }}
-        >
-          {/* State indicator */}
-          <div className="flex flex-col items-center">
-            {isAIThinking ? (
-              <motion.div
-                key="thinking"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="flex flex-col items-center gap-2"
-              >
-                <div className="relative w-12 h-12 flex items-center justify-center">
-                  {/* Shimmer ring */}
-                  <div
-                    className="absolute inset-0 rounded-full shimmer-ring"
-                    style={{
-                      border: "1px solid color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent)",
-                      boxShadow: "0 0 16px color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent)",
-                    }}
-                  />
-                  {/* Inner orb */}
-                  <div
-                    className="w-8 h-8 rounded-full orb-breathe flex items-center justify-center"
-                    style={{
-                      background: "radial-gradient(circle, color-mix(in srgb, var(--md-sys-color-primary) 50%, transparent), color-mix(in srgb, var(--md-sys-color-primary-container) 25%, transparent))",
-                      boxShadow: "0 0 20px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent)",
-                    }}
-                  >
-                    <BrainCircuit size={14} style={{ color: "var(--md-sys-color-on-primary-container)" }} />
-                  </div>
-                </div>
-                <span className="label-caps" style={{ color: "var(--md-sys-color-primary)" }}>
-                  Analyzing
-                </span>
-              </motion.div>
-            ) : isRecording ? (
-              <motion.div
-                key="recording"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="flex flex-col items-center gap-2"
-              >
-                <div className="relative w-12 h-12 flex items-center justify-center">
-                  {/* Expanding rings */}
-                  {[0, 1].map((ring) => (
-                    <motion.div
-                      key={ring}
-                      className="absolute inset-0 rounded-full"
-                      style={{ border: "1px solid color-mix(in srgb, var(--md-sys-color-tertiary) 35%, transparent)" }}
-                      animate={{ scale: [1, 1.9], opacity: [0.6, 0] }}
-                      transition={{
-                        repeat: Infinity,
-                        duration: 1.5,
-                        delay: ring * 0.55,
-                        ease: "easeOut",
-                      }}
-                    />
-                  ))}
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{
-                      background: "radial-gradient(circle, color-mix(in srgb, var(--md-sys-color-tertiary) 35%, transparent), color-mix(in srgb, var(--md-sys-color-tertiary) 12%, transparent))",
-                      border: "1px solid color-mix(in srgb, var(--md-sys-color-tertiary) 45%, transparent)",
-                      boxShadow: "0 0 18px color-mix(in srgb, var(--md-sys-color-tertiary) 35%, transparent)",
-                    }}
-                  >
-                    <Mic size={14} style={{ color: "var(--md-sys-color-tertiary)" }} />
-                  </div>
-                </div>
-                <span className="label-caps" style={{ color: "var(--md-sys-color-tertiary)" }}>
-                  Listening
-                </span>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="idle"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex flex-col items-center gap-2"
-              >
-                <div
-                  className="w-8 h-8 rounded-full orb-breathe"
-                  style={{
-                    background: "var(--md-sys-color-surface-container)",
-                    border: "1px solid var(--md-sys-color-outline-variant)",
-                  }}
-                />
-                <span className="label-caps">Ready — start speaking</span>
-              </motion.div>
+      {/* ── CENTER — Video mode (question + camera preview) ── */}
+      {interviewMode === "video" && (
+        <div className="flex-1 flex flex-col items-center justify-center w-full px-6 py-6 relative z-10 gap-6">
+          {currentQuestion && (
+            <motion.p
+              key={currentQuestion}
+              className="text-xl md:text-2xl leading-relaxed font-medium text-center text-on-surface opacity-90 max-w-2xl"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              {currentQuestion}
+            </motion.p>
+          )}
+          <div className="relative rounded-2xl overflow-hidden border border-white/10 w-full max-w-2xl aspect-video shadow-2xl bg-black/50">
+            <video
+              ref={(el) => setVideoPreviewElement(el)}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover mirror"
+              style={{ transform: "scaleX(-1)" }}
+            />
+            {!isCameraReady && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/70">
+                <Loader2 className="animate-spin text-white/50" size={32} />
+              </div>
+            )}
+            {isRecording && (
+              <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-500/80 text-white text-[10px] font-bold">
+                <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                REC
+              </div>
             )}
           </div>
+        </div>
+      )}
 
-          {/* Voice visualizer */}
-          <VoiceVisualizer
-            volume={volume}
-            isRecording={isRecording}
-            isAIThinking={isAIThinking}
-          />
-
-          {/* Done Speaking button */}
-          <motion.button
-            onClick={handleManualStop}
-            disabled={!hasSpoken || isAIThinking}
-            whileHover={hasSpoken && !isAIThinking ? { scale: 1.02 } : {}}
-            whileTap={hasSpoken && !isAIThinking ? { scale: 0.98 } : {}}
-            className="flex items-center gap-2 px-8 py-3 rounded-xl text-sm font-semibold transition-all duration-300"
-            style={
-              hasSpoken && !isAIThinking
-                ? {
-                    background: "linear-gradient(135deg, #10B981, #059669)",
-                    boxShadow: "0 4px 20px rgba(16,185,129,0.35)",
-                    color: "#ffffff",
-                  }
-                : {
-                    background: "var(--md-sys-color-surface-container)",
-                    border: "1px solid var(--md-sys-color-outline-variant)",
-                    color: "var(--md-sys-color-on-surface-variant)",
-                    opacity: 0.4,
-                    cursor: "not-allowed",
-                  }
-            }
+      {/* ── BOTTOM DOCK — floating glass pill (Audio/Video mode) ──── */}
+      {(interviewMode === "audio" || interviewMode === "video") && (
+        <div className="w-full flex justify-center pb-10 relative z-10 px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.5, ease: "easeOut" }}
+            className="flex flex-col items-center gap-5 px-8 py-6 rounded-2xl glass-card"
+            style={{
+              boxShadow: isRecording
+                ? "0 0 0 1px color-mix(in srgb, var(--md-sys-color-tertiary) 12%, transparent), 0 8px 40px rgba(0,0,0,0.4)"
+                : isAIThinking
+                  ? "0 0 0 1px color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent), 0 8px 40px rgba(0,0,0,0.4)"
+                  : "0 8px 40px rgba(0,0,0,0.3)",
+              transition: "box-shadow 0.8s ease",
+            }}
           >
-            <CheckCircle size={16} />
-            Done Speaking
-          </motion.button>
-        </motion.div>
-      </div>
+            {/* State indicator */}
+            <div className="flex flex-col items-center">
+              {isAIThinking ? (
+                <motion.div
+                  key="thinking"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="flex flex-col items-center gap-2"
+                >
+                  <div className="relative w-12 h-12 flex items-center justify-center">
+                    {/* Shimmer ring */}
+                    <div
+                      className="absolute inset-0 rounded-full shimmer-ring"
+                      style={{
+                        border:
+                          "1px solid color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent)",
+                        boxShadow:
+                          "0 0 16px color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent)",
+                      }}
+                    />
+                    {/* Inner orb */}
+                    <div
+                      className="w-8 h-8 rounded-full orb-breathe flex items-center justify-center"
+                      style={{
+                        background:
+                          "radial-gradient(circle, color-mix(in srgb, var(--md-sys-color-primary) 50%, transparent), color-mix(in srgb, var(--md-sys-color-primary-container) 25%, transparent))",
+                        boxShadow:
+                          "0 0 20px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent)",
+                      }}
+                    >
+                      <BrainCircuit
+                        size={14}
+                        style={{
+                          color: "var(--md-sys-color-on-primary-container)",
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <span
+                    className="label-caps"
+                    style={{ color: "var(--md-sys-color-primary)" }}
+                  >
+                    Analyzing
+                  </span>
+                </motion.div>
+              ) : isRecording ? (
+                <motion.div
+                  key="recording"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="flex flex-col items-center gap-2"
+                >
+                  <div className="relative w-12 h-12 flex items-center justify-center">
+                    {/* Expanding rings */}
+                    {[0, 1].map((ring) => (
+                      <motion.div
+                        key={ring}
+                        className="absolute inset-0 rounded-full"
+                        style={{
+                          border:
+                            "1px solid color-mix(in srgb, var(--md-sys-color-tertiary) 35%, transparent)",
+                        }}
+                        animate={{ scale: [1, 1.9], opacity: [0.6, 0] }}
+                        transition={{
+                          repeat: Infinity,
+                          duration: 1.5,
+                          delay: ring * 0.55,
+                          ease: "easeOut",
+                        }}
+                      />
+                    ))}
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center"
+                      style={{
+                        background:
+                          "radial-gradient(circle, color-mix(in srgb, var(--md-sys-color-tertiary) 35%, transparent), color-mix(in srgb, var(--md-sys-color-tertiary) 12%, transparent))",
+                        border:
+                          "1px solid color-mix(in srgb, var(--md-sys-color-tertiary) 45%, transparent)",
+                        boxShadow:
+                          "0 0 18px color-mix(in srgb, var(--md-sys-color-tertiary) 35%, transparent)",
+                      }}
+                    >
+                      <Mic
+                        size={14}
+                        style={{ color: "var(--md-sys-color-tertiary)" }}
+                      />
+                    </div>
+                  </div>
+                  <span
+                    className="label-caps"
+                    style={{ color: "var(--md-sys-color-tertiary)" }}
+                  >
+                    Listening
+                  </span>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="idle"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex flex-col items-center gap-2"
+                >
+                  <div
+                    className="w-8 h-8 rounded-full orb-breathe"
+                    style={{
+                      background: "var(--md-sys-color-surface-container)",
+                      border: "1px solid var(--md-sys-color-outline-variant)",
+                    }}
+                  />
+                  <span className="label-caps">Ready — start speaking</span>
+                </motion.div>
+              )}
+            </div>
+
+            {/* Voice visualizer */}
+            <VoiceVisualizer
+              volume={volume}
+              isRecording={isRecording}
+              isAIThinking={isAIThinking}
+            />
+
+            {/* Done Speaking button */}
+            <motion.button
+              onClick={handleManualStop}
+              disabled={!hasSpoken || isAIThinking}
+              whileHover={hasSpoken && !isAIThinking ? { scale: 1.02 } : {}}
+              whileTap={hasSpoken && !isAIThinking ? { scale: 0.98 } : {}}
+              className="flex items-center gap-2 px-8 py-3 rounded-xl text-sm font-semibold transition-all duration-300"
+              style={
+                hasSpoken && !isAIThinking
+                  ? {
+                      background: "linear-gradient(135deg, #10B981, #059669)",
+                      boxShadow: "0 4px 20px rgba(16,185,129,0.35)",
+                      color: "#ffffff",
+                    }
+                  : {
+                      background: "var(--md-sys-color-surface-container)",
+                      border: "1px solid var(--md-sys-color-outline-variant)",
+                      color: "var(--md-sys-color-on-surface-variant)",
+                      opacity: 0.4,
+                      cursor: "not-allowed",
+                    }
+              }
+            >
+              <CheckCircle size={16} />
+              Done Speaking
+            </motion.button>
+          </motion.div>
+        </div>
       )}
 
       {/* Hidden audio element */}
@@ -1114,7 +1192,10 @@ export default function InterviewPanel() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               className="fixed inset-0 z-50"
-              style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+              style={{
+                background: "rgba(0,0,0,0.6)",
+                backdropFilter: "blur(4px)",
+              }}
               onClick={() => setShowExitModal(false)}
             />
 

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect, useId } from "react";
+import { useState, useRef, useEffect, useId, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { useInterviewStore, InterviewType } from "@/stores/useInterviewStore";
+import { useInterviewStore, InterviewType, InterviewMode } from "@/stores/useInterviewStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { FileUpload } from "@/components/ui/file-upload";
 import { InterviewTypeSidebar } from "@/components/start/InterviewTypeSidebar";
@@ -11,11 +11,12 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   Zap, FileText, Sparkles, BarChart, MessageSquare,
   CheckCircle, ChevronRight, Loader2,
+  Mic, Video, MessageCircle, Camera,
 } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-type StartStage = "form" | "loading" | "analysis" | "launching";
+type StartStage = "form" | "loading" | "analysis" | "camera-check" | "launching";
 
 interface AnalysisData {
   candidateSummary: string | null;
@@ -63,6 +64,12 @@ export default function StartPage() {
     setConfig,
     interviewerVoice,
     setInterviewerVoice,
+    interviewMode,
+    setInterviewMode,
+    selectedMicId,
+    setSelectedMicId,
+    selectedCameraId,
+    setSelectedCameraId,
   } = useInterviewStore();
 
   // Job-Specific fields
@@ -72,6 +79,24 @@ export default function StartPage() {
   const [stage, setStage] = useState<StartStage>("form");
   const [loadingStep, setLoadingStep] = useState(0);
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
+
+  // Device enumeration + testing state
+  const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
+  const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
+  const [micTestActive, setMicTestActive] = useState(false);
+  const [micTestVolume, setMicTestVolume] = useState(0);
+  const [cameraTestActive, setCameraTestActive] = useState(false);
+  const [devicePermissionGranted, setDevicePermissionGranted] = useState(false);
+  const micTestStreamRef = useRef<MediaStream | null>(null);
+  const micTestRafRef = useRef<number | null>(null);
+  const cameraTestStreamRef = useRef<MediaStream | null>(null);
+  const cameraPreviewRef = useRef<HTMLVideoElement | null>(null);
+
+  // Camera-check stage state
+  const [cameraCheckStream, setCameraCheckStream] = useState<MediaStream | null>(null);
+  const [cameraCheckLoading, setCameraCheckLoading] = useState(false);
+  const cameraCheckVideoRef = useRef<HTMLVideoElement | null>(null);
+  const cameraCheckStreamRef = useRef<MediaStream | null>(null);
 
   const loadingStepRef = useRef(0);
   const apiDoneRef = useRef(false);
@@ -83,6 +108,140 @@ export default function StartPage() {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
+
+  const enumerateDevices = useCallback(async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      setAudioDevices(devices.filter((d) => d.kind === "audioinput"));
+      setVideoDevices(devices.filter((d) => d.kind === "videoinput"));
+    } catch {
+      // permissions not granted yet
+    }
+  }, []);
+
+  const requestDevicePermissions = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((t) => t.stop());
+      setDevicePermissionGranted(true);
+      await enumerateDevices();
+    } catch {
+      toast.error("Microphone permission denied. Please allow access in your browser settings.");
+    }
+  }, [enumerateDevices]);
+
+  useEffect(() => {
+    if (interviewMode === "audio" || interviewMode === "video") {
+      enumerateDevices();
+    }
+    return () => {
+      stopMicTest();
+      stopCameraTest();
+    };
+  }, [interviewMode, enumerateDevices]);
+
+  useEffect(() => {
+    if (stage === "camera-check") {
+      startCameraCheck(selectedCameraId);
+    } else {
+      stopCameraCheck();
+    }
+  }, [stage]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const startMicTest = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { deviceId: selectedMicId ? { exact: selectedMicId } : undefined },
+      });
+      micTestStreamRef.current = stream;
+      setMicTestActive(true);
+      setDevicePermissionGranted(true);
+      enumerateDevices();
+
+      const ctx = new AudioContext();
+      const source = ctx.createMediaStreamSource(stream);
+      const analyzer = ctx.createAnalyser();
+      analyzer.fftSize = 256;
+      source.connect(analyzer);
+      const dataArray = new Uint8Array(analyzer.frequencyBinCount);
+
+      const check = () => {
+        analyzer.getByteFrequencyData(dataArray);
+        const vol = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+        setMicTestVolume(vol);
+        micTestRafRef.current = requestAnimationFrame(check);
+      };
+      check();
+
+      setTimeout(() => stopMicTest(), 5000);
+    } catch {
+      toast.error("Could not access microphone.");
+    }
+  };
+
+  const stopMicTest = () => {
+    if (micTestRafRef.current) cancelAnimationFrame(micTestRafRef.current);
+    micTestStreamRef.current?.getTracks().forEach((t) => t.stop());
+    micTestStreamRef.current = null;
+    setMicTestActive(false);
+    setMicTestVolume(0);
+  };
+
+  const startCameraTest = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: selectedCameraId ? { exact: selectedCameraId } : undefined },
+      });
+      cameraTestStreamRef.current = stream;
+      setCameraTestActive(true);
+      setDevicePermissionGranted(true);
+      enumerateDevices();
+
+      if (cameraPreviewRef.current) {
+        cameraPreviewRef.current.srcObject = stream;
+      }
+
+      setTimeout(() => stopCameraTest(), 8000);
+    } catch {
+      toast.error("Could not access camera.");
+    }
+  };
+
+  const stopCameraTest = () => {
+    cameraTestStreamRef.current?.getTracks().forEach((t) => t.stop());
+    cameraTestStreamRef.current = null;
+    setCameraTestActive(false);
+    if (cameraPreviewRef.current) cameraPreviewRef.current.srcObject = null;
+  };
+
+  const startCameraCheck = async (deviceId?: string | null) => {
+    setCameraCheckLoading(true);
+    cameraCheckStreamRef.current?.getTracks().forEach((t) => t.stop());
+    cameraCheckStreamRef.current = null;
+    setCameraCheckStream(null);
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      setVideoDevices(devices.filter((d) => d.kind === "videoinput"));
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: deviceId ? { exact: deviceId } : undefined },
+      });
+      cameraCheckStreamRef.current = stream;
+      setCameraCheckStream(stream);
+      if (cameraCheckVideoRef.current) {
+        cameraCheckVideoRef.current.srcObject = stream;
+      }
+    } catch {
+      toast.error("Could not access camera. Please check your camera permissions.");
+    } finally {
+      setCameraCheckLoading(false);
+    }
+  };
+
+  const stopCameraCheck = () => {
+    cameraCheckStreamRef.current?.getTracks().forEach((t) => t.stop());
+    cameraCheckStreamRef.current = null;
+    setCameraCheckStream(null);
+  };
 
   const handleFileUpload = (files: File[]) => {
     setFile(files.length > 0 ? files[0] : null);
@@ -144,6 +303,7 @@ export default function StartPage() {
     const formData = new FormData();
     formData.append("userId", user?.id ?? "");
     formData.append("interviewerVoice", interviewerVoice);
+    formData.append("interviewMode", interviewMode);
 
     if (interviewType === "job-specific") {
       formData.append("interviewType", "JOB_SPECIFIC");
@@ -174,15 +334,27 @@ export default function StartPage() {
   };
 
   const handleStartInterview = () => {
+    if (interviewMode === "video") {
+      setStage("camera-check");
+      return;
+    }
     setStage("launching");
     setTimeout(() => router.push("/interview"), 1200);
   };
 
   const isSubmitDisabled = (() => {
-    if (interviewType === "job-specific") return !file || !jd.trim();
-    if (interviewType === "technical") return !config.stack || !config.difficulty || !config.questionCount;
-    if (interviewType === "behavioral") return !config.difficulty || !config.questionCount;
-    return true;
+    let typeDisabled = false;
+    if (interviewType === "job-specific") typeDisabled = !file || !jd.trim();
+    else if (interviewType === "technical") typeDisabled = !config.stack || !config.difficulty || !config.questionCount;
+    else if (interviewType === "behavioral") typeDisabled = !config.difficulty || !config.questionCount;
+    else typeDisabled = true;
+
+    if (typeDisabled) return true;
+
+    if (interviewMode === "audio" && !devicePermissionGranted) return true;
+    if (interviewMode === "video" && !devicePermissionGranted) return true;
+
+    return false;
   })();
 
   const reduceMotion = useReducedMotion();
@@ -659,6 +831,100 @@ export default function StartPage() {
                           </div>
                         </div>
 
+                        <div className="h-px mb-5 bg-outline-variant opacity-40" />
+
+                        {/* ── INTERVIEW MODE SELECTOR ── */}
+                        <div className="mb-5">
+                          <label className="label-caps block mb-2">Interview Mode</label>
+                          <div className="grid grid-cols-3 gap-2">
+                            {([
+                              { mode: "chat" as InterviewMode, label: "Chat", Icon: MessageCircle, desc: "Text only" },
+                              { mode: "audio" as InterviewMode, label: "Audio", Icon: Mic, desc: "Voice interview" },
+                              { mode: "video" as InterviewMode, label: "Video", Icon: Video, desc: "Video + voice" },
+                            ]).map(({ mode, label, Icon, desc }) => (
+                              <button
+                                key={mode}
+                                type="button"
+                                onClick={() => setInterviewMode(mode)}
+                                className={`relative flex flex-col items-center gap-1.5 rounded-xl py-3 px-2 text-sm font-semibold transition-all duration-200 ${
+                                  interviewMode === mode
+                                    ? "glass-card border border-violet-500/40 lp-hi shadow-[0_0_20px_rgba(124,58,237,0.15)]"
+                                    : "glass-card border border-transparent lp-muted hover:lp-body"
+                                }`}
+                              >
+                                <Icon size={18} className={interviewMode === mode ? "text-violet-400" : ""} />
+                                <span>{label}</span>
+                                <span className="text-[10px] font-normal lp-faint">{desc}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* ── DEVICE SETUP (Audio & Video modes) ── */}
+                        {(interviewMode === "audio" || interviewMode === "video") && (
+                          <div className="mb-5 space-y-4">
+                            {!devicePermissionGranted && audioDevices.length === 0 && (
+                              <button
+                                type="button"
+                                onClick={requestDevicePermissions}
+                                className="w-full rounded-xl py-2.5 text-sm font-semibold glass-card border border-cyan-500/30 text-cyan-400 hover:border-cyan-500/50 transition-all duration-200"
+                              >
+                                Grant Device Permissions
+                              </button>
+                            )}
+
+                            {/* Microphone dropdown + test */}
+                            <div>
+                              <label className="label-caps block mb-2">Microphone</label>
+                              <div className="flex gap-2">
+                                <select
+                                  value={selectedMicId ?? ""}
+                                  onChange={(e) => setSelectedMicId(e.target.value || null)}
+                                  className="flex-1 rounded-xl px-3 py-2.5 text-sm outline-none text-on-surface"
+                                  style={{
+                                    background: "var(--md-sys-color-surface-container-low)",
+                                    border: "1px solid var(--md-sys-color-outline-variant)",
+                                    appearance: "none",
+                                  }}
+                                >
+                                  <option value="">Default microphone</option>
+                                  {audioDevices.map((d) => (
+                                    <option key={d.deviceId} value={d.deviceId}>
+                                      {d.label || `Mic ${d.deviceId.slice(0, 8)}`}
+                                    </option>
+                                  ))}
+                                </select>
+                                <button
+                                  type="button"
+                                  onClick={micTestActive ? stopMicTest : startMicTest}
+                                  className={`shrink-0 rounded-xl px-3 py-2.5 text-xs font-semibold transition-all duration-200 ${
+                                    micTestActive
+                                      ? "glass-card border border-emerald-500/40 text-emerald-400"
+                                      : "glass-card border border-white/10 lp-muted hover:lp-body"
+                                  }`}
+                                >
+                                  <Mic size={14} className="inline mr-1" />
+                                  {micTestActive ? "Stop" : "Test"}
+                                </button>
+                              </div>
+                              {micTestActive && (
+                                <div className="mt-2 h-2 bg-white/[0.08] rounded-full overflow-hidden">
+                                  <motion.div
+                                    className="h-full rounded-full"
+                                    style={{
+                                      background: "linear-gradient(90deg, #10B981, #34D399)",
+                                      boxShadow: "0 0 8px rgba(16,185,129,0.5)",
+                                    }}
+                                    animate={{ width: `${Math.min(100, (micTestVolume / 60) * 100)}%` }}
+                                    transition={{ duration: 0.05 }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+
+                          </div>
+                        )}
+
                         <button
                           onClick={startInterview}
                           disabled={isSubmitDisabled}
@@ -820,6 +1086,96 @@ export default function StartPage() {
                     className="btn-violet w-full flex items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold"
                   >
                     Start Interview <ChevronRight size={16} />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── STAGE: CAMERA-CHECK ── */}
+            {stage === "camera-check" && (
+              <motion.div
+                key="camera-check"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.35 }}
+                className="w-full max-w-lg"
+              >
+                <div className="glass-card-raised rounded-2xl p-7">
+                  <div className="flex items-center gap-3 mb-1">
+                    <Camera size={20} className="text-violet-400 shrink-0" />
+                    <h2 className="text-xl font-bold lp-hi">Camera Check</h2>
+                  </div>
+                  <p className="lp-muted text-sm mb-5">Make sure your camera is positioned correctly before the interview starts.</p>
+
+                  {/* Camera preview */}
+                  <div className="relative rounded-xl overflow-hidden border border-white/10 aspect-video bg-black/50 mb-4">
+                    {cameraCheckLoading && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Loader2 size={28} className="text-white/40 animate-spin" />
+                      </div>
+                    )}
+                    <video
+                      ref={(el) => {
+                        cameraCheckVideoRef.current = el;
+                        if (el && cameraCheckStream) {
+                          el.srcObject = cameraCheckStream;
+                        }
+                      }}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-full object-cover"
+                      style={{ transform: "scaleX(-1)" }}
+                    />
+                  </div>
+
+                  {/* Camera device selector */}
+                  {videoDevices.length > 0 && (
+                    <div className="mb-5">
+                      <label className="label-caps block mb-2">Camera</label>
+                      <select
+                        value={selectedCameraId ?? ""}
+                        onChange={(e) => {
+                          const id = e.target.value || null;
+                          setSelectedCameraId(id);
+                          startCameraCheck(id);
+                        }}
+                        className="w-full rounded-xl px-3 py-2.5 text-sm outline-none text-on-surface"
+                        style={{
+                          background: "var(--md-sys-color-surface-container-low)",
+                          border: "1px solid var(--md-sys-color-outline-variant)",
+                          appearance: "none",
+                        }}
+                      >
+                        <option value="">Default camera</option>
+                        {videoDevices.map((d) => (
+                          <option key={d.deviceId} value={d.deviceId}>
+                            {d.label || `Camera ${d.deviceId.slice(0, 8)}`}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      stopCameraCheck();
+                      setStage("launching");
+                      setTimeout(() => router.push("/interview"), 1200);
+                    }}
+                    className="btn-violet w-full flex items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold mb-3"
+                  >
+                    Looks good, Start Interview <ChevronRight size={16} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      stopCameraCheck();
+                      setStage("analysis");
+                    }}
+                    className="w-full text-center text-sm lp-muted hover:lp-body transition-colors"
+                  >
+                    ← Back
                   </button>
                 </div>
               </motion.div>

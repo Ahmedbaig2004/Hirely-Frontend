@@ -9,7 +9,7 @@ import {
   ArrowLeft, CheckCircle, XCircle, Lightbulb,
   TrendingUp, BarChart3, Tag, Mic, Activity,
   Gauge, MessageCircle, MessageSquare, Zap,
-  FileText, AlertTriangle, ChevronDown
+  FileText, AlertTriangle, ChevronDown, Video
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LpBackground from "@/components/landing/LpBackground";
@@ -285,17 +285,27 @@ export default function InterviewDetail() {
             </h3>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {(
-                [
-                  { label: "Technical", value: feedback.scores.technical, weight: null },
-                  ...(feedback.scores.delivery != null
-                    ? [{ label: "Delivery", value: feedback.scores.delivery, weight: null }]
-                    : []),
-                  { label: "Content Quality", value: feedback.scores.contentQuality ?? feedback.scores.technical, weight: feedback.scores.voice != null ? "60%" : null },
-                  ...(feedback.scores.voice != null
-                    ? [{ label: "Vocal Delivery", value: feedback.scores.voice, weight: "40%" }]
-                    : []),
-                  { label: "Combined", value: feedback.scores.combined, weight: null },
-                ] as { label: string; value: number; weight: string | null }[]
+                (() => {
+                  const hasVoice = feedback.scores.voice != null;
+                  const hasVideo = feedback.scores.video != null;
+                  const contentWeight = hasVoice && hasVideo ? "41%" : hasVoice ? "60%" : hasVideo ? "56%" : null;
+                  const voiceWeight = hasVoice && hasVideo ? "27%" : "40%";
+                  const videoWeight = hasVoice && hasVideo ? "32%" : "44%";
+                  return [
+                    { label: "Technical", value: feedback.scores.technical, weight: null },
+                    ...(feedback.scores.delivery != null
+                      ? [{ label: "Delivery", value: feedback.scores.delivery, weight: null }]
+                      : []),
+                    { label: "Content Quality", value: feedback.scores.contentQuality ?? feedback.scores.technical, weight: contentWeight },
+                    ...(hasVoice
+                      ? [{ label: "Vocal Delivery", value: feedback.scores.voice, weight: voiceWeight }]
+                      : []),
+                    ...(hasVideo
+                      ? [{ label: "Body Language", value: feedback.scores.video, weight: videoWeight }]
+                      : []),
+                    { label: "Combined", value: feedback.scores.combined, weight: null },
+                  ];
+                })() as { label: string; value: number; weight: string | null }[]
               ).map(({ label, value, weight }) => {
                 const barStyle = getScoreBarStyle(value);
                 return (
@@ -574,6 +584,65 @@ export default function InterviewDetail() {
               </details>
             )}
           </div>
+          );
+        })()}
+
+        {/* 5b. BODY LANGUAGE (Video Analysis) */}
+        {(() => {
+          const videoTurns = data.turns.filter((t: any) => t.videoAnalysis?.confidenceLevel != null);
+          if (videoTurns.length === 0) return null;
+          const videoPct = Math.round(
+            (videoTurns.reduce((s: number, t: any) => s + t.videoAnalysis.confidenceLevel, 0) /
+              videoTurns.length) * 100
+          );
+          const videoStroke =
+            videoPct >= 70 ? "#10B981"
+              : videoPct >= 50 ? "#F59E0B"
+              : "#EF4444";
+          const videoLabel =
+            videoPct >= 75 ? "Highly Confident"
+              : videoPct >= 50 ? "Confident"
+              : videoPct >= 30 ? "Moderately Confident"
+              : "Needs Improvement";
+          const circumference = 2 * Math.PI * 36;
+          const offset = circumference * (1 - videoPct / 100);
+          return (
+            <div className="glass-card p-6 rounded-xl border-l-4 border-cyan-500 mb-8">
+              <div className="flex flex-wrap justify-between items-start mb-5 gap-4">
+                <div>
+                  <h3 className="font-bold text-cyan-400 flex items-center gap-2 mb-1">
+                    <Video size={20} /> Body Language
+                  </h3>
+                  <p className="text-xs text-on-surface-variant opacity-40">
+                    How interviewers typically perceive your body language and non-verbal cues
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="relative w-[88px] h-[88px]">
+                    <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80">
+                      <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6" />
+                      <circle
+                        cx="40" cy="40" r="36" fill="none"
+                        stroke={videoStroke} strokeWidth="6" strokeLinecap="round"
+                        strokeDasharray={circumference} strokeDashoffset={offset}
+                        style={{ transition: "stroke-dashoffset 1s ease" }}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-lg font-black" style={{ color: videoStroke }}>{videoPct}</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs font-semibold" style={{ color: videoStroke }}>{videoLabel}</div>
+                    <div className="text-[10px] text-on-surface-variant opacity-40">Body Language Score</div>
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-on-surface-variant opacity-30 italic">
+                This score reflects how interviewers may perceive your posture, gestures, and facial expressions.
+                Detailed body language insights will be available in a future update.
+              </p>
+            </div>
           );
         })()}
 

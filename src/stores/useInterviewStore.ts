@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 export type InterviewType = "job-specific" | "technical" | "behavioral";
+export type InterviewMode = "chat" | "audio" | "video";
 
 export interface InterviewConfig {
   stack?: string;
@@ -12,6 +13,7 @@ export interface InterviewConfig {
 interface InterviewState {
   sessionId: string | null;
   currentQuestion: string | null;
+  questionCount: number;
   loading: boolean;
   transcript: string;
   feedback: string | null;
@@ -32,8 +34,17 @@ interface InterviewState {
   interviewerVoice: "male" | "female";
   setInterviewerVoice: (v: "male" | "female") => void;
 
+  // Interview mode + device selection
+  interviewMode: InterviewMode;
+  setInterviewMode: (mode: InterviewMode) => void;
+  selectedMicId: string | null;
+  setSelectedMicId: (id: string | null) => void;
+  selectedCameraId: string | null;
+  setSelectedCameraId: (id: string | null) => void;
+
   setSessionId: (id: string) => void;
   setQuestion: (text: string) => void;
+  setQuestionCount: (count: number) => void;
   setLoading: (status: boolean) => void;
   setTranscript: (text: string) => void;
   setFeedback: (text: string) => void;
@@ -46,6 +57,7 @@ export const useInterviewStore = create<InterviewState>()(
     (set) => ({
       sessionId: null,
       currentQuestion: null,
+      questionCount: 1,
       loading: false,
       transcript: '',
       feedback: null,
@@ -60,8 +72,16 @@ export const useInterviewStore = create<InterviewState>()(
       isTtsEnabled: true,
       interviewerVoice: "female" as "male" | "female",
 
+      interviewMode: "audio" as InterviewMode,
+      setInterviewMode: (mode) => set({ interviewMode: mode }),
+      selectedMicId: null,
+      setSelectedMicId: (id) => set({ selectedMicId: id }),
+      selectedCameraId: null,
+      setSelectedCameraId: (id) => set({ selectedCameraId: id }),
+
       setSessionId: (id) => set({ sessionId: id }),
       setQuestion: (text) => set({ currentQuestion: text }),
+      setQuestionCount: (count) => set({ questionCount: count }),
       setLoading: (status) => set({ loading: status }),
       setTranscript: (text) => set({ transcript: text }),
       setFeedback: (text) => set({ feedback: text }),
@@ -75,11 +95,14 @@ export const useInterviewStore = create<InterviewState>()(
         set({
           sessionId: null,
           currentQuestion: null,
+          questionCount: 1,
           feedback: null,
           firstQuestionAudio: null,
           firstQuestionAudioMime: null,
           transcript: "",
           loading: false,
+          selectedMicId: null,
+          selectedCameraId: null,
         }),
     }),
     {
