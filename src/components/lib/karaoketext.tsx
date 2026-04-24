@@ -45,14 +45,15 @@ export const KaraokeText = ({ text, isPlaying, audioRef }: KaraokeTextProps) => 
           <motion.span
             key={i}
             initial={{ opacity: 0, y: 5 }}
-            animate={{ 
-              // 🚨 THE FIX:
-              // If not playing (currentIndex = length), show full text (1).
-              // If playing, follow the index logic.
-              opacity: i <= currentIndex ? 1 : 0, 
+            animate={{
+              opacity: i <= currentIndex ? 1 : 0,
               y: i <= currentIndex ? 0 : 5,
-              scale: (isPlaying && i === currentIndex) ? 1.05 : 1, // Only pop if actually playing
-              color: (isPlaying && i === currentIndex) ? "#22d3ee" : "#e2e8f0" // Cyan active, Slate inactive
+              scale: isPlaying && i === currentIndex ? 1.05 : 1,
+              /* Pastel LP background: dark slate + strong cyan — not pale slate (#e2e8f0) or MD primary */
+              color:
+                isPlaying && i === currentIndex
+                  ? "rgb(8, 145, 178)"
+                  : "rgb(15, 23, 42)",
             }}
             transition={{ duration: 0.2 }}
             className="transition-colors duration-200"

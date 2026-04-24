@@ -1,7 +1,13 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { getScoreCellColor, getScoreCellBorder } from "@/lib/scoreColors";
+import { useTheme } from "next-themes";
+import {
+  getScoreCellColor,
+  getScoreCellBorder,
+  getScoreCellFg,
+  type ScoreHeatmapTheme,
+} from "@/lib/scoreColors";
 
 interface TopicRow {
   topic: string;
@@ -17,20 +23,30 @@ interface Props {
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard"] as const;
 
-const DIFF_COLORS: Record<string, string> = {
-  Easy:   "text-emerald-400",
-  Medium: "text-amber-400",
-  Hard:   "text-rose-400",
+const DIFF_COLORS: Record<ScoreHeatmapTheme, Record<string, string>> = {
+  light: {
+    Easy: "text-emerald-700",
+    Medium: "text-amber-800",
+    Hard: "text-rose-800",
+  },
+  dark: {
+    Easy: "text-emerald-400",
+    Medium: "text-amber-400",
+    Hard: "text-rose-400",
+  },
 };
 
 const NO_DATA = (
-  <div className="flex items-center justify-center py-12 lp-muted text-sm">
+  <div className="flex items-center justify-center py-12 lp-sub text-sm">
     No topic data available — topics appear after interviews with per-question tracking
   </div>
 );
 
 export function TopicHeatmap({ topicHeatmap }: Props) {
   const reduceMotion = useReducedMotion();
+  const { resolvedTheme } = useTheme();
+  const heatTheme: ScoreHeatmapTheme = resolvedTheme === "dark" ? "dark" : "light";
+  const diffTone = DIFF_COLORS[heatTheme];
 
   if (!topicHeatmap || topicHeatmap.length === 0) return NO_DATA;
 
@@ -39,13 +55,13 @@ export function TopicHeatmap({ topicHeatmap }: Props) {
       <table className="w-full min-w-[480px] border-collapse">
         <thead>
           <tr>
-            <th className="label-caps text-left pb-3 pr-6 lp-dim font-semibold w-1/3">Topic</th>
+            <th className="label-caps text-left pb-3 pr-6 lp-sub font-semibold w-1/3">Topic</th>
             {DIFFICULTIES.map((d) => (
-              <th key={d} className={`label-caps text-center pb-3 px-3 ${DIFF_COLORS[d]}`}>
+              <th key={d} className={`label-caps text-center pb-3 px-3 ${diffTone[d]}`}>
                 {d}
               </th>
             ))}
-            <th className="label-caps text-right pb-3 pl-3 lp-dim">Turns</th>
+            <th className="label-caps text-right pb-3 pl-3 lp-sub">Turns</th>
           </tr>
         </thead>
         <tbody>
@@ -68,9 +84,9 @@ export function TopicHeatmap({ topicHeatmap }: Props) {
                     <motion.span
                       className="inline-flex items-center justify-center w-14 h-9 rounded-lg text-sm font-bold cursor-default"
                       style={{
-                        background: getScoreCellColor(score),
-                        border: `1px solid ${getScoreCellBorder(score)}`,
-                        color: score !== null ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.2)",
+                        background: getScoreCellColor(score, heatTheme),
+                        border: `1px solid ${getScoreCellBorder(score, heatTheme)}`,
+                        color: getScoreCellFg(score, heatTheme),
                         boxShadow: score !== null ? "0 0 0 0 rgba(124,58,237,0)" : undefined,
                       }}
                       whileHover={
@@ -86,7 +102,7 @@ export function TopicHeatmap({ topicHeatmap }: Props) {
                 );
               })}
               <td className="py-2 pl-3 text-right">
-                <span className="text-xs lp-dim">{row.count}</span>
+                <span className="text-xs lp-sub">{row.count}</span>
               </td>
             </motion.tr>
           ))}

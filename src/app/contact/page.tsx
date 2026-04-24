@@ -77,7 +77,7 @@ export default function ContactPage() {
   };
 
   const inputCls =
-    "mt-1.5 block w-full rounded-xl border border-white/[0.1] bg-white/[0.04] px-4 py-3 text-sm text-slate-100 shadow-sm backdrop-blur-sm transition placeholder:text-slate-500 focus:border-cyan-400/35 focus:outline-none focus:ring-2 focus:ring-cyan-500/15";
+    "mt-1.5 block w-full rounded-xl border border-white/50 bg-[var(--lp-input-bg)] px-4 py-3 text-sm text-slate-900 shadow-sm backdrop-blur-md transition placeholder:text-slate-600 focus:border-cyan-600/45 focus:outline-none focus:ring-2 focus:ring-cyan-500/25 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-cyan-400/35 dark:focus:ring-cyan-500/15";
 
   return (
     <div
@@ -140,17 +140,17 @@ export default function ContactPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={loadTransition}
             >
-              <div className="mb-2 inline-flex w-fit items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-cyan-300">
+              <div className="mb-2 inline-flex w-fit items-center gap-2 rounded-full border border-cyan-600/25 bg-cyan-500/15 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-cyan-800 dark:border-cyan-400/30 dark:bg-cyan-500/10 dark:text-cyan-300">
                 <Phone className="h-3.5 w-3.5 opacity-90" aria-hidden />
                 Contact us
               </div>
-              <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl lg:text-[2.35rem] lg:leading-[1.15]">
-                <span className="bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent">
+              <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:text-4xl lg:text-[2.35rem] lg:leading-[1.15] dark:text-white">
+                <span className="bg-gradient-to-r from-cyan-700 to-blue-600 bg-clip-text text-transparent dark:from-cyan-300 dark:to-blue-400">
                   Get in touch
                 </span>{" "}
-                <span className="text-slate-100">with our team</span>
+                <span className="text-slate-800 dark:text-slate-100">with our team</span>
               </h1>
-              <p className="mt-4 max-w-md text-[15px] leading-relaxed text-slate-400">
+              <p className="mt-4 max-w-md text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
                 Fill out the form and we&apos;ll get back to you within 1–2 business days.
               </p>
 
@@ -158,15 +158,15 @@ export default function ContactPage() {
                 {INFO_CARDS.map(({ title, value, icon: Icon }) => (
                   <div
                     key={title}
-                    className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 shadow-[0_12px_40px_-20px_rgba(0,0,0,0.5)] backdrop-blur-sm transition-colors hover:border-cyan-500/20"
+                    className="rounded-2xl border border-[var(--lp-glass-border)] bg-[var(--lp-glass)] p-4 shadow-[0_12px_40px_-24px_rgba(15,23,42,0.12)] backdrop-blur-[28px] backdrop-saturate-150 transition-colors hover:border-cyan-500/35 dark:border-white/[0.08] dark:bg-white/[0.03] dark:shadow-[0_12px_40px_-20px_rgba(0,0,0,0.5)] dark:backdrop-blur-sm dark:hover:border-cyan-500/20"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-500/15 text-blue-400">
+                      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-500/15 text-blue-700 dark:text-blue-400">
                         <Icon className="h-5 w-5" aria-hidden />
                       </div>
                       <div className="min-w-0">
-                        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</div>
-                        <div className="mt-0.5 text-sm font-medium text-slate-200">{value}</div>
+                        <div className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">{title}</div>
+                        <div className="mt-0.5 text-sm font-medium text-slate-800 dark:text-slate-200">{value}</div>
                       </div>
                     </div>
                   </div>
@@ -181,19 +181,19 @@ export default function ContactPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={loadTransition}
             >
-              <div className="overflow-hidden rounded-[1.75rem] border border-white/[0.09] bg-slate-950/50 shadow-[0_32px_80px_-32px_rgba(0,0,0,0.75)] backdrop-blur-xl">
+              <div className="overflow-hidden rounded-[1.75rem] border border-[var(--lp-glass-border)] bg-[var(--lp-glass)] shadow-[0_32px_80px_-32px_rgba(15,23,42,0.14)] backdrop-blur-[28px] backdrop-saturate-150 dark:border-white/[0.09] dark:bg-slate-950/50 dark:shadow-[0_32px_80px_-32px_rgba(0,0,0,0.75)] dark:backdrop-blur-xl">
                 <div
                   className="h-2 w-full bg-gradient-to-r from-blue-600 via-cyan-500 to-sky-400"
                   aria-hidden
                 />
-                <div className="bg-gradient-to-b from-slate-900/40 to-slate-950/80 p-6 sm:p-8">
-                  <p className="mb-6 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                <div className="bg-white/[0.06] p-6 backdrop-blur-md sm:p-8 dark:bg-gradient-to-b dark:from-slate-900/40 dark:via-slate-900/50 dark:to-slate-950/80 dark:backdrop-blur-none">
+                  <p className="mb-6 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-600 dark:text-slate-500">
                     Send a message
                   </p>
                   <form onSubmit={submit} className="space-y-5">
                     <div className="grid gap-5 sm:grid-cols-2">
                       <div>
-                        <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                           First name
                         </label>
                         <input
@@ -207,7 +207,7 @@ export default function ContactPage() {
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                           Last name
                         </label>
                         <input
@@ -223,7 +223,7 @@ export default function ContactPage() {
                     </div>
                     <div className="grid gap-5 sm:grid-cols-2">
                       <div>
-                        <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                           Work email
                         </label>
                         <input
@@ -237,8 +237,8 @@ export default function ContactPage() {
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                          Phone <span className="font-normal text-slate-500">(optional)</span>
+                        <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                          Phone <span className="font-normal text-slate-500 dark:text-slate-500">(optional)</span>
                         </label>
                         <input
                           type="tel"
@@ -251,7 +251,7 @@ export default function ContactPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">Subject</label>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Subject</label>
                       <input
                         required
                         type="text"
@@ -262,7 +262,7 @@ export default function ContactPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">Message</label>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Message</label>
                       <textarea
                         required
                         rows={5}

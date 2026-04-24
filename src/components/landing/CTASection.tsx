@@ -3,19 +3,88 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useTheme } from "next-themes";
+import { LpGradientText } from "./LpGradientText";
+
+const APP_MOCKUP_PALETTE = {
+  dark: {
+    shellBg: "rgba(255,255,255,0.04)",
+    shellBorder: "1px solid rgba(244,114,182,0.22)",
+    shellShadow:
+      "0 -20px 80px rgba(244,114,182,0.12), 0 -40px 120px rgba(251,146,60,0.08), inset 0 1px 0 rgba(255,255,255,0.06)",
+    sidebarBg: "rgba(255,255,255,0.02)",
+    sidebarBorder: "1px solid rgba(255,255,255,0.04)",
+    icon: "#94a3b8",
+    panelBg: "rgba(255,255,255,0.02)",
+    panelBorder: "1px solid rgba(255,255,255,0.04)",
+    muted: "#94a3b8",
+    title: "#e2e8f0",
+    badgeBg: "rgba(52,211,153,0.1)",
+    badgeFg: "#34d399",
+    tabRule: "1px solid rgba(255,255,255,0.04)",
+    tabActive: "#e879f9",
+    tabInactive: "#64748b",
+    searchBg: "rgba(255,255,255,0.03)",
+    searchBorder: "1px solid rgba(255,255,255,0.05)",
+    searchMuted: "#64748b",
+    entryName: "#e2e8f0",
+    entryTime: "#64748b",
+    entryBody: "#94a3b8",
+    vidNameBg: "rgba(17,24,39,0.6)",
+    vidNameFg: "#fff",
+    controlBg: "rgba(17,24,39,0.85)",
+    controlMuted: "#94a3b8",
+    controlTime: "#64748b",
+    waveEmpty: "rgba(255,255,255,0.06)",
+    playIcon: "#fff",
+  },
+  light: {
+    shellBg: "rgba(255,255,255,0.97)",
+    shellBorder: "1px solid rgba(219,39,119,0.28)",
+    shellShadow:
+      "0 28px 72px rgba(80, 60, 120, 0.14), 0 12px 32px rgba(251, 146, 60, 0.1), inset 0 1px 0 rgba(255,255,255,1)",
+    sidebarBg: "rgba(244,249,255,0.95)",
+    sidebarBorder: "1px solid rgba(57,72,103,0.12)",
+    icon: "#5c6b82",
+    panelBg: "rgba(255,255,255,0.98)",
+    panelBorder: "1px solid rgba(57,72,103,0.1)",
+    muted: "#5c6b82",
+    title: "#1b262c",
+    badgeBg: "rgba(16,185,129,0.12)",
+    badgeFg: "#047857",
+    tabRule: "1px solid rgba(57,72,103,0.12)",
+    tabActive: "#a21caf",
+    tabInactive: "#64748b",
+    searchBg: "rgba(248,251,255,0.98)",
+    searchBorder: "1px solid rgba(57,72,103,0.14)",
+    searchMuted: "#64748b",
+    entryName: "#1b262c",
+    entryTime: "#64748b",
+    entryBody: "#475569",
+    vidNameBg: "rgba(255,255,255,0.92)",
+    vidNameFg: "#1b262c",
+    controlBg: "rgba(241,245,249,0.98)",
+    controlMuted: "#5c6b82",
+    controlTime: "#64748b",
+    waveEmpty: "rgba(27,38,44,0.08)",
+    playIcon: "#fff",
+  },
+} as const;
 
 /* ─── App Mockup (warm accent — distinct from lp blue canvas) ─── */
 function AppMockup() {
+  const { resolvedTheme } = useTheme();
+  const p = resolvedTheme === "light" ? APP_MOCKUP_PALETTE.light : APP_MOCKUP_PALETTE.dark;
+
   return (
     <div
       style={{
-        background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(244,114,182,0.22)",
+        background: p.shellBg,
+        border: p.shellBorder,
         backdropFilter: "blur(24px) saturate(1.4)",
         borderRadius: "20px 20px 0 0",
         overflow: "hidden",
-        boxShadow:
-          "0 -20px 80px rgba(244,114,182,0.12), 0 -40px 120px rgba(251,146,60,0.08), inset 0 1px 0 rgba(255,255,255,0.06)",
+        boxShadow: p.shellShadow,
       }}
     >
       <div style={{ display: "flex", minHeight: 360 }}>
@@ -23,8 +92,8 @@ function AppMockup() {
         <div
           style={{
             width: 44,
-            background: "rgba(255,255,255,0.02)",
-            borderRight: "1px solid rgba(255,255,255,0.04)",
+            background: p.sidebarBg,
+            borderRight: p.sidebarBorder,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -42,8 +111,8 @@ function AppMockup() {
                 alignItems: "center",
                 justifyContent: "center",
                 fontSize: 12,
-                opacity: i === 0 ? 0.8 : 0.35,
-                color: "#94a3b8",
+                opacity: i === 0 ? 0.85 : 0.45,
+                color: p.icon,
               }}
             >
               {icon}
@@ -55,8 +124,8 @@ function AppMockup() {
         <div
           style={{
             flex: "0 0 40%",
-            background: "rgba(255,255,255,0.02)",
-            borderRight: "1px solid rgba(255,255,255,0.04)",
+            background: p.panelBg,
+            borderRight: p.panelBorder,
             padding: 16,
             display: "flex",
             flexDirection: "column",
@@ -65,16 +134,16 @@ function AppMockup() {
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 12, color: "#94a3b8" }}>←</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0" }}>Weekly dev sync</span>
+              <span style={{ fontSize: 12, color: p.muted }}>←</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: p.title }}>Weekly dev sync</span>
             </div>
             <div
               style={{
                 fontSize: 10,
                 padding: "2px 8px",
                 borderRadius: 999,
-                background: "rgba(52,211,153,0.1)",
-                color: "#34d399",
+                background: p.badgeBg,
+                color: p.badgeFg,
                 fontWeight: 600,
               }}
             >
@@ -82,7 +151,7 @@ function AppMockup() {
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: 12, fontSize: 10, color: "#94a3b8" }}>
+          <div style={{ display: "flex", gap: 12, fontSize: 10, color: p.muted }}>
             <span>📅 Apr 10, 2026</span>
             <span>🕐 2:30 PM</span>
           </div>
@@ -91,7 +160,7 @@ function AppMockup() {
             style={{
               display: "flex",
               gap: 16,
-              borderBottom: "1px solid rgba(255,255,255,0.04)",
+              borderBottom: p.tabRule,
               paddingBottom: 8,
             }}
           >
@@ -101,8 +170,8 @@ function AppMockup() {
                 style={{
                   fontSize: 11,
                   fontWeight: i === 0 ? 600 : 400,
-                  color: i === 0 ? "#e879f9" : "#64748b",
-                  borderBottom: i === 0 ? "2px solid #e879f9" : "none",
+                  color: i === 0 ? p.tabActive : p.tabInactive,
+                  borderBottom: i === 0 ? `2px solid ${p.tabActive}` : "none",
                   paddingBottom: 4,
                 }}
               >
@@ -115,10 +184,10 @@ function AppMockup() {
             style={{
               padding: "6px 10px",
               borderRadius: 8,
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.05)",
+              background: p.searchBg,
+              border: p.searchBorder,
               fontSize: 11,
-              color: "#64748b",
+              color: p.searchMuted,
             }}
           >
             🔍 Search transcript...
@@ -149,10 +218,10 @@ function AppMockup() {
               </div>
               <div>
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: "#e2e8f0" }}>{entry.name}</span>
-                  <span style={{ fontSize: 9, color: "#64748b" }}>{entry.time}</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: p.entryName }}>{entry.name}</span>
+                  <span style={{ fontSize: 9, color: p.entryTime }}>{entry.time}</span>
                 </div>
-                <p style={{ fontSize: 11, color: "#94a3b8", margin: "2px 0 0", lineHeight: 1.5 }}>{entry.text}</p>
+                <p style={{ fontSize: 11, color: p.entryBody, margin: "2px 0 0", lineHeight: 1.5 }}>{entry.text}</p>
               </div>
             </div>
           ))}
@@ -192,9 +261,9 @@ function AppMockup() {
                     left: 6,
                     padding: "2px 8px",
                     borderRadius: 4,
-                    background: "rgba(17,24,39,0.6)",
+                    background: p.vidNameBg,
                     fontSize: 10,
-                    color: "#fff",
+                    color: p.vidNameFg,
                     fontWeight: 500,
                   }}
                 >
@@ -207,7 +276,7 @@ function AppMockup() {
           <div
             style={{
               padding: "8px 12px",
-              background: "rgba(17,24,39,0.85)",
+              background: p.controlBg,
               display: "flex",
               alignItems: "center",
               gap: 12,
@@ -224,11 +293,11 @@ function AppMockup() {
                 justifyContent: "center",
               }}
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="#fff">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill={p.playIcon}>
                 <polygon points="5,3 19,12 5,21" />
               </svg>
             </div>
-            <span style={{ fontSize: 10, color: "#94a3b8" }}>1x</span>
+            <span style={{ fontSize: 10, color: p.controlMuted }}>1x</span>
             <div
               style={{
                 flex: 1,
@@ -243,9 +312,9 @@ function AppMockup() {
               <div style={{ flex: 2, background: "#e879f9", borderRadius: 2 }} />
               <div style={{ flex: 2, background: "#22d3ee", borderRadius: 2 }} />
               <div style={{ flex: 1, background: "#34d399", borderRadius: 2 }} />
-              <div style={{ flex: 4, background: "rgba(255,255,255,0.06)", borderRadius: 2 }} />
+              <div style={{ flex: 4, background: p.waveEmpty, borderRadius: 2 }} />
             </div>
-            <span style={{ fontSize: 10, color: "#64748b" }}>23:41</span>
+            <span style={{ fontSize: 10, color: p.controlTime }}>23:41</span>
           </div>
         </div>
       </div>
@@ -309,12 +378,12 @@ export function CTASection() {
       <div className="lp-cta-noise" aria-hidden />
 
       <div
+        className="lp-cta-sparkle"
         style={{
           position: "absolute",
           top: "28%",
           right: "16%",
           fontSize: 28,
-          color: "rgba(251,191,36,0.35)",
           animation: "lp-float 4s ease-in-out infinite",
           pointerEvents: "none",
         }}
@@ -322,12 +391,12 @@ export function CTASection() {
         ✦
       </div>
       <div
+        className="lp-cta-sparkle-pink"
         style={{
           position: "absolute",
           top: "38%",
           right: "12%",
           fontSize: 14,
-          color: "rgba(244,114,182,0.35)",
           animation: "lp-float 5s ease-in-out 1s infinite",
           pointerEvents: "none",
         }}
@@ -346,16 +415,15 @@ export function CTASection() {
           }}
         >
           <div
+            className="lp-cta-kicker"
             style={{
               display: "inline-block",
               padding: "6px 18px",
               borderRadius: 999,
-              background: "rgba(244,114,182,0.12)",
-              border: "1px solid rgba(251,191,36,0.35)",
+              border: "1px solid transparent",
               backdropFilter: "blur(12px)",
               fontSize: 12,
               fontWeight: 600,
-              color: "#fde68a",
               marginBottom: 20,
             }}
           >
@@ -374,12 +442,12 @@ export function CTASection() {
           }}
         >
           <h2
+            className="lp-cta-heading-line"
             style={{
               fontSize: "clamp(36px, 5vw, 60px)",
               fontWeight: 800,
               lineHeight: 1.1,
               marginBottom: 8,
-              color: "#faf5ff",
             }}
           >
             Make every interview
@@ -392,7 +460,7 @@ export function CTASection() {
               marginBottom: 28,
             }}
           >
-            <span className="lp-cta-gradient-text">worth showing up to</span>
+            <LpGradientText variant="cta">worth showing up to</LpGradientText>
           </h2>
         </div>
 

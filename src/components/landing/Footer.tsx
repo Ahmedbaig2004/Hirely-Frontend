@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 const footerLinks = {
   Product: [
@@ -29,12 +31,33 @@ const footerLinks = {
 };
 
 export function Footer() {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const light = mounted && resolvedTheme === "light";
+
+  const bg = light ? "#f2f9ff" : "#0d1220";
+  const borderTop = light ? "1px solid rgba(209,233,255,0.95)" : "1px solid rgba(255,255,255,0.04)";
+  const brandColor = light ? "#1b262c" : "#e2e8f0";
+  const bodyMuted = light ? "rgba(57,72,103,0.82)" : "#64748b";
+  const headingColor = light ? "#1b262c" : "#e2e8f0";
+  const linkColor = light ? "rgba(30,41,59,0.92)" : "#64748b";
+  const linkHover = light ? "#1d4ed8" : "#e2e8f0";
+  const logoGrad = light ? "linear-gradient(135deg, #7eb8ff, #5eb8c4)" : "linear-gradient(135deg, #2563eb, #3b82f6)";
+  const iconStroke = light ? "#394867" : "#94a3b8";
+  const socialBg = light ? "var(--lp-inner-well)" : "rgba(255,255,255,0.04)";
+  const socialBorder = light ? "1px solid var(--lp-inner-well-border)" : "1px solid rgba(255,255,255,0.06)";
+  const bottomText = light ? "rgba(51,65,85,0.72)" : "#475569";
+  const dividerGrad = light
+    ? "linear-gradient(90deg, transparent, rgba(209,233,255,0.9), transparent)"
+    : "linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)";
+
   return (
     <footer
       className="relative z-[60] isolate"
       style={{
-        background: "#0d1220",
-        borderTop: "1px solid rgba(255,255,255,0.04)",
+        background: bg,
+        borderTop,
         padding: "64px 24px 32px",
       }}
     >
@@ -63,7 +86,7 @@ export function Footer() {
                   width: 32,
                   height: 32,
                   borderRadius: 10,
-                  background: "linear-gradient(135deg, #2563eb, #3b82f6)",
+                  background: logoGrad,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -74,7 +97,7 @@ export function Footer() {
                   height="16"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="#fff"
+                  stroke="#ffffff"
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -86,7 +109,7 @@ export function Footer() {
                 style={{
                   fontSize: 16,
                   fontWeight: 700,
-                  color: "#e2e8f0",
+                  color: brandColor,
                   letterSpacing: "0.04em",
                 }}
               >
@@ -96,7 +119,7 @@ export function Footer() {
             <p
               style={{
                 fontSize: 13,
-                color: "#64748b",
+                color: bodyMuted,
                 lineHeight: 1.7,
                 maxWidth: 280,
                 marginBottom: 20,
@@ -129,21 +152,29 @@ export function Footer() {
                     width: 32,
                     height: 32,
                     borderRadius: 8,
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.06)",
+                    background: socialBg,
+                    border: socialBorder,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     transition: "background 0.2s, border-color 0.2s",
+                    ...(light
+                      ? { backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }
+                      : {}),
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(59,130,246,0.1)";
-                    e.currentTarget.style.borderColor = "rgba(59,130,246,0.2)";
+                    e.currentTarget.style.background = light
+                      ? "rgba(162,210,255,0.35)"
+                      : "rgba(59,130,246,0.1)";
+                    e.currentTarget.style.borderColor = light
+                      ? "rgba(255,209,220,0.75)"
+                      : "rgba(59,130,246,0.2)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-                    e.currentTarget.style.borderColor =
-                      "rgba(255,255,255,0.06)";
+                    e.currentTarget.style.background = socialBg;
+                    e.currentTarget.style.borderColor = light
+                      ? "rgba(255, 255, 255, 0.38)"
+                      : "rgba(255,255,255,0.06)";
                   }}
                 >
                   <svg
@@ -151,7 +182,7 @@ export function Footer() {
                     height="14"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="#94a3b8"
+                    stroke={iconStroke}
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -170,7 +201,7 @@ export function Footer() {
                 style={{
                   fontSize: 12,
                   fontWeight: 600,
-                  color: "#e2e8f0",
+                  color: headingColor,
                   letterSpacing: "0.04em",
                   marginBottom: 16,
                   textTransform: "uppercase",
@@ -194,15 +225,15 @@ export function Footer() {
                       href={link.href}
                       style={{
                         fontSize: 13,
-                        color: "#64748b",
+                        color: linkColor,
                         textDecoration: "none",
                         transition: "color 0.2s",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.color = "#e2e8f0";
+                        e.currentTarget.style.color = linkHover;
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.color = "#64748b";
+                        e.currentTarget.style.color = linkColor;
                       }}
                     >
                       {link.label}
@@ -218,8 +249,7 @@ export function Footer() {
         <div
           style={{
             height: 1,
-            background:
-              "linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)",
+            background: dividerGrad,
             marginBottom: 24,
           }}
         />
@@ -234,10 +264,10 @@ export function Footer() {
             gap: 12,
           }}
         >
-          <p style={{ fontSize: 12, color: "#475569", margin: 0 }}>
+          <p style={{ fontSize: 12, color: bottomText, margin: 0 }}>
             &copy; {new Date().getFullYear()} Hirely. All rights reserved.
           </p>
-          <p style={{ fontSize: 12, color: "#475569", margin: 0 }}>
+          <p style={{ fontSize: 12, color: bottomText, margin: 0 }}>
             Built with AI for the future of hiring.
           </p>
         </div>

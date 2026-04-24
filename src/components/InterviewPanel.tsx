@@ -496,12 +496,12 @@ export default function InterviewPanel() {
                 boxShadow: "0 0 30px color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent)",
               }}
             >
-              <BrainCircuit size={26} style={{ color: "var(--md-sys-color-primary)" }} />
+              <BrainCircuit size={26} className="text-cyan-700" />
             </motion.div>
-            <h2 className="text-xl font-semibold text-on-surface tracking-tight opacity-90">
+            <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
               Building Your Report
             </h2>
-            <p className="text-xs text-on-surface-variant mt-1.5 tracking-wide opacity-45">
+            <p className="mt-1.5 text-xs tracking-wide text-slate-600 dark:text-slate-400">
               Analyzing your full interview session
             </p>
           </div>
@@ -546,7 +546,7 @@ export default function InterviewPanel() {
                         animate={{ rotate: 360 }}
                         transition={{ repeat: Infinity, duration: 1.4, ease: "linear" }}
                       >
-                        <Loader2 size={14} style={{ color: "var(--md-sys-color-primary)" }} />
+                        <Loader2 size={14} className="text-cyan-600" />
                       </motion.div>
                     ) : (
                       <div
@@ -562,22 +562,15 @@ export default function InterviewPanel() {
                       className="text-sm font-medium transition-colors duration-500"
                       style={{
                         color: isCompleted
-                          ? "#10B981"
+                          ? "#059669"
                           : isActive
-                          ? "#ffffff"
-                          : "var(--md-sys-color-on-surface-variant)",
+                          ? "rgb(15, 23, 42)"
+                          : "rgb(71, 85, 105)",
                       }}
                     >
                       {stage.label}
                     </p>
-                    <p
-                      className="text-xs mt-0.5 transition-colors duration-500"
-                      style={{
-                        color: isActive
-                          ? "var(--md-sys-color-on-surface-variant)"
-                          : "var(--md-sys-color-on-surface-variant)",
-                      }}
-                    >
+                    <p className="mt-0.5 text-xs text-slate-600 transition-colors duration-500 dark:text-slate-400">
                       {stage.subtitle}
                     </p>
 
@@ -593,10 +586,10 @@ export default function InterviewPanel() {
                             style={{
                               background: isCompleted
                                 ? "#10B981"
-                                : "linear-gradient(90deg, var(--md-sys-color-primary), var(--md-sys-color-tertiary))",
+                                : "linear-gradient(90deg, rgb(8, 145, 178), rgb(13, 148, 136))",
                               boxShadow: isCompleted
                                 ? "none"
-                                : "0 0 8px color-mix(in srgb, var(--md-sys-color-primary) 50%, transparent)",
+                                : "0 0 10px rgba(8, 145, 178, 0.35)",
                             }}
                             initial={{ width: "0%" }}
                             animate={{ width: `${isCompleted ? 100 : pct}%` }}
@@ -604,8 +597,7 @@ export default function InterviewPanel() {
                           />
                         </div>
                         <span
-                          className="text-xs font-mono shrink-0 tabular-nums"
-                          style={{ color: isCompleted ? "#10B981" : "var(--md-sys-color-tertiary)" }}
+                          className={`text-xs font-mono shrink-0 tabular-nums ${isCompleted ? "text-emerald-600" : "text-teal-700"}`}
                         >
                           {isCompleted ? "100" : pct}%
                         </span>
@@ -663,8 +655,8 @@ export default function InterviewPanel() {
         >
           {/* Question counter */}
           <div className="flex items-center gap-2">
-            <span className="label-caps">Question</span>
-            <span className="text-sm font-bold text-on-surface tabular-nums">
+            <span className="label-caps text-slate-600 dark:text-slate-400">Question</span>
+            <span className="text-sm font-bold tabular-nums text-slate-900 dark:text-slate-100">
               #{questionCount}
             </span>
           </div>
@@ -678,8 +670,11 @@ export default function InterviewPanel() {
           {/* TTS toggle */}
           <button
             onClick={toggleTts}
-            className="flex items-center gap-1.5 transition-all duration-200"
-            style={{ color: isTtsEnabled ? "var(--md-sys-color-tertiary)" : "var(--md-sys-color-on-surface-variant)" }}
+            className={
+              isTtsEnabled
+                ? "flex items-center gap-1.5 text-teal-700 transition-all duration-200 dark:text-teal-300"
+                : "flex items-center gap-1.5 text-slate-600 transition-all duration-200 dark:text-slate-400"
+            }
             aria-label={isTtsEnabled ? "Disable voice" : "Enable voice"}
           >
             {isTtsEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
@@ -697,8 +692,7 @@ export default function InterviewPanel() {
           {/* Exit button */}
           <button
             onClick={() => setShowExitModal(true)}
-            className="flex items-center gap-1.5 transition-all duration-200"
-            style={{ color: "var(--md-sys-color-on-surface-variant)" }}
+            className="flex items-center gap-1.5 text-slate-600 transition-all duration-200 dark:text-slate-400"
             aria-label="Exit interview"
           >
             <X size={16} />
@@ -734,19 +728,19 @@ export default function InterviewPanel() {
                 style={
                   mode.disabled
                     ? {
-                        color: "var(--md-sys-color-on-surface-variant)",
-                        opacity: 0.3,
+                        color: "rgb(148, 163, 184)",
+                        opacity: 0.45,
                         cursor: "not-allowed",
                       }
                     : isActive
                     ? {
-                        background: "color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)",
-                        color: "var(--md-sys-color-primary)",
-                        border: "1px solid color-mix(in srgb, var(--md-sys-color-primary) 35%, transparent)",
-                        boxShadow: "0 0 12px color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent)",
+                        background: "rgba(8, 145, 178, 0.14)",
+                        color: "rgb(14, 116, 144)",
+                        border: "1px solid rgba(8, 145, 178, 0.35)",
+                        boxShadow: "0 0 14px rgba(8, 145, 178, 0.12)",
                       }
                     : {
-                        color: "var(--md-sys-color-on-surface-variant)",
+                        color: "rgb(51, 65, 85)",
                         border: "1px solid transparent",
                       }
                 }
@@ -787,7 +781,7 @@ export default function InterviewPanel() {
               ) : (
                 <motion.p
                   key={currentQuestion}
-                  className="text-2xl md:text-3xl leading-relaxed font-medium text-center text-on-surface opacity-90"
+                  className="text-center text-2xl font-medium leading-relaxed text-slate-900 md:text-3xl dark:text-slate-100"
                   initial="hidden"
                   animate="visible"
                   variants={{
@@ -837,27 +831,25 @@ export default function InterviewPanel() {
                 className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className="max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed"
+                  className="max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed text-slate-800 dark:text-slate-100"
                   style={
                     msg.role === "ai"
                       ? {
                           background: "var(--md-sys-color-surface-container)",
                           border: "1px solid var(--md-sys-color-outline-variant)",
-                          color: "var(--md-sys-color-on-surface)",
                           borderBottomLeftRadius: "6px",
                         }
                       : {
-                          background: "color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)",
-                          border: "1px solid color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent)",
-                          color: "var(--md-sys-color-on-surface)",
+                          background: "rgba(8, 145, 178, 0.12)",
+                          border: "1px solid rgba(8, 145, 178, 0.28)",
                           borderBottomRightRadius: "6px",
                         }
                   }
                 >
                   {msg.role === "ai" && (
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <BrainCircuit size={12} style={{ color: "var(--md-sys-color-primary)" }} />
-                      <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--md-sys-color-primary)" }}>
+                    <div className="mb-1.5 flex items-center gap-1.5">
+                      <BrainCircuit size={12} className="text-cyan-700 dark:text-cyan-400" />
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-cyan-800 dark:text-cyan-300">
                         Interviewer
                       </span>
                     </div>
@@ -885,8 +877,7 @@ export default function InterviewPanel() {
                   {[0, 1, 2].map((dot) => (
                     <motion.div
                       key={dot}
-                      className="w-1.5 h-1.5 rounded-full"
-                      style={{ background: "var(--md-sys-color-primary)" }}
+                      className="h-1.5 w-1.5 rounded-full bg-cyan-600 dark:bg-cyan-400"
                       animate={{ opacity: [0.3, 1, 0.3] }}
                       transition={{
                         repeat: Infinity,
@@ -916,9 +907,8 @@ export default function InterviewPanel() {
                 onKeyDown={handleChatKeyDown}
                 placeholder="Type your answer..."
                 rows={1}
-                className="flex-1 resize-none bg-transparent text-sm outline-none"
+                className="flex-1 resize-none bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
                 style={{
-                  color: "var(--md-sys-color-on-surface)",
                   maxHeight: "120px",
                 }}
                 onInput={(e) => {
@@ -998,12 +988,10 @@ export default function InterviewPanel() {
                       boxShadow: "0 0 20px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent)",
                     }}
                   >
-                    <BrainCircuit size={14} style={{ color: "var(--md-sys-color-on-primary-container)" }} />
+                    <BrainCircuit size={14} className="text-cyan-900 dark:text-cyan-100" />
                   </div>
                 </div>
-                <span className="label-caps" style={{ color: "var(--md-sys-color-primary)" }}>
-                  Analyzing
-                </span>
+                <span className="label-caps text-cyan-800 dark:text-cyan-300">Analyzing</span>
               </motion.div>
             ) : isRecording ? (
               <motion.div
@@ -1037,12 +1025,10 @@ export default function InterviewPanel() {
                       boxShadow: "0 0 18px color-mix(in srgb, var(--md-sys-color-tertiary) 35%, transparent)",
                     }}
                   >
-                    <Mic size={14} style={{ color: "var(--md-sys-color-tertiary)" }} />
+                    <Mic size={14} className="text-teal-700 dark:text-teal-300" />
                   </div>
                 </div>
-                <span className="label-caps" style={{ color: "var(--md-sys-color-tertiary)" }}>
-                  Listening
-                </span>
+                <span className="label-caps text-teal-800 dark:text-teal-300">Listening</span>
               </motion.div>
             ) : (
               <motion.div
@@ -1058,7 +1044,7 @@ export default function InterviewPanel() {
                     border: "1px solid var(--md-sys-color-outline-variant)",
                   }}
                 />
-                <span className="label-caps">Ready — start speaking</span>
+                <span className="label-caps text-slate-600 dark:text-slate-400">Ready — start speaking</span>
               </motion.div>
             )}
           </div>
@@ -1087,8 +1073,8 @@ export default function InterviewPanel() {
                 : {
                     background: "var(--md-sys-color-surface-container)",
                     border: "1px solid var(--md-sys-color-outline-variant)",
-                    color: "var(--md-sys-color-on-surface-variant)",
-                    opacity: 0.4,
+                    color: "rgb(71, 85, 105)",
+                    opacity: 0.55,
                     cursor: "not-allowed",
                   }
             }

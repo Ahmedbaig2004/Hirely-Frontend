@@ -2,25 +2,39 @@
 
 import dynamic from "next/dynamic";
 import { useReducedMotion } from "framer-motion";
+import { useTheme } from "next-themes";
 
 const HeroCanvas = dynamic(
   () => import("./HeroCanvas").then((m) => m.HeroCanvas),
   {
     ssr: false,
     loading: () => (
-      <div
-        className="absolute inset-0 flex items-center justify-center text-xs font-medium uppercase tracking-[0.25em]"
-        style={{ background: "#060a12", color: "#64748b" }}
-        aria-hidden
-      >
-        Loading scene
-      </div>
+      <HeroCanvasLoadingFallback />
     ),
   },
 );
 
+function HeroCanvasLoadingFallback() {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme !== "dark";
+  return (
+    <div
+      className="absolute inset-0 flex items-center justify-center text-xs font-medium uppercase tracking-[0.25em]"
+      style={{
+        background: isLight ? "#f2f9ff" : "#060a12",
+        color: isLight ? "#475569" : "#64748b",
+      }}
+      aria-hidden
+    >
+      Loading scene
+    </div>
+  );
+}
+
 export function HeroVisual() {
   const reduced = useReducedMotion();
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme !== "dark";
 
   if (reduced === true) {
     return (
@@ -29,14 +43,22 @@ export function HeroVisual() {
         aria-label="Decorative 3D backdrop — reduced motion"
         className="absolute inset-0"
         style={{
-          background: "radial-gradient(ellipse at 50% 40%, #0c1629 0%, #060a12 100%)",
+          background: isLight
+            ? "radial-gradient(ellipse at 50% 38%, #ffffff 0%, #f2f9ff 45%, #e5f2fc 100%)"
+            : "radial-gradient(ellipse at 50% 40%, #0c1629 0%, #060a12 100%)",
         }}
       />
     );
   }
 
   if (reduced === null) {
-    return <div className="absolute inset-0" style={{ background: "#060a12" }} aria-hidden />;
+    return (
+      <div
+        className="absolute inset-0"
+        style={{ background: isLight ? "#f2f9ff" : "#060a12" }}
+        aria-hidden
+      />
+    );
   }
 
   return (
