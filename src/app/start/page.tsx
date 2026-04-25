@@ -471,14 +471,14 @@ export default function StartPage() {
                         ? { opacity: 1 }
                         : { opacity: 1, x: 0, filter: "blur(0px)", transition: springSoft },
                     }}
-                    className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-400/25 bg-gradient-to-r from-cyan-500/[0.12] via-white/[0.04] to-violet-500/[0.14] px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-100/95 shadow-[0_0_32px_-8px_rgba(34,211,238,0.35)] backdrop-blur-md"
+                    className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-700/25 bg-gradient-to-r from-cyan-500/15 via-white/50 to-violet-500/12 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-900 shadow-sm backdrop-blur-md dark:border-cyan-400/25 dark:from-cyan-500/[0.12] dark:via-white/[0.04] dark:to-violet-500/[0.14] dark:text-cyan-100/95 dark:shadow-[0_0_32px_-8px_rgba(34,211,238,0.35)]"
                   >
                     Ready to begin?
                   </motion.span>
 
                   {/* motion.h1 required: plain <h1> breaks Framer variant inheritance to word spans */}
                   <motion.h1
-                    className="max-w-[22ch] text-3xl font-semibold leading-[1.12] tracking-tight text-white drop-shadow-[0_0_42px_rgba(34,211,238,0.22)] md:text-5xl md:leading-[1.08]"
+                    className="max-w-[22ch] text-3xl font-semibold leading-[1.12] tracking-tight text-slate-900 md:text-5xl md:leading-[1.08] dark:text-white dark:drop-shadow-[0_0_42px_rgba(34,211,238,0.22)]"
                     variants={{
                       hidden: {},
                       show: {
@@ -518,7 +518,7 @@ export default function StartPage() {
                         ? { opacity: 1 }
                         : { opacity: 1, x: 0, filter: "blur(0px)", transition: { ...springSoft, delay: 0.08 } },
                     }}
-                    className="mt-4 max-w-lg text-sm leading-relaxed text-slate-400/95 md:text-base"
+                    className="mt-4 max-w-lg text-sm leading-relaxed text-slate-600 md:text-base dark:text-slate-400"
                   >
                     Choose your interview type and configure your session.
                   </motion.p>
@@ -541,7 +541,7 @@ export default function StartPage() {
                   />
                 </motion.div>
 
-                <div className="relative z-[2] w-full rounded-[2rem] border border-white/[0.07] bg-slate-950/[0.35] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset,0_40px_100px_-48px_rgba(0,0,0,0.85)] backdrop-blur-xl sm:p-8">
+                <div className="relative z-[2] w-full rounded-[2rem] border border-[var(--lp-glass-border)] bg-[var(--lp-glass)] p-5 shadow-[0_20px_60px_-28px_rgba(15,23,42,0.14)] backdrop-blur-[28px] backdrop-saturate-150 sm:p-8 dark:border-white/[0.07] dark:bg-slate-950/[0.35] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset,0_40px_100px_-48px_rgba(0,0,0,0.85)]">
                 <div className="w-full grid grid-cols-1 lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)] gap-8 lg:gap-10 items-start">
                   {/* Sidebar — subtle counter-motion from left */}
                   <motion.div
@@ -569,13 +569,13 @@ export default function StartPage() {
                         style={{ background: "radial-gradient(circle, var(--md-sys-color-primary) 0%, transparent 72%)" }}
                       />
 
-                      <div className="relative rounded-3xl glass-card-raised border border-white/[0.09] p-6 shadow-[0_24px_80px_-24px_rgba(0,0,0,0.55),0_0_0_1px_rgba(255,255,255,0.04)_inset] sm:p-7">
+                      <div className="relative rounded-3xl glass-card-raised p-6 shadow-[0_24px_80px_-28px_rgba(15,23,42,0.14)] sm:p-7 dark:shadow-[0_24px_80px_-24px_rgba(0,0,0,0.55),0_0_0_1px_rgba(255,255,255,0.04)_inset]">
                         <div className="flex items-center justify-between mb-6 gap-3">
                           <div>
-                            <h2 className="text-base font-semibold text-on-surface tracking-tight opacity-90">
+                            <h2 className="text-base font-semibold tracking-tight text-slate-900 dark:text-on-surface dark:opacity-90">
                               Start your session
                             </h2>
-                            <p className="text-xs text-on-surface-variant mt-0.5 opacity-40">
+                            <p className="mt-0.5 text-xs text-slate-600 dark:text-on-surface-variant dark:opacity-70">
                               Takes less than 60 seconds
                             </p>
                           </div>
@@ -590,7 +590,7 @@ export default function StartPage() {
                           </div>
                         </div>
 
-                        <div className="h-px mb-6 bg-outline-variant opacity-40" />
+                        <div className="mb-6 h-px bg-slate-300/80 dark:bg-outline-variant dark:opacity-40" />
 
                         {/* ── JOB-SPECIFIC FIELDS ── */}
                         {interviewType === "job-specific" && (
@@ -621,7 +621,7 @@ export default function StartPage() {
                             </div>
                             <div className="mb-6">
                               <label className="label-caps block mb-2">Resume (PDF)</label>
-                              <div className="dark rounded-xl overflow-hidden">
+                              <div className="overflow-hidden rounded-xl">
                                 <FileUpload onChange={handleFileUpload} />
                               </div>
                             </div>
@@ -933,7 +933,7 @@ export default function StartPage() {
                           Start Interview
                         </button>
 
-                        <p className="text-center mt-4 label-caps">Powered by Gemini AI</p>
+                        <p className="label-caps mt-4 text-center">Powered by Gemini AI</p>
                       </div>
                   </motion.div>
                 </div>

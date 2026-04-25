@@ -40,17 +40,44 @@ export function getScoreBarStyle(score: number): React.CSSProperties {
   };
 }
 
-/** Returns the hex fill color for a score cell (for heatmap use) */
-export function getScoreCellColor(score: number | null): string {
-  if (score === null) return "rgba(255,255,255,0.03)";
-  if (score >= 75) return "rgba(16,185,129,0.18)";
-  if (score >= 50) return "rgba(245,158,11,0.18)";
-  return "rgba(239,68,68,0.18)";
+export type ScoreHeatmapTheme = "light" | "dark";
+
+/** Fill for heatmap cells — light theme uses stronger tints + readable contrast with dark text */
+export function getScoreCellColor(score: number | null, theme: ScoreHeatmapTheme = "light"): string {
+  if (score === null) {
+    return theme === "light" ? "rgba(27, 38, 44, 0.05)" : "rgba(255,255,255,0.03)";
+  }
+  if (theme === "light") {
+    if (score >= 75) return "rgba(16, 185, 129, 0.35)";
+    if (score >= 50) return "rgba(245, 158, 11, 0.38)";
+    return "rgba(248, 113, 113, 0.38)";
+  }
+  if (score >= 75) return "rgba(16,185,129,0.22)";
+  if (score >= 50) return "rgba(245,158,11,0.22)";
+  return "rgba(239,68,68,0.22)";
 }
 
-export function getScoreCellBorder(score: number | null): string {
-  if (score === null) return "rgba(255,255,255,0.06)";
+export function getScoreCellBorder(score: number | null, theme: ScoreHeatmapTheme = "light"): string {
+  if (score === null) {
+    return theme === "light" ? "rgba(57, 72, 103, 0.14)" : "rgba(255,255,255,0.06)";
+  }
+  if (theme === "light") {
+    if (score >= 75) return "rgba(5, 150, 105, 0.55)";
+    if (score >= 50) return "rgba(180, 83, 9, 0.55)";
+    return "rgba(185, 28, 28, 0.55)";
+  }
   if (score >= 75) return "rgba(16,185,129,0.35)";
   if (score >= 50) return "rgba(245,158,11,0.35)";
   return "rgba(239,68,68,0.35)";
+}
+
+/** Text on heatmap score cells */
+export function getScoreCellFg(score: number | null, theme: ScoreHeatmapTheme = "light"): string {
+  if (score === null) {
+    return theme === "light" ? "rgba(57, 72, 103, 0.5)" : "rgba(255,255,255,0.2)";
+  }
+  if (theme === "dark") return "rgba(255,255,255,0.92)";
+  if (score >= 75) return "#065f46";
+  if (score >= 50) return "#9a3412";
+  return "#9f1239";
 }

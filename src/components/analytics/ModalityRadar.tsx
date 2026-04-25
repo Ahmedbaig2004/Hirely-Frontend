@@ -11,11 +11,14 @@ import {
   Tooltip,
 } from "recharts";
 import { motion, useReducedMotion } from "framer-motion";
+import { useTheme } from "next-themes";
 import {
-  CHART_COLORS,
+  pickChartColors,
   TICK_STYLE,
   TOOLTIP_STYLE,
   CHART_ANIM_MS,
+  RADAR_GRID_STROKE,
+  RADAR_DOT_FILL,
 } from "./chartTheme";
 
 type ModalityPayload = {
@@ -33,6 +36,9 @@ type Props = {
 export function ModalityRadar({ modality }: Props) {
   const uid = useId().replace(/:/g, "");
   const reduceMotion = useReducedMotion();
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme !== "dark";
+  const C = pickChartColors(isLight);
   const animMs = reduceMotion ? 0 : CHART_ANIM_MS;
 
   const chartData = useMemo(
@@ -63,16 +69,16 @@ export function ModalityRadar({ modality }: Props) {
         >
           <defs>
             <linearGradient id={`radarFill-${uid}`} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor={CHART_COLORS.violetLight} stopOpacity={0.55} />
-              <stop offset="100%" stopColor={CHART_COLORS.violet} stopOpacity={0.18} />
+              <stop offset="0%" stopColor={C.violetLight} stopOpacity={isLight ? 0.78 : 0.55} />
+              <stop offset="100%" stopColor={C.violet} stopOpacity={isLight ? 0.42 : 0.18} />
             </linearGradient>
             <linearGradient id={`radarStroke-${uid}`} x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#DDD6FE" />
-              <stop offset="100%" stopColor={CHART_COLORS.violetLight} />
+              <stop offset="0%" stopColor={isLight ? C.violet : "#DDD6FE"} />
+              <stop offset="100%" stopColor={isLight ? C.violet : C.violetLight} />
             </linearGradient>
           </defs>
           <PolarGrid
-            stroke="rgba(255,255,255,0.12)"
+            stroke={RADAR_GRID_STROKE}
             strokeDasharray="3 6"
             gridType="polygon"
           />
@@ -97,8 +103,8 @@ export function ModalityRadar({ modality }: Props) {
             fillOpacity={1}
             dot={{
               r: 4,
-              fill: "#fff",
-              stroke: CHART_COLORS.violet,
+              fill: RADAR_DOT_FILL,
+              stroke: C.violet,
               strokeWidth: 2,
             }}
             isAnimationActive={animMs > 0}

@@ -122,7 +122,7 @@ function InterviewCard({
               <DecisionBadge decision={fb?.decision} />
             </div>
             <div className="flex flex-wrap items-center gap-4">
-              <span className="flex items-center gap-1 text-on-surface-variant text-sm opacity-40">
+              <span className="flex items-center gap-1 text-sm text-slate-600 dark:text-slate-400">
                 <Calendar size={14} />
                 {new Date(item.createdAt).toLocaleDateString()}
               </span>
@@ -131,7 +131,7 @@ function InterviewCard({
           </div>
           <ChevronDown
             size={18}
-            className={`text-on-surface-variant shrink-0 transition-transform duration-300 opacity-40 ${expanded ? "rotate-180" : ""}`}
+            className={`shrink-0 text-slate-600 transition-transform duration-300 dark:text-slate-400 ${expanded ? "rotate-180" : ""}`}
           />
         </button>
 
@@ -308,19 +308,18 @@ export default function Dashboard() {
               key={opt.value}
               type="button"
               onClick={() => setFilter(opt.value)}
-              className="glass-card rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200"
-              style={
+              className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-all duration-200 ${
                 isActive
-                  ? {
-                      borderColor: "rgba(124,58,237,0.4)",
-                      boxShadow: "0 0 20px rgba(124,58,237,0.15)",
-                      color: "rgba(255,255,255,0.95)",
-                    }
-                  : { color: "rgba(255,255,255,0.5)" }
-              }
+                  ? "border-violet-600/45 bg-violet-500/15 text-slate-900 shadow-[0_0_20px_rgba(124,58,237,0.18)] dark:border-violet-400/45 dark:bg-violet-500/20 dark:text-slate-100 dark:shadow-[0_0_22px_rgba(124,58,237,0.28)]"
+                  : "border-slate-400/55 bg-white/55 text-slate-800 hover:border-slate-500/70 hover:bg-white/75 hover:text-slate-900 dark:border-white/18 dark:bg-white/[0.07] dark:text-slate-200 dark:hover:border-white/28 dark:hover:bg-white/10 dark:hover:text-slate-50"
+              }`}
             >
               {opt.label}
-              <span className="ml-2 opacity-50">{count}</span>
+              <span
+                className={`ml-2 tabular-nums ${isActive ? "text-slate-700 dark:text-slate-200" : "text-slate-600 dark:text-slate-400"}`}
+              >
+                {count}
+              </span>
             </button>
           );
         })}

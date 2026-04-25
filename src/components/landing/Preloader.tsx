@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { usePreloaderContext } from "./PreloaderContext";
@@ -34,6 +35,8 @@ function measureFlyTargets(text: HTMLElement) {
  */
 export function LandingPreloader() {
   const pathname = usePathname();
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === "light";
   const { revealNavbarLogo } = usePreloaderContext();
   const [active, setActive] = useState(false);
 
@@ -175,14 +178,18 @@ export function LandingPreloader() {
         ref={curtainLeftRef}
         className="absolute inset-y-0 left-0 w-1/2"
         style={{
-          background: "linear-gradient(90deg, rgba(15,23,42,0.95), transparent)",
+          background: isLight
+            ? "linear-gradient(90deg, rgba(180, 218, 252, 0.85), rgba(242, 249, 255, 0))"
+            : "linear-gradient(90deg, rgba(15,23,42,0.95), transparent)",
         }}
       />
       <div
         ref={curtainRightRef}
         className="absolute inset-y-0 right-0 w-1/2"
         style={{
-          background: "linear-gradient(270deg, rgba(15,23,42,0.95), transparent)",
+          background: isLight
+            ? "linear-gradient(270deg, rgba(180, 218, 252, 0.85), rgba(242, 249, 255, 0))"
+            : "linear-gradient(270deg, rgba(15,23,42,0.95), transparent)",
         }}
       />
 
@@ -194,7 +201,7 @@ export function LandingPreloader() {
           fontWeight: 700,
           fontSize: "clamp(2.75rem, 10vw, 4.25rem)",
           letterSpacing: "0.08em",
-          color: "#f1f5f9",
+          color: isLight ? "#0c2748" : "#f1f5f9",
         }}
         aria-hidden
       >

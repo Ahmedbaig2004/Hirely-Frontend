@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
+import { useTheme } from "next-themes";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { supabase } from "@/lib/supabaseClient";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -20,6 +21,54 @@ import { cn } from "@/components/lib/utils";
 import { usePreloaderContextOptional } from "@/components/landing/PreloaderContext";
 
 const SCROLL_RANGE = 140;
+
+const NAV_THEME = {
+  dark: {
+    linkActive: "#f1f5f9",
+    linkMuted: "#94a3b8",
+    linkHover: "#f8fafc",
+    logoText: "#e2e8f0",
+    loginHover: "#e2e8f0",
+    borderTop: "rgba(255,255,255,0.08)",
+    mobileActiveBg: "rgba(59,130,246,0.12)",
+    helpActiveBg: "rgba(59,130,246,0.12)",
+    settingsActiveBg: "rgba(139,92,246,0.15)",
+    settingsBorder: "1px solid rgba(139,92,246,0.25)",
+    menuBtnBorder: "1px solid rgba(255,255,255,0.1)",
+    menuBtnBg: "rgba(255,255,255,0.04)",
+    menuBtnColor: "#e2e8f0",
+    logoIconBg: "linear-gradient(135deg, #2563eb, #3b82f6)",
+    logoIconStroke: "#fff",
+    ctaBg: "linear-gradient(135deg, #2563eb, #3b82f6)",
+    ctaShadow: "0 2px 14px rgba(59,130,246,0.3)",
+    ctaShadowHover: "0 6px 24px rgba(59,130,246,0.45)",
+    navShadowHi: "0 18px 48px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)",
+    navShadowLo: "0 8px 32px rgba(0,0,0,0.12)",
+  },
+  light: {
+    linkActive: "#1b262c",
+    linkMuted: "rgba(57,72,103,0.72)",
+    linkHover: "#0f172a",
+    logoText: "#1b262c",
+    loginHover: "#2563eb",
+    borderTop: "rgba(209,233,255,0.95)",
+    mobileActiveBg: "rgba(162,210,255,0.28)",
+    helpActiveBg: "rgba(162,210,255,0.28)",
+    settingsActiveBg: "rgba(255,209,220,0.35)",
+    settingsBorder: "1px solid rgba(162,210,255,0.85)",
+    menuBtnBorder: "1px solid rgba(209,233,255,0.95)",
+    menuBtnBg: "rgba(255,255,255,0.72)",
+    menuBtnColor: "#1b262c",
+    logoIconBg: "linear-gradient(135deg, #7eb8ff, #5eb8c4)",
+    logoIconStroke: "#ffffff",
+    ctaBg: "linear-gradient(135deg, #7eb8ff, #62c4d0)",
+    ctaShadow: "0 2px 14px rgba(98,196,208,0.4)",
+    ctaShadowHover: "0 8px 28px rgba(255,209,220,0.55), 0 6px 24px rgba(98,196,208,0.45)",
+    navShadowHi:
+      "0 18px 48px rgba(90,140,180,0.16), inset 0 1px 0 rgba(255,255,255,0.9)",
+    navShadowLo: "0 8px 32px rgba(90,140,180,0.12)",
+  },
+} as const;
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -53,6 +102,8 @@ export function Navbar() {
   const t = useScrollT();
   const reduceMotion = useReducedMotion();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const [navMounted, setNavMounted] = useState(false);
   const [desktopCursor, setDesktopCursor] = useState(false);
   const [cursor, setCursor] = useState({
     x: 0,
@@ -60,6 +111,8 @@ export function Navbar() {
     visible: false,
     onTarget: false,
   });
+
+  useEffect(() => setNavMounted(true), []);
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 768px)");
@@ -95,10 +148,23 @@ export function Navbar() {
   const linkGap = 26 - t * 3;
   const linkSize = 13.5;
 
-  const glassBg =
-    t > 0.35 ? "rgba(15, 23, 42, 0.82)" : "rgba(17, 24, 39, 0.42)";
-  const borderCol =
-    t > 0.35 ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.04)";
+  const lightNav = navMounted && resolvedTheme === "light";
+  const tc = lightNav ? NAV_THEME.light : NAV_THEME.dark;
+
+  const glassBg = lightNav
+    ? t > 0.35
+      ? "rgba(255, 255, 255, 0.38)"
+      : "rgba(255, 255, 255, 0.28)"
+    : t > 0.35
+      ? "rgba(15, 23, 42, 0.82)"
+      : "rgba(17, 24, 39, 0.42)";
+  const borderCol = lightNav
+    ? t > 0.35
+      ? "rgba(255, 255, 255, 0.55)"
+      : "rgba(255, 255, 255, 0.42)"
+    : t > 0.35
+      ? "rgba(255,255,255,0.1)"
+      : "rgba(255,255,255,0.04)";
 
   const showCustomCursor = desktopCursor && !reduceMotion;
 
@@ -143,13 +209,10 @@ export function Navbar() {
             display: "block",
             overflow: "visible",
             background: glassBg,
-            backdropFilter: "blur(22px) saturate(1.35)",
-            WebkitBackdropFilter: "blur(22px) saturate(1.35)",
+            backdropFilter: "blur(26px) saturate(1.45)",
+            WebkitBackdropFilter: "blur(26px) saturate(1.45)",
             border: `1px solid ${borderCol}`,
-            boxShadow:
-              t > 0.4
-                ? "0 18px 48px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)"
-                : "0 8px 32px rgba(0,0,0,0.12)",
+            boxShadow: t > 0.4 ? tc.navShadowHi : tc.navShadowLo,
             transition: `border-radius ${ease} ${easeFn}, padding ${ease} ${easeFn}, background ${ease} ${easeFn}, border-color ${ease} ${easeFn}, box-shadow ${ease} ${easeFn}`,
           }}
         >
@@ -211,7 +274,7 @@ export function Navbar() {
                     width: 28,
                     height: 28,
                     borderRadius: 8,
-                    background: "linear-gradient(135deg, #2563eb, #3b82f6)",
+                    background: tc.logoIconBg,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -222,7 +285,7 @@ export function Navbar() {
                     height="13"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="#fff"
+                    stroke={tc.logoIconStroke}
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -236,7 +299,7 @@ export function Navbar() {
                     fontWeight: 600,
                     fontSize: 13.5,
                     letterSpacing: "0.06em",
-                    color: "#e2e8f0",
+                    color: tc.logoText,
                     fontFamily: "var(--font-geist-sans), system-ui, sans-serif",
                   }}
                 >
@@ -267,7 +330,7 @@ export function Navbar() {
                     style={{
                       fontSize: linkSize,
                       fontWeight: isActive ? 500 : 400,
-                      color: isActive ? "#f1f5f9" : "#94a3b8",
+                      color: isActive ? tc.linkActive : tc.linkMuted,
                       textDecoration: "none",
                       fontFamily:
                         "var(--font-geist-sans), system-ui, sans-serif",
@@ -277,10 +340,10 @@ export function Navbar() {
                       whiteSpace: "nowrap",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.color = "#f8fafc";
+                      e.currentTarget.style.color = tc.linkHover;
                     }}
                     onMouseLeave={(e) => {
-                      if (!isActive) e.currentTarget.style.color = "#94a3b8";
+                      if (!isActive) e.currentTarget.style.color = tc.linkMuted;
                     }}
                     onMouseDown={(e) => {
                       e.currentTarget.style.transform = "scale(0.97)";
@@ -315,9 +378,9 @@ export function Navbar() {
                 style={{
                   padding: 8,
                   borderRadius: 10,
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  background: "rgba(255,255,255,0.04)",
-                  color: "#e2e8f0",
+                  border: tc.menuBtnBorder,
+                  background: tc.menuBtnBg,
+                  color: tc.menuBtnColor,
                   cursor: "pointer",
                   transition:
                     "background 0.2s ease, border-color 0.2s ease, transform 0.15s ease",
@@ -338,7 +401,7 @@ export function Navbar() {
                       borderRadius: 999,
                       fontSize: 12,
                       fontWeight: 500,
-                      color: pathname === "/dashboard" ? "#e2e8f0" : "#94a3b8",
+                      color: pathname === "/dashboard" ? tc.linkActive : tc.linkMuted,
                       textDecoration: "none",
                       transition: "color 0.2s ease, background 0.2s ease",
                     }}
@@ -358,9 +421,7 @@ export function Navbar() {
                       fontSize: 12,
                       fontWeight: 500,
                       color:
-                        pathname === "/dashboard/analytics"
-                          ? "#e2e8f0"
-                          : "#94a3b8",
+                        pathname === "/dashboard/analytics" ? tc.linkActive : tc.linkMuted,
                       textDecoration: "none",
                       transition: "color 0.2s ease",
                     }}
@@ -380,7 +441,7 @@ export function Navbar() {
                       borderRadius: 999,
                       fontSize: 12,
                       fontWeight: 500,
-                      color: "#94a3b8",
+                      color: tc.linkMuted,
                       background: "none",
                       border: "none",
                       cursor: "pointer",
@@ -400,15 +461,15 @@ export function Navbar() {
                   style={{
                     fontSize: 12.5,
                     fontWeight: 500,
-                    color: "#94a3b8",
+                    color: tc.linkMuted,
                     textDecoration: "none",
                     transition: "color 0.2s ease, transform 0.15s ease",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "#e2e8f0";
+                    e.currentTarget.style.color = tc.loginHover;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "#94a3b8";
+                    e.currentTarget.style.color = tc.linkMuted;
                   }}
                 >
                   Login
@@ -426,7 +487,7 @@ export function Navbar() {
                 style={{
                   fontSize: 12.5,
                   fontWeight: 500,
-                  color: pathname === "/help" ? "#e2e8f0" : "#94a3b8",
+                  color: pathname === "/help" ? tc.linkActive : tc.linkMuted,
                   textDecoration: "none",
                   transition: "color 0.2s ease",
                 }}
@@ -441,9 +502,13 @@ export function Navbar() {
                 data-nav-cursor-target
                 className={cn(
                   "hidden items-center gap-1.5 rounded-[10px] border px-2.5 py-1.5 text-[12.5px] font-semibold transition-colors sm:inline-flex",
-                  pathname === "/settings"
-                    ? "border-violet-400/35 bg-violet-500/15 text-[#e2e8f0] shadow-[0_0_20px_-4px_rgba(139,92,246,0.35)]"
-                    : "border-white/[0.12] bg-white/[0.05] text-[#e2e8f0] hover:border-violet-400/25 hover:bg-violet-500/10",
+                  lightNav
+                    ? pathname === "/settings"
+                      ? "border-[rgba(162,210,255,0.9)] bg-[rgba(255,209,220,0.25)] text-[#1b262c] shadow-[0_0_20px_-4px_rgba(162,210,255,0.45)]"
+                      : "border-[var(--lp-glass-border)] bg-[var(--lp-inner-well)] text-[#1b262c] backdrop-blur-md hover:border-[rgba(255,209,220,0.75)] hover:bg-[rgba(162,210,255,0.2)]"
+                    : pathname === "/settings"
+                      ? "border-violet-400/35 bg-violet-500/15 text-[#e2e8f0] shadow-[0_0_20px_-4px_rgba(139,92,246,0.35)]"
+                      : "border-white/[0.12] bg-white/[0.05] text-[#e2e8f0] hover:border-violet-400/25 hover:bg-violet-500/10",
                 )}
                 title="Settings"
               >
@@ -459,24 +524,22 @@ export function Navbar() {
                   alignItems: "center",
                   padding: `7px ${18 - t * 5}px`,
                   borderRadius: 999,
-                  background: "linear-gradient(135deg, #2563eb, #3b82f6)",
+                  background: tc.ctaBg,
                   color: "#fff",
                   fontSize: 12.5,
                   fontWeight: 600,
                   textDecoration: "none",
-                  boxShadow: "0 2px 14px rgba(59,130,246,0.3)",
+                  boxShadow: tc.ctaShadow,
                   transition:
-                    "transform 0.2s ease, box-shadow 0.25s ease, filter 0.2s ease",
+                    "transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, filter 0.2s ease",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                  e.currentTarget.style.boxShadow =
-                    "0 6px 24px rgba(59,130,246,0.45)";
+                  e.currentTarget.style.transform = "translateY(-2px) scale(1.02)";
+                  e.currentTarget.style.boxShadow = tc.ctaShadowHover;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "";
-                  e.currentTarget.style.boxShadow =
-                    "0 2px 14px rgba(59,130,246,0.3)";
+                  e.currentTarget.style.boxShadow = tc.ctaShadow;
                 }}
                 onMouseDown={(e) => {
                   e.currentTarget.style.transform = "translateY(0) scale(0.98)";
@@ -497,7 +560,7 @@ export function Navbar() {
               style={{
                 marginTop: 14,
                 paddingTop: 14,
-                borderTop: "1px solid rgba(255,255,255,0.08)",
+                borderTop: `1px solid ${tc.borderTop}`,
                 display: "flex",
                 flexDirection: "column",
                 gap: 4,
@@ -518,11 +581,9 @@ export function Navbar() {
                       borderRadius: 10,
                       fontSize: 15,
                       fontWeight: isActive ? 600 : 400,
-                      color: isActive ? "#f1f5f9" : "#94a3b8",
+                      color: isActive ? tc.linkActive : tc.linkMuted,
                       textDecoration: "none",
-                      background: isActive
-                        ? "rgba(59,130,246,0.12)"
-                        : "transparent",
+                      background: isActive ? tc.mobileActiveBg : "transparent",
                       transition: "background 0.2s ease, color 0.2s ease",
                     }}
                   >
@@ -538,7 +599,7 @@ export function Navbar() {
                     padding: "12px 10px",
                     borderRadius: 10,
                     fontSize: 15,
-                    color: "#94a3b8",
+                    color: tc.linkMuted,
                     textDecoration: "none",
                   }}
                 >
@@ -553,10 +614,9 @@ export function Navbar() {
                   borderRadius: 10,
                   fontSize: 15,
                   fontWeight: pathname === "/help" ? 600 : 400,
-                  color: pathname === "/help" ? "#f1f5f9" : "#94a3b8",
+                  color: pathname === "/help" ? tc.linkActive : tc.linkMuted,
                   textDecoration: "none",
-                  background:
-                    pathname === "/help" ? "rgba(59,130,246,0.12)" : "transparent",
+                  background: pathname === "/help" ? tc.helpActiveBg : "transparent",
                 }}
               >
                 Help Center
@@ -569,11 +629,12 @@ export function Navbar() {
                   borderRadius: 10,
                   fontSize: 15,
                   fontWeight: pathname === "/settings" ? 600 : 400,
-                  color: pathname === "/settings" ? "#f1f5f9" : "#94a3b8",
+                  color: pathname === "/settings" ? tc.linkActive : tc.linkMuted,
                   textDecoration: "none",
                   background:
-                    pathname === "/settings" ? "rgba(139,92,246,0.15)" : "transparent",
-                  border: pathname === "/settings" ? "1px solid rgba(139,92,246,0.25)" : "1px solid transparent",
+                    pathname === "/settings" ? tc.settingsActiveBg : "transparent",
+                  border:
+                    pathname === "/settings" ? tc.settingsBorder : "1px solid transparent",
                 }}
               >
                 Settings
@@ -596,13 +657,23 @@ export function Navbar() {
             marginTop: -size / 2,
             borderRadius,
             border: cursor.onTarget
-              ? "1px solid rgba(96,165,250,0.85)"
-              : "1px solid rgba(148,163,184,0.45)",
+              ? lightNav
+                ? "1px solid rgba(98,196,208,0.9)"
+                : "1px solid rgba(96,165,250,0.85)"
+              : lightNav
+                ? "1px solid rgba(162,210,255,0.55)"
+                : "1px solid rgba(148,163,184,0.45)",
             background: cursor.onTarget
-              ? "rgba(59,130,246,0.18)"
-              : "rgba(255,255,255,0.04)",
+              ? lightNav
+                ? "rgba(162,210,255,0.22)"
+                : "rgba(59,130,246,0.18)"
+              : lightNav
+                ? "rgba(255,209,220,0.12)"
+                : "rgba(255,255,255,0.04)",
             boxShadow: cursor.onTarget
-              ? "0 0 28px rgba(59,130,246,0.55), inset 0 0 12px rgba(34,211,238,0.12)"
+              ? lightNav
+                ? "0 0 28px rgba(255,209,220,0.45), inset 0 0 12px rgba(162,210,255,0.35)"
+                : "0 0 28px rgba(59,130,246,0.55), inset 0 0 12px rgba(34,211,238,0.12)"
               : "none",
             pointerEvents: "none",
             zIndex: 110,

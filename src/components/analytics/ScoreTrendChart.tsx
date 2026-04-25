@@ -12,12 +12,16 @@ import {
   ReferenceLine,
 } from "recharts";
 import { motion, useReducedMotion } from "framer-motion";
+import { useTheme } from "next-themes";
 import {
-  CHART_COLORS,
+  pickChartColors,
   GRID_FAINT,
   TICK_STYLE,
   TOOLTIP_STYLE,
   CHART_ANIM_MS,
+  REF_LINE_1,
+  REF_LINE_2,
+  CHART_CURSOR_STROKE,
 } from "./chartTheme";
 
 type TrendPoint = { date: string; avgScore: number | null; count: number };
@@ -29,6 +33,8 @@ type Props = {
 export function ScoreTrendChart({ trend }: Props) {
   const uid = useId().replace(/:/g, "");
   const reduceMotion = useReducedMotion();
+  const { resolvedTheme } = useTheme();
+  const C = pickChartColors(resolvedTheme !== "dark");
   const animMs = reduceMotion ? 0 : CHART_ANIM_MS;
 
   const chartData = useMemo(() => {
@@ -40,7 +46,7 @@ export function ScoreTrendChart({ trend }: Props) {
 
   if (chartData.length === 0) {
     return (
-      <div className="flex h-[260px] items-center justify-center lp-muted text-sm">
+      <div className="flex h-[260px] items-center justify-center lp-sub text-sm">
         No trend data for this range
       </div>
     );
@@ -60,14 +66,14 @@ export function ScoreTrendChart({ trend }: Props) {
         >
           <defs>
             <linearGradient id={`scoreTrendFill-${uid}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={CHART_COLORS.violetLight} stopOpacity={0.55} />
-              <stop offset="45%" stopColor={CHART_COLORS.violet} stopOpacity={0.22} />
-              <stop offset="100%" stopColor={CHART_COLORS.violet} stopOpacity={0} />
+              <stop offset="0%" stopColor={C.violetLight} stopOpacity={resolvedTheme !== "dark" ? 0.72 : 0.55} />
+              <stop offset="45%" stopColor={C.violet} stopOpacity={resolvedTheme !== "dark" ? 0.38 : 0.22} />
+              <stop offset="100%" stopColor={C.violet} stopOpacity={0} />
             </linearGradient>
             <linearGradient id={`scoreTrendStroke-${uid}`} x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#C4B5FD" />
-              <stop offset="50%" stopColor={CHART_COLORS.violetLight} />
-              <stop offset="100%" stopColor="#8B5CF6" />
+              <stop offset="0%" stopColor={C.violetLight} />
+              <stop offset="50%" stopColor={C.violet} />
+              <stop offset="100%" stopColor={C.violet} />
             </linearGradient>
             <filter id={`scoreTrendGlow-${uid}`} x="-20%" y="-20%" width="140%" height="140%">
               <feGaussianBlur stdDeviation="2.5" result="blur" />
@@ -84,13 +90,13 @@ export function ScoreTrendChart({ trend }: Props) {
           />
           <ReferenceLine
             y={50}
-            stroke="rgba(34,211,238,0.25)"
+            stroke={REF_LINE_1}
             strokeDasharray="4 6"
             strokeWidth={1}
           />
           <ReferenceLine
             y={75}
-            stroke="rgba(124,58,237,0.2)"
+            stroke={REF_LINE_2}
             strokeDasharray="4 6"
             strokeWidth={1}
           />
@@ -98,7 +104,7 @@ export function ScoreTrendChart({ trend }: Props) {
             dataKey="date"
             tick={TICK_STYLE}
             tickLine={false}
-            axisLine={{ stroke: "rgba(255,255,255,0.12)" }}
+            axisLine={{ stroke: "var(--chart-grid-faint)" }}
             tickMargin={8}
           />
           <YAxis
@@ -110,7 +116,7 @@ export function ScoreTrendChart({ trend }: Props) {
             ticks={[0, 25, 50, 75, 100]}
           />
           <Tooltip
-            cursor={{ stroke: "rgba(124,58,237,0.35)", strokeWidth: 1 }}
+            cursor={{ stroke: CHART_CURSOR_STROKE, strokeWidth: 1 }}
             contentStyle={TOOLTIP_STYLE}
             formatter={(value) => [`${value ?? "—"}`, "Score"]}
             labelFormatter={(l) => l}
@@ -128,11 +134,11 @@ export function ScoreTrendChart({ trend }: Props) {
             dot={{
               r: 5,
               strokeWidth: 2,
-              stroke: "rgba(255,255,255,0.9)",
-              fill: CHART_COLORS.violetLight,
+              stroke: resolvedTheme !== "dark" ? "#ffffff" : "rgba(255,255,255,0.9)",
+              fill: C.violetLight,
               filter: `url(#scoreTrendGlow-${uid})`,
             }}
-            activeDot={{ r: 7, strokeWidth: 2, stroke: "#fff", fill: CHART_COLORS.violet }}
+            activeDot={{ r: 7, strokeWidth: 2, stroke: "#fff", fill: C.violet }}
           />
         </AreaChart>
       </ResponsiveContainer>

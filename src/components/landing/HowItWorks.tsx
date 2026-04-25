@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { LpGradientText } from "./LpGradientText";
 
 /* ─── Shared helpers ─── */
 function Waveform({ color = "#3b82f6", bars = 22, height = 36, speed = 1 }: {
@@ -72,8 +73,8 @@ function ResumeUploadCard() {
         {speakers.map((s, i) => (
           <div key={i} style={{
             display: "flex", alignItems: "center", gap: 10,
-            background: "rgba(255,255,255,0.03)", borderRadius: 12,
-            padding: "10px 14px", border: "1px solid rgba(255,255,255,0.05)",
+            background: "var(--lp-inner-well)", borderRadius: 12,
+            padding: "10px 14px", border: "1px solid var(--lp-inner-well-border)",
           }}>
             <Avatar initials={s.initials} color={s.color} />
             {i === 0 ? (
@@ -108,7 +109,7 @@ function VoiceRecordingCard() {
         <Waveform color="#3b82f6" bars={14} height={40} speed={0.9} />
         <div style={{
           width: 56, height: 56, borderRadius: "50%", flexShrink: 0,
-          background: "rgba(255,255,255,0.05)", border: "1px solid rgba(59,130,246,0.12)",
+          background: "var(--lp-inner-well-2)", border: "1px solid rgba(59,130,246,0.14)",
           display: "flex", alignItems: "center", justifyContent: "center",
           boxShadow: "0 0 0 8px rgba(59,130,246,0.06), 0 0 0 16px rgba(59,130,246,0.03)",
           animation: "lp-float 3s ease-in-out infinite",
@@ -170,7 +171,7 @@ function AdaptiveQuestionsCard() {
               {[...row, ...row].map((l, i) => (
                 <div key={i} style={{
                   display: "flex", alignItems: "center", gap: 6,
-                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+                  background: "var(--lp-inner-well)", border: "1px solid var(--lp-inner-well-border)",
                   borderRadius: 10, padding: "6px 12px", whiteSpace: "nowrap",
                 }}>
                   <span style={{ fontSize: 14 }}>{l.flag}</span>
@@ -203,7 +204,7 @@ function AIAnalysisCard() {
       <p style={descStyle}>Deep analysis of technical accuracy, clarity, and confidence across your interview.</p>
       <div style={{
         position: "relative", height: 6, borderRadius: 3,
-        background: "rgba(255,255,255,0.06)", overflow: "hidden", marginTop: 18, marginBottom: 20,
+        background: "var(--lp-inner-track)", overflow: "hidden", marginTop: 18, marginBottom: 20,
       }}>
         <div style={{
           position: "absolute", top: 0, height: "100%", width: "30%",
@@ -245,7 +246,7 @@ function AIAnalysisCard() {
                 <span style={{ fontSize: 11, color: "var(--lp-muted-foreground)" }}>{d.label}</span>
                 <span style={{ fontSize: 11, fontWeight: 600, color: d.color }}>{d.val}%</span>
               </div>
-              <div style={{ height: 5, borderRadius: 3, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+              <div style={{ height: 5, borderRadius: 3, background: "var(--lp-inner-track)", overflow: "hidden" }}>
                 <div style={{
                   height: "100%", borderRadius: 3, background: d.color,
                   "--target-w": `${d.val}%`,
@@ -307,7 +308,7 @@ function ScoreRow({ label, score, color, visible, delay }: {
         <span style={{ fontSize: 11, color: "var(--lp-muted-foreground)" }}>{label}</span>
         <span style={{ fontSize: 11, fontWeight: 600, color }}>{score}%</span>
       </div>
-      <div style={{ height: 5, borderRadius: 3, background: "rgba(255,255,255,0.06)" }}>
+      <div style={{ height: 5, borderRadius: 3, background: "var(--lp-inner-track)" }}>
         <div style={{
           height: "100%", borderRadius: 3, background: color,
           width: visible ? `${score}%` : "0%",
@@ -345,7 +346,7 @@ function SummaryReportCard() {
             <ScoreRow key={i} label={s.label} score={s.score} color={s.color} visible={visible} delay={i * 180} />
           ))}
         </div>
-        <div style={{ width: 1, background: "rgba(255,255,255,0.06)", borderRadius: 1 }} />
+        <div style={{ width: 1, background: "var(--lp-inner-track)", borderRadius: 1 }} />
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 10 }}>
             <span style={{ fontSize: 14 }}>⚠️</span>
@@ -408,7 +409,7 @@ export function HowItWorks() {
             color: "var(--lp-foreground)", lineHeight: 1.2, marginBottom: 16,
           }}>
             Five steps from{" "}
-            <span className="lp-gradient-text">practice to perfection</span>
+            <LpGradientText>practice to perfection</LpGradientText>
           </h2>
           <p style={{ fontSize: 16, color: "var(--lp-muted-foreground)", lineHeight: 1.7, maxWidth: 560, margin: "0 auto" }}>
             Our AI pipeline parses, questions, records, analyzes, and reports on every interview — automatically.

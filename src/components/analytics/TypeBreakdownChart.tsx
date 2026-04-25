@@ -12,11 +12,12 @@ import {
   Legend,
 } from "recharts";
 import { motion, useReducedMotion } from "framer-motion";
+import { useTheme } from "next-themes";
 import {
   AXIS_COLOR,
   GRID_FAINT,
   TOOLTIP_STYLE,
-  CHART_COLORS,
+  pickChartColors,
   CHART_ANIM_MS,
 } from "./chartTheme";
 
@@ -39,7 +40,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const NO_DATA = (
-  <div className="flex items-center justify-center h-[280px] lp-muted text-sm">
+  <div className="flex items-center justify-center h-[280px] lp-sub text-sm">
     No type breakdown available
   </div>
 );
@@ -47,6 +48,8 @@ const NO_DATA = (
 export function TypeBreakdownChart({ byType }: Props) {
   const uid = useId().replace(/:/g, "");
   const reduceMotion = useReducedMotion();
+  const { resolvedTheme } = useTheme();
+  const C = pickChartColors(resolvedTheme !== "dark");
   const animMs = reduceMotion ? 0 : CHART_ANIM_MS;
 
   if (!byType || byType.length === 0) return NO_DATA;
@@ -67,16 +70,16 @@ export function TypeBreakdownChart({ byType }: Props) {
         <BarChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }} barCategoryGap="30%">
           <defs>
             <linearGradient id={`barScore-${uid}`} x1="0" y1="1" x2="0" y2="0">
-              <stop offset="0%" stopColor="#5B21B6" />
-              <stop offset="100%" stopColor={CHART_COLORS.violetLight} />
+              <stop offset="0%" stopColor={C.violet} />
+              <stop offset="100%" stopColor={C.violetLight} />
             </linearGradient>
             <linearGradient id={`barDel-${uid}`} x1="0" y1="1" x2="0" y2="0">
-              <stop offset="0%" stopColor="#0E7490" />
-              <stop offset="100%" stopColor={CHART_COLORS.cyan} />
+              <stop offset="0%" stopColor={C.cyan} />
+              <stop offset="100%" stopColor={resolvedTheme !== "dark" ? "#06b6d4" : "#22d3ee"} />
             </linearGradient>
             <linearGradient id={`barVoice-${uid}`} x1="0" y1="1" x2="0" y2="0">
-              <stop offset="0%" stopColor="#047857" />
-              <stop offset="100%" stopColor={CHART_COLORS.emeraldLight} />
+              <stop offset="0%" stopColor={C.emerald} />
+              <stop offset="100%" stopColor={C.emeraldLight} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="4 8" stroke={GRID_FAINT} vertical={false} />
@@ -96,12 +99,12 @@ export function TypeBreakdownChart({ byType }: Props) {
           />
           <Tooltip
             contentStyle={TOOLTIP_STYLE}
-            labelStyle={{ color: "rgba(255,255,255,0.5)", marginBottom: 4 }}
-            cursor={{ fill: "rgba(124,58,237,0.1)" }}
+            labelStyle={{ color: "var(--chart-axis-muted)", marginBottom: 4 }}
+            cursor={{ fill: "rgba(91, 33, 182, 0.12)" }}
           />
           <Legend
             formatter={(value) => (
-              <span style={{ color: "rgba(255,255,255,0.55)", fontSize: 11 }}>{value}</span>
+              <span className="text-[11px] text-on-surface-variant/90">{value}</span>
             )}
           />
           <Bar

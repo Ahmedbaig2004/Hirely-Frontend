@@ -7,63 +7,119 @@
    MD3 TOKENS: LIGHT (default / :root)
 ────────────────────────────────────────────── */
 :root {
-  --radius: 0.625rem;
+  --radius: 1rem;
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --theme-primary-light: rgb(110 198 204);
 
-  --md-sys-color-primary: rgb(16 107 87);
-  --md-sys-color-surface-tint: rgb(16 107 87);
-  --md-sys-color-on-primary: rgb(255 255 255);
-  --md-sys-color-primary-container: rgb(162 242 217);
-  --md-sys-color-on-primary-container: rgb(0 81 65);
-  --md-sys-color-secondary: rgb(21 107 84);
+  --md-sys-color-primary: rgb(162 210 255);
+  --md-sys-color-surface-tint: rgb(120 188 200);
+  --md-sys-color-on-primary: rgb(27 38 44);
+  --md-sys-color-primary-container: rgb(214 236 255);
+  --md-sys-color-on-primary-container: rgb(20 55 75);
+  --md-sys-color-secondary: rgb(236 145 162);
   --md-sys-color-on-secondary: rgb(255 255 255);
-  --md-sys-color-secondary-container: rgb(164 242 213);
-  --md-sys-color-on-secondary-container: rgb(0 81 62);
-  --md-sys-color-tertiary: rgb(87 89 146);
+  --md-sys-color-secondary-container: rgb(255 221 225);
+  --md-sys-color-on-secondary-container: rgb(85 45 55);
+  --md-sys-color-tertiary: rgb(100 184 184);
   --md-sys-color-on-tertiary: rgb(255 255 255);
-  --md-sys-color-tertiary-container: rgb(225 224 255);
-  --md-sys-color-on-tertiary-container: rgb(63 65 120);
+  --md-sys-color-tertiary-container: rgb(204 236 236);
+  --md-sys-color-on-tertiary-container: rgb(15 65 65);
   --md-sys-color-error: rgb(186 26 26);
   --md-sys-color-on-error: rgb(255 255 255);
   --md-sys-color-error-container: rgb(255 218 214);
   --md-sys-color-on-error-container: rgb(147 0 10);
-  --md-sys-color-background: rgb(245 251 246);
-  --md-sys-color-on-background: rgb(23 29 27);
-  --md-sys-color-surface: rgb(245 251 246);
-  --md-sys-color-on-surface: rgb(23 29 27);
-  --md-sys-color-surface-variant: rgb(219 229 223);
-  --md-sys-color-on-surface-variant: rgb(63 73 69);
-  --md-sys-color-outline: rgb(111 121 117);
-  --md-sys-color-outline-variant: rgb(191 201 196);
-  --md-sys-color-shadow: rgb(0 0 0);
+  --md-sys-color-background: rgb(242 249 255);
+  --md-sys-color-on-background: rgb(27 38 44);
+  --md-sys-color-surface: rgb(242 249 255);
+  --md-sys-color-on-surface: rgb(27 38 44);
+  --md-sys-color-surface-variant: rgb(225 237 252);
+  --md-sys-color-on-surface-variant: rgb(45 62 88);
+  --md-sys-color-outline: rgb(130 170 210);
+  --md-sys-color-outline-variant: rgb(175 205 235);
+  --md-sys-color-shadow: rgb(55 100 130);
   --md-sys-color-scrim: rgb(0 0 0);
-  --md-sys-color-inverse-surface: rgb(43 50 47);
-  --md-sys-color-inverse-on-surface: rgb(236 242 238);
-  --md-sys-color-inverse-primary: rgb(135 214 189);
-  --md-sys-color-primary-fixed: rgb(162 242 217);
-  --md-sys-color-on-primary-fixed: rgb(0 32 25);
-  --md-sys-color-primary-fixed-dim: rgb(135 214 189);
-  --md-sys-color-on-primary-fixed-variant: rgb(0 81 65);
-  --md-sys-color-secondary-fixed: rgb(164 242 213);
-  --md-sys-color-on-secondary-fixed: rgb(0 33 23);
-  --md-sys-color-secondary-fixed-dim: rgb(136 214 186);
-  --md-sys-color-on-secondary-fixed-variant: rgb(0 81 62);
-  --md-sys-color-tertiary-fixed: rgb(225 224 255);
-  --md-sys-color-on-tertiary-fixed: rgb(19 20 75);
-  --md-sys-color-tertiary-fixed-dim: rgb(192 193 255);
-  --md-sys-color-on-tertiary-fixed-variant: rgb(63 65 120);
-  --md-sys-color-surface-dim: rgb(213 219 215);
-  --md-sys-color-surface-bright: rgb(245 251 246);
+  --md-sys-color-inverse-surface: rgb(35 48 58);
+  --md-sys-color-inverse-on-surface: rgb(236 244 252);
+  --md-sys-color-inverse-primary: rgb(120 178 220);
+  --md-sys-color-primary-fixed: rgb(200 228 255);
+  --md-sys-color-on-primary-fixed: rgb(15 45 65);
+  --md-sys-color-primary-fixed-dim: rgb(162 210 255);
+  --md-sys-color-on-primary-fixed-variant: rgb(25 70 95);
+  --md-sys-color-secondary-fixed: rgb(255 221 225);
+  --md-sys-color-on-secondary-fixed: rgb(45 20 28);
+  --md-sys-color-secondary-fixed-dim: rgb(255 190 198);
+  --md-sys-color-on-secondary-fixed-variant: rgb(75 35 45);
+  --md-sys-color-tertiary-fixed: rgb(190 232 232);
+  --md-sys-color-on-tertiary-fixed: rgb(10 55 55);
+  --md-sys-color-tertiary-fixed-dim: rgb(140 210 210);
+  --md-sys-color-on-tertiary-fixed-variant: rgb(15 75 75);
+  --md-sys-color-surface-dim: rgb(228 238 248);
+  --md-sys-color-surface-bright: rgb(252 253 255);
   --md-sys-color-surface-container-lowest: rgb(255 255 255);
-  --md-sys-color-surface-container-low: rgb(239 245 241);
-  --md-sys-color-surface-container: rgb(233 239 235);
-  --md-sys-color-surface-container-high: rgb(227 234 229);
-  --md-sys-color-surface-container-highest: rgb(222 228 224);
+  --md-sys-color-surface-container-low: rgb(248 251 255);
+  --md-sys-color-surface-container: rgb(255 255 255);
+  --md-sys-color-surface-container-high: rgb(244 249 255);
+  --md-sys-color-surface-container-highest: rgb(236 244 252);
+
+  /* Charts / data viz (light) — high-contrast grids & axes */
+  --chart-axis-color: rgba(27, 38, 44, 0.92);
+  --chart-axis-muted: rgba(45, 62, 88, 0.82);
+  --chart-grid-color: rgba(30, 48, 72, 0.44);
+  --chart-grid-faint: rgba(30, 48, 72, 0.32);
+  --chart-radar-grid: rgba(15, 30, 48, 0.52);
+  --chart-radar-dot: rgb(91 33 182);
+  --chart-radar-label-fill: rgba(27, 38, 44, 0.88);
+  --chart-tick-faint: rgba(45, 62, 88, 0.72);
+  --chart-pie-cell-stroke: rgba(27, 38, 44, 0.28);
+  --chart-ref-line-1: rgba(0, 90, 110, 0.72);
+  --chart-ref-line-2: rgba(75, 40, 130, 0.62);
+  --chart-decision-ring: rgba(27, 38, 44, 0.75);
+  --chart-tooltip-bg: rgba(255, 255, 255, 0.97);
+  --chart-tooltip-border: rgba(162, 210, 255, 0.85);
+  --chart-tooltip-color: rgba(27, 38, 44, 0.92);
+  --chart-tooltip-shadow:
+    0 10px 36px rgba(80, 140, 180, 0.15), 0 4px 12px rgba(255, 209, 220, 0.14);
+  --chart-cursor-stroke: rgba(95, 55, 150, 0.55);
+
+  /* Landing / features plane — visible on pastel, subtle in dark */
+  --lp-feature-ribbon-3: rgba(95, 70, 150, 0.48);
+  --lp-feature-hex-a: rgba(15, 125, 160, 0.62);
+  --lp-feature-hex-b: rgba(100, 75, 165, 0.58);
+  --lp-feature-tri-1: rgba(35, 95, 195, 0.55);
+  --lp-feature-tri-2: rgba(175, 70, 130, 0.52);
 }
 
 /* ──────────────────────────────────────────────
    MD3 TOKENS: DARK
 ────────────────────────────────────────────── */
 .dark {
+  --radius: 0.625rem;
+  --theme-primary-light: rgb(34 211 238);
+  --chart-axis-color: rgba(255, 255, 255, 0.35);
+  --chart-axis-muted: rgba(255, 255, 255, 0.32);
+  --chart-grid-color: rgba(255, 255, 255, 0.07);
+  --chart-grid-faint: rgba(255, 255, 255, 0.045);
+  --chart-radar-grid: rgba(255, 255, 255, 0.12);
+  --chart-radar-dot: rgb(255 255 255);
+  --chart-radar-label-fill: rgba(255, 255, 255, 0.5);
+  --chart-tick-faint: rgba(255, 255, 255, 0.28);
+  --chart-pie-cell-stroke: rgba(255, 255, 255, 0.06);
+  --chart-ref-line-1: rgba(34, 211, 238, 0.35);
+  --chart-ref-line-2: rgba(167, 139, 250, 0.32);
+  --chart-decision-ring: rgba(8, 8, 16, 0.85);
+  --chart-tooltip-bg: rgba(8, 8, 16, 0.97);
+  --chart-tooltip-border: rgba(124, 58, 237, 0.45);
+  --chart-tooltip-color: rgba(255, 255, 255, 0.9);
+  --chart-tooltip-shadow:
+    0 0 24px rgba(124, 58, 237, 0.15), 0 8px 32px rgba(0, 0, 0, 0.35);
+  --chart-cursor-stroke: rgba(167, 139, 250, 0.55);
+
+  --lp-feature-ribbon-3: rgba(167, 139, 250, 0.15);
+  --lp-feature-hex-a: rgba(34, 211, 238, 0.35);
+  --lp-feature-hex-b: rgba(167, 139, 250, 0.3);
+  --lp-feature-tri-1: rgba(59, 130, 246, 0.25);
+  --lp-feature-tri-2: rgba(244, 114, 182, 0.22);
+
   --md-sys-color-primary: rgb(135 214 189);
   --md-sys-color-surface-tint: rgb(135 214 189);
   --md-sys-color-on-primary: rgb(0 56 44);
@@ -229,110 +285,110 @@
    MD3 TOKENS: LIGHT MEDIUM CONTRAST
 ────────────────────────────────────────────── */
 .light-medium-contrast {
-  --md-sys-color-primary: rgb(0 62 49);
-  --md-sys-color-surface-tint: rgb(16 107 87);
+  --md-sys-color-primary: rgb(74 148 205);
+  --md-sys-color-surface-tint: rgb(100 165 200);
   --md-sys-color-on-primary: rgb(255 255 255);
-  --md-sys-color-primary-container: rgb(39 122 101);
-  --md-sys-color-on-primary-container: rgb(255 255 255);
-  --md-sys-color-secondary: rgb(0 62 47);
+  --md-sys-color-primary-container: rgb(190 222 255);
+  --md-sys-color-on-primary-container: rgb(12 45 72);
+  --md-sys-color-secondary: rgb(200 95 118);
   --md-sys-color-on-secondary: rgb(255 255 255);
-  --md-sys-color-secondary-container: rgb(42 122 99);
-  --md-sys-color-on-secondary-container: rgb(255 255 255);
-  --md-sys-color-tertiary: rgb(47 48 102);
+  --md-sys-color-secondary-container: rgb(255 205 212);
+  --md-sys-color-on-secondary-container: rgb(62 22 32);
+  --md-sys-color-tertiary: rgb(72 150 150);
   --md-sys-color-on-tertiary: rgb(255 255 255);
-  --md-sys-color-tertiary-container: rgb(102 104 162);
-  --md-sys-color-on-tertiary-container: rgb(255 255 255);
+  --md-sys-color-tertiary-container: rgb(175 220 220);
+  --md-sys-color-on-tertiary-container: rgb(8 52 52);
   --md-sys-color-error: rgb(116 0 6);
   --md-sys-color-on-error: rgb(255 255 255);
   --md-sys-color-error-container: rgb(207 44 39);
   --md-sys-color-on-error-container: rgb(255 255 255);
-  --md-sys-color-background: rgb(245 251 246);
-  --md-sys-color-on-background: rgb(23 29 27);
-  --md-sys-color-surface: rgb(245 251 246);
-  --md-sys-color-on-surface: rgb(12 18 16);
-  --md-sys-color-surface-variant: rgb(219 229 223);
-  --md-sys-color-on-surface-variant: rgb(47 56 53);
-  --md-sys-color-outline: rgb(75 85 81);
-  --md-sys-color-outline-variant: rgb(101 111 107);
-  --md-sys-color-shadow: rgb(0 0 0);
+  --md-sys-color-background: rgb(242 249 255);
+  --md-sys-color-on-background: rgb(15 28 36);
+  --md-sys-color-surface: rgb(242 249 255);
+  --md-sys-color-on-surface: rgb(15 28 36);
+  --md-sys-color-surface-variant: rgb(210 228 245);
+  --md-sys-color-on-surface-variant: rgb(45 58 78);
+  --md-sys-color-outline: rgb(120 160 200);
+  --md-sys-color-outline-variant: rgb(175 210 235);
+  --md-sys-color-shadow: rgb(40 70 95);
   --md-sys-color-scrim: rgb(0 0 0);
-  --md-sys-color-inverse-surface: rgb(43 50 47);
-  --md-sys-color-inverse-on-surface: rgb(236 242 238);
-  --md-sys-color-inverse-primary: rgb(135 214 189);
-  --md-sys-color-primary-fixed: rgb(39 122 101);
+  --md-sys-color-inverse-surface: rgb(30 42 52);
+  --md-sys-color-inverse-on-surface: rgb(240 248 255);
+  --md-sys-color-inverse-primary: rgb(162 210 255);
+  --md-sys-color-primary-fixed: rgb(74 148 205);
   --md-sys-color-on-primary-fixed: rgb(255 255 255);
-  --md-sys-color-primary-fixed-dim: rgb(0 97 78);
-  --md-sys-color-on-primary-fixed-variant: rgb(255 255 255);
-  --md-sys-color-secondary-fixed: rgb(42 122 99);
+  --md-sys-color-primary-fixed-dim: rgb(50 120 175);
+  --md-sys-color-on-primary-fixed-variant: rgb(230 242 255);
+  --md-sys-color-secondary-fixed: rgb(200 95 118);
   --md-sys-color-on-secondary-fixed: rgb(255 255 255);
-  --md-sys-color-secondary-fixed-dim: rgb(0 97 75);
-  --md-sys-color-on-secondary-fixed-variant: rgb(255 255 255);
-  --md-sys-color-tertiary-fixed: rgb(102 104 162);
+  --md-sys-color-secondary-fixed-dim: rgb(170 70 90);
+  --md-sys-color-on-secondary-fixed-variant: rgb(255 235 238);
+  --md-sys-color-tertiary-fixed: rgb(72 150 150);
   --md-sys-color-on-tertiary-fixed: rgb(255 255 255);
-  --md-sys-color-tertiary-fixed-dim: rgb(78 79 135);
-  --md-sys-color-on-tertiary-fixed-variant: rgb(255 255 255);
-  --md-sys-color-surface-dim: rgb(194 200 196);
-  --md-sys-color-surface-bright: rgb(245 251 246);
+  --md-sys-color-tertiary-fixed-dim: rgb(50 120 120);
+  --md-sys-color-on-tertiary-fixed-variant: rgb(220 245 245);
+  --md-sys-color-surface-dim: rgb(215 228 242);
+  --md-sys-color-surface-bright: rgb(252 253 255);
   --md-sys-color-surface-container-lowest: rgb(255 255 255);
-  --md-sys-color-surface-container-low: rgb(239 245 241);
-  --md-sys-color-surface-container: rgb(227 234 229);
-  --md-sys-color-surface-container-high: rgb(216 222 218);
-  --md-sys-color-surface-container-highest: rgb(205 211 207);
+  --md-sys-color-surface-container-low: rgb(244 249 255);
+  --md-sys-color-surface-container: rgb(236 244 252);
+  --md-sys-color-surface-container-high: rgb(226 236 248);
+  --md-sys-color-surface-container-highest: rgb(214 228 242);
 }
 
 /* ──────────────────────────────────────────────
    MD3 TOKENS: LIGHT HIGH CONTRAST
 ────────────────────────────────────────────── */
 .light-high-contrast {
-  --md-sys-color-primary: rgb(0 51 40);
-  --md-sys-color-surface-tint: rgb(16 107 87);
+  --md-sys-color-primary: rgb(25 85 130);
+  --md-sys-color-surface-tint: rgb(45 120 165);
   --md-sys-color-on-primary: rgb(255 255 255);
-  --md-sys-color-primary-container: rgb(0 84 67);
-  --md-sys-color-on-primary-container: rgb(255 255 255);
-  --md-sys-color-secondary: rgb(0 51 38);
+  --md-sys-color-primary-container: rgb(130 185 230);
+  --md-sys-color-on-primary-container: rgb(0 25 45);
+  --md-sys-color-secondary: rgb(120 40 58);
   --md-sys-color-on-secondary: rgb(255 255 255);
-  --md-sys-color-secondary-container: rgb(0 84 64);
-  --md-sys-color-on-secondary-container: rgb(255 255 255);
-  --md-sys-color-tertiary: rgb(36 38 92);
+  --md-sys-color-secondary-container: rgb(255 185 195);
+  --md-sys-color-on-secondary-container: rgb(45 0 12);
+  --md-sys-color-tertiary: rgb(0 95 95);
   --md-sys-color-on-tertiary: rgb(255 255 255);
-  --md-sys-color-tertiary-container: rgb(66 68 123);
-  --md-sys-color-on-tertiary-container: rgb(255 255 255);
+  --md-sys-color-tertiary-container: rgb(150 215 215);
+  --md-sys-color-on-tertiary-container: rgb(0 35 35);
   --md-sys-color-error: rgb(96 0 4);
   --md-sys-color-on-error: rgb(255 255 255);
   --md-sys-color-error-container: rgb(152 0 10);
   --md-sys-color-on-error-container: rgb(255 255 255);
-  --md-sys-color-background: rgb(245 251 246);
-  --md-sys-color-on-background: rgb(23 29 27);
-  --md-sys-color-surface: rgb(245 251 246);
+  --md-sys-color-background: rgb(242 249 255);
+  --md-sys-color-on-background: rgb(0 0 0);
+  --md-sys-color-surface: rgb(242 249 255);
   --md-sys-color-on-surface: rgb(0 0 0);
-  --md-sys-color-surface-variant: rgb(219 229 223);
+  --md-sys-color-surface-variant: rgb(200 220 240);
   --md-sys-color-on-surface-variant: rgb(0 0 0);
-  --md-sys-color-outline: rgb(37 46 43);
-  --md-sys-color-outline-variant: rgb(66 75 71);
+  --md-sys-color-outline: rgb(40 55 75);
+  --md-sys-color-outline-variant: rgb(90 115 145);
   --md-sys-color-shadow: rgb(0 0 0);
   --md-sys-color-scrim: rgb(0 0 0);
-  --md-sys-color-inverse-surface: rgb(43 50 47);
+  --md-sys-color-inverse-surface: rgb(25 38 48);
   --md-sys-color-inverse-on-surface: rgb(255 255 255);
-  --md-sys-color-inverse-primary: rgb(135 214 189);
-  --md-sys-color-primary-fixed: rgb(0 84 67);
+  --md-sys-color-inverse-primary: rgb(190 225 255);
+  --md-sys-color-primary-fixed: rgb(25 85 130);
   --md-sys-color-on-primary-fixed: rgb(255 255 255);
-  --md-sys-color-primary-fixed-dim: rgb(0 58 46);
-  --md-sys-color-on-primary-fixed-variant: rgb(255 255 255);
-  --md-sys-color-secondary-fixed: rgb(0 84 64);
+  --md-sys-color-primary-fixed-dim: rgb(15 60 95);
+  --md-sys-color-on-primary-fixed-variant: rgb(230 242 255);
+  --md-sys-color-secondary-fixed: rgb(120 40 58);
   --md-sys-color-on-secondary-fixed: rgb(255 255 255);
-  --md-sys-color-secondary-fixed-dim: rgb(0 58 44);
-  --md-sys-color-on-secondary-fixed-variant: rgb(255 255 255);
-  --md-sys-color-tertiary-fixed: rgb(66 68 123);
+  --md-sys-color-secondary-fixed-dim: rgb(90 25 40);
+  --md-sys-color-on-secondary-fixed-variant: rgb(255 220 225);
+  --md-sys-color-tertiary-fixed: rgb(0 95 95);
   --md-sys-color-on-tertiary-fixed: rgb(255 255 255);
-  --md-sys-color-tertiary-fixed-dim: rgb(43 45 99);
-  --md-sys-color-on-tertiary-fixed-variant: rgb(255 255 255);
-  --md-sys-color-surface-dim: rgb(180 186 182);
-  --md-sys-color-surface-bright: rgb(245 251 246);
+  --md-sys-color-tertiary-fixed-dim: rgb(0 65 65);
+  --md-sys-color-on-tertiary-fixed-variant: rgb(200 240 240);
+  --md-sys-color-surface-dim: rgb(200 215 232);
+  --md-sys-color-surface-bright: rgb(255 255 255);
   --md-sys-color-surface-container-lowest: rgb(255 255 255);
-  --md-sys-color-surface-container-low: rgb(236 242 238);
-  --md-sys-color-surface-container: rgb(222 228 224);
-  --md-sys-color-surface-container-high: rgb(208 214 210);
-  --md-sys-color-surface-container-highest: rgb(194 200 196);
+  --md-sys-color-surface-container-low: rgb(245 250 255);
+  --md-sys-color-surface-container: rgb(234 242 252);
+  --md-sys-color-surface-container-high: rgb(220 232 246);
+  --md-sys-color-surface-container-highest: rgb(205 222 240);
 }
 
 /* ──────────────────────────────────────────────
@@ -404,7 +460,7 @@
   --color-muted: var(--md-sys-color-surface-variant);
   --color-border: var(--md-sys-color-outline-variant);
   --color-success: rgb(52 211 153);
-  --color-primary-light: rgb(34 211 238);
+  --color-primary-light: var(--theme-primary-light);
 }
 
 /* ──────────────────────────────────────────────
@@ -412,6 +468,12 @@
 ────────────────────────────────────────────── */
 @layer utilities {
   .shadow-input {
+    box-shadow:
+      0px 2px 4px -1px rgba(62, 120, 160, 0.12),
+      0px 1px 0px 0px rgba(209, 233, 255, 0.85),
+      0px 0px 0px 1px rgba(162, 210, 255, 0.35);
+  }
+  :is(.dark *) .shadow-input {
     box-shadow:
       0px 2px 3px -1px rgba(0, 0, 0, 0.1),
       0px 1px 0px 0px rgba(25, 28, 33, 0.02),
@@ -468,14 +530,52 @@
     border-color: var(--lp-border-sub);
   }
 
-  /* Light mode: use surface-container tokens */
+  /* Light: frosted glass (translucent — shows page tint through the panel) */
   .glass-card {
-    background: var(--md-sys-color-surface-container-low);
-    border: 1px solid var(--md-sys-color-outline-variant);
+    background: rgba(255, 255, 255, 0.34);
+    border: 1px solid rgba(255, 255, 255, 0.52);
+    backdrop-filter: blur(26px) saturate(1.45);
+    -webkit-backdrop-filter: blur(26px) saturate(1.45);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.55),
+      0 2px 10px rgba(55, 100, 140, 0.07),
+      0 18px 44px -14px rgba(80, 130, 180, 0.16);
+    transition:
+      transform 0.45s var(--ease-spring),
+      box-shadow 0.35s ease,
+      border-color 0.3s ease;
+  }
+  html:not(.dark) .glass-card:hover {
+    transform: translateY(-3px) scale(1.005);
+    border-color: rgba(255, 209, 220, 0.85);
+    box-shadow:
+      0 12px 36px -8px rgba(255, 209, 220, 0.45),
+      0 8px 28px -6px rgba(162, 210, 255, 0.35);
   }
   .glass-card-raised {
-    background: var(--md-sys-color-surface-container);
-    border: 1px solid var(--md-sys-color-outline-variant);
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(32px) saturate(1.5);
+    -webkit-backdrop-filter: blur(32px) saturate(1.5);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.6),
+      0 4px 14px rgba(55, 100, 140, 0.08),
+      0 22px 52px -14px rgba(80, 130, 180, 0.2);
+    transition:
+      transform 0.45s var(--ease-spring),
+      box-shadow 0.35s ease,
+      border-color 0.3s ease;
+  }
+  html:not(.dark) .glass-card-raised:hover {
+    transform: translateY(-3px) scale(1.005);
+    border-color: rgba(162, 210, 255, 0.95);
+    box-shadow:
+      0 16px 44px -10px rgba(162, 210, 255, 0.4),
+      0 10px 32px -8px rgba(255, 209, 220, 0.28);
+  }
+  html:not(.dark) .glass-card,
+  html:not(.dark) .glass-card-raised {
+    border-radius: 1rem;
   }
 
   /* Dark mode: frosted glass effect */
@@ -484,12 +584,18 @@
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: none;
+    transition: none;
+    transform: none;
   }
   :is(.dark *) .glass-card-raised {
     background: rgba(255, 255, 255, 0.06);
     backdrop-filter: blur(32px);
     -webkit-backdrop-filter: blur(32px);
     border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow: none;
+    transition: none;
+    transform: none;
   }
 
   /* Primary CTA button — colours, glow and base layout only. Callers must
@@ -501,26 +607,40 @@
     font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
-    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    background: linear-gradient(135deg, #7eb8ff 0%, #62c4d0 52%, #5eb8c4 100%);
     color: #ffffff;
-    box-shadow: 0 2px 12px rgba(124, 58, 237, 0.25);
+    text-shadow: 0 1px 1px rgba(27, 38, 44, 0.12);
+    box-shadow:
+      0 2px 14px rgba(98, 196, 208, 0.45),
+      0 0 24px -4px rgba(162, 210, 255, 0.55);
     transition:
-      box-shadow 0.3s ease,
-      transform 0.2s ease;
+      box-shadow 0.4s var(--ease-spring),
+      transform 0.4s var(--ease-spring),
+      filter 0.25s ease;
   }
   .btn-violet:hover:not(:disabled) {
-    box-shadow: 0 6px 24px rgba(124, 58, 237, 0.45);
-    transform: translateY(-1px);
+    box-shadow:
+      0 8px 28px rgba(255, 209, 220, 0.55),
+      0 6px 32px rgba(98, 196, 208, 0.5),
+      0 0 36px -4px rgba(255, 209, 220, 0.45);
+    transform: translateY(-2px) scale(1.02);
+    filter: brightness(1.03);
   }
   /* Dark mode: slightly brighter violet */
   :is(.dark *) .btn-violet {
     background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
     color: #ffffff;
+    text-shadow: none;
     box-shadow: 0 4px 20px rgba(139, 92, 246, 0.35);
+    transition:
+      box-shadow 0.3s ease,
+      transform 0.2s ease,
+      filter 0.2s ease;
   }
   :is(.dark *) .btn-violet:hover:not(:disabled) {
     box-shadow: 0 8px 36px rgba(139, 92, 246, 0.55);
     transform: translateY(-1px);
+    filter: none;
   }
 
   .label-caps {
@@ -530,6 +650,12 @@
     text-transform: uppercase;
     color: var(--md-sys-color-on-surface-variant);
     opacity: 0.7;
+  }
+
+  /* Light UI: caps labels were too faint (0.7 on muted MD token) */
+  html:not(.dark) .label-caps {
+    color: rgb(51 65 85 / 0.92);
+    opacity: 1;
   }
 
   .orb-breathe {
@@ -634,40 +760,76 @@ main {
    Landing page components reference these directly.
 ══════════════════════════════════════════════════════ */
 :root {
-  --lp-background: #f0f4ff;
-  --lp-foreground: #0f172a;
-  --lp-card: rgba(255, 255, 255, 0.72);
-  --lp-card-foreground: #1e293b;
-  --lp-muted: rgba(241, 245, 249, 0.8);
-  --lp-muted-foreground: #64748b;
-  --lp-border: rgba(37, 99, 235, 0.08);
-  --lp-primary: #2563eb;
-  --lp-primary-light: #06b6d4;
-  --lp-primary-dark: #1d4ed8;
-  --lp-accent: #8b5cf6;
-  --lp-glass: rgba(255, 255, 255, 0.45);
-  --lp-glass-border: rgba(37, 99, 235, 0.1);
-  --lp-ring: rgba(37, 99, 235, 0.35);
+  --lp-background: #f2f9ff;
+  --lp-foreground: #1b262c;
+  --lp-card: rgba(255, 255, 255, 0.34);
+  --lp-card-foreground: #1b262c;
+  --lp-muted: rgba(232, 243, 252, 0.95);
+  --lp-muted-foreground: rgba(57, 72, 103, 0.82);
+  --lp-border: rgba(209, 233, 255, 0.95);
+  --lp-primary: #a2d2ff;
+  --lp-primary-light: #7ec8e3;
+  --lp-primary-dark: #6ba8e0;
+  --lp-accent: #ffd1dc;
+  --lp-secondary-glow: rgba(255, 209, 220, 0.65);
+  /* Light frosted panels — translucent like dark mode glass, not opaque white */
+  --lp-glass: rgba(255, 255, 255, 0.32);
+  --lp-glass-border: rgba(255, 255, 255, 0.52);
+  /* Nested wells inside glass cards (How it works, etc.) */
+  --lp-inner-well: rgba(255, 255, 255, 0.22);
+  --lp-inner-well-border: rgba(255, 255, 255, 0.38);
+  --lp-inner-well-2: rgba(255, 255, 255, 0.3);
+  --lp-inner-track: rgba(27, 38, 44, 0.09);
+  --lp-ring: rgba(162, 210, 255, 0.55);
+  --lp-input-bg: rgba(255, 255, 255, 0.38);
   --lp-success: #10b981;
   --lp-warning: #f59e0b;
   --lp-danger: #ef4444;
-  --lp-glow-primary: rgba(37, 99, 235, 0.25);
-  --lp-glow-accent: rgba(139, 92, 246, 0.2);
-  --lp-glow-cyan: rgba(6, 182, 212, 0.18);
-  --lp-grid-color: rgba(37, 99, 235, 0.06);
-  --lp-cursor-glow: rgba(37, 99, 235, 0.12);
-  /* Adaptive text — swap from white-based to dark-based in light mode */
-  --lp-text-hi: rgba(15, 23, 42, 0.9);
-  --lp-text-body: rgba(15, 23, 42, 0.7);
-  --lp-text-sub: rgba(15, 23, 42, 0.58);
-  --lp-text-muted: rgba(15, 23, 42, 0.45);
-  --lp-text-dim: rgba(15, 23, 42, 0.35);
-  --lp-text-faint: rgba(15, 23, 42, 0.3);
+  --lp-glow-primary: rgba(162, 210, 255, 0.55);
+  --lp-glow-accent: rgba(255, 209, 220, 0.5);
+  --lp-glow-cyan: rgba(110, 198, 204, 0.35);
+  --lp-grid-color: rgba(162, 210, 255, 0.2);
+  --lp-cursor-glow: rgba(162, 210, 255, 0.22);
+  --lp-orb-a: rgba(162, 210, 255, 0.42);
+  --lp-orb-b: rgba(110, 198, 204, 0.38);
+  --lp-orb-c: rgba(255, 209, 220, 0.4);
+  /* Adaptive text — navy / slate for light canvas */
+  --lp-text-hi: rgba(27, 38, 44, 0.96);
+  --lp-text-body: rgba(35, 48, 68, 0.92);
+  --lp-text-sub: rgba(45, 62, 88, 0.88);
+  --lp-text-muted: rgba(45, 62, 88, 0.76);
+  --lp-text-dim: rgba(45, 62, 88, 0.62);
+  --lp-text-faint: rgba(45, 62, 88, 0.48);
   /* Adaptive surfaces */
-  --lp-surface-lo: rgba(15, 23, 42, 0.05);
-  --lp-surface-md: rgba(15, 23, 42, 0.08);
-  --lp-surface-hi: rgba(15, 23, 42, 0.11);
-  --lp-border-sub: rgba(15, 23, 42, 0.09);
+  --lp-surface-lo: rgba(27, 38, 44, 0.04);
+  --lp-surface-md: rgba(27, 38, 44, 0.07);
+  --lp-surface-hi: rgba(27, 38, 44, 0.1);
+  --lp-border-sub: rgba(120, 160, 200, 0.45);
+  /* Enhance section — monitor mockup (theme-aware) */
+  --lp-monitor-bezel: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.92),
+    rgba(232, 243, 252, 0.88)
+  );
+  --lp-monitor-bezel-border: rgba(120, 160, 200, 0.4);
+  --lp-monitor-chrome: rgba(232, 243, 252, 0.98);
+  --lp-monitor-chrome-title: rgba(45, 62, 88, 0.78);
+  --lp-monitor-screen: linear-gradient(180deg, #f0f8ff, #e2f0fa);
+  --lp-monitor-screen-divider: rgba(120, 160, 200, 0.35);
+  --lp-monitor-sweep: linear-gradient(
+    90deg,
+    transparent,
+    rgba(59, 130, 246, 0.07),
+    transparent
+  );
+  --lp-enhance-chip-blue-bg: rgba(37, 99, 235, 0.1);
+  --lp-enhance-chip-blue-border: rgba(37, 99, 235, 0.22);
+  --lp-enhance-chip-blue-text: #1d4ed8;
+  --lp-enhance-chip-cyan-bg: rgba(8, 145, 178, 0.1);
+  --lp-enhance-chip-cyan-border: rgba(8, 145, 178, 0.24);
+  --lp-enhance-chip-cyan-text: #0e7490;
+  /* User / secondary accent inside monitor cards (violet reads on light canvas) */
+  --lp-monitor-human: #6d28d9;
 }
 
 .dark {
@@ -682,9 +844,18 @@ main {
   --lp-primary-light: #22d3ee;
   --lp-primary-dark: #2563eb;
   --lp-accent: #a78bfa;
+  --lp-secondary-glow: rgba(167, 139, 250, 0.35);
+  --lp-input-bg: rgba(255, 255, 255, 0.06);
   --lp-glass: rgba(255, 255, 255, 0.045);
   --lp-glass-border: rgba(255, 255, 255, 0.09);
+  --lp-inner-well: rgba(255, 255, 255, 0.03);
+  --lp-inner-well-border: rgba(255, 255, 255, 0.06);
+  --lp-inner-well-2: rgba(255, 255, 255, 0.06);
+  --lp-inner-track: rgba(255, 255, 255, 0.06);
   --lp-ring: rgba(59, 130, 246, 0.4);
+  --lp-orb-a: rgba(59, 130, 246, 0.35);
+  --lp-orb-b: rgba(34, 211, 238, 0.3);
+  --lp-orb-c: rgba(139, 92, 246, 0.2);
   --lp-success: #34d399;
   --lp-warning: #fbbf24;
   --lp-danger: #f87171;
@@ -705,6 +876,29 @@ main {
   --lp-surface-md: rgba(255, 255, 255, 0.06);
   --lp-surface-hi: rgba(255, 255, 255, 0.08);
   --lp-border-sub: rgba(255, 255, 255, 0.07);
+  --lp-monitor-bezel: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.06),
+    rgba(255, 255, 255, 0.02)
+  );
+  --lp-monitor-bezel-border: rgba(255, 255, 255, 0.1);
+  --lp-monitor-chrome: rgba(20, 26, 38, 0.95);
+  --lp-monitor-chrome-title: #94a3b8;
+  --lp-monitor-screen: linear-gradient(180deg, #141c2e, #1a2340);
+  --lp-monitor-screen-divider: rgba(255, 255, 255, 0.05);
+  --lp-monitor-sweep: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
+  --lp-enhance-chip-blue-bg: rgba(59, 130, 246, 0.1);
+  --lp-enhance-chip-blue-border: rgba(59, 130, 246, 0.15);
+  --lp-enhance-chip-blue-text: #3b82f6;
+  --lp-enhance-chip-cyan-bg: rgba(34, 211, 238, 0.1);
+  --lp-enhance-chip-cyan-border: rgba(34, 211, 238, 0.15);
+  --lp-enhance-chip-cyan-text: #22d3ee;
+  --lp-monitor-human: #a78bfa;
 }
 
 /* ─── Landing Page Keyframes ─── */
@@ -962,23 +1156,55 @@ main {
 }
 
 /* ─── Landing Page Utility Classes ─── */
-.lp-gradient-text {
-  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #22d3ee 100%);
-  background-size: 200% 200%;
+/* Light: deeper stops so gradient headlines stay readable on `--lp-background` (#f2f9ff) */
+.lp-gradient-text,
+.gradient-text {
+  display: inline;
+  font-weight: inherit;
+  line-height: inherit;
+  vertical-align: baseline;
+  /* Static-ish fill reads as letters; motion can smear on some GPUs */
+  background: linear-gradient(135deg, #1e3a8a 0%, #0f766e 36%, #9f1239 100%);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: lp-gradient-shift 6s ease infinite;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: none;
 }
 
-/* Alias for content that references `gradient-text` */
-.gradient-text {
-  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #22d3ee 100%);
-  background-size: 200% 200%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: lp-gradient-shift 6s ease infinite;
+/* Dark: `html.dark` / `.dark` — brighter stops for contrast on `--lp-background` dark; static fill (animated bg-position can clip to invisible on some GPUs with `background-clip: text`) */
+html.dark .lp-gradient-text,
+html.dark .gradient-text,
+.dark .lp-gradient-text,
+.dark .gradient-text {
+  background: linear-gradient(
+    135deg,
+    #bae6fd 0%,
+    #5eead4 32%,
+    #c4b5fd 62%,
+    #f9a8d4 100%
+  );
+  background-size: 100% 100%;
+  animation: none;
+}
+
+/* If clip isn’t supported, show solid fill instead of a colored box */
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  .lp-gradient-text,
+  .gradient-text {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    color: #1e3a8a;
+    animation: none;
+  }
+  html.dark .lp-gradient-text,
+  html.dark .gradient-text,
+  .dark .lp-gradient-text,
+  .dark .gradient-text {
+    color: #bae6fd;
+  }
 }
 
 .lp-glass-card {
@@ -986,6 +1212,20 @@ main {
   border: 1px solid var(--lp-glass-border);
   backdrop-filter: blur(28px) saturate(1.6);
   -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  box-shadow:
+    0 1px 2px rgba(62, 120, 150, 0.08),
+    0 6px 24px rgba(100, 160, 190, 0.12),
+    0 14px 40px rgba(162, 210, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.35);
+  transition:
+    box-shadow 0.45s var(--ease-spring),
+    border-color 0.35s ease,
+    transform 0.45s var(--ease-spring);
+  position: relative;
+  overflow: hidden;
+}
+:is(.dark *) .lp-glass-card {
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.25),
     0 4px 16px rgba(0, 0, 0, 0.18),
@@ -996,8 +1236,6 @@ main {
     box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
     border-color 0.4s ease,
     transform 0.3s ease;
-  position: relative;
-  overflow: hidden;
 }
 .lp-glass-card::before {
   content: "";
@@ -1020,6 +1258,15 @@ main {
   left: 120%;
 }
 .lp-glass-card:hover {
+  border-color: rgba(255, 209, 220, 0.75);
+  box-shadow:
+    0 6px 16px rgba(100, 160, 190, 0.14),
+    0 12px 40px rgba(162, 210, 255, 0.28),
+    0 0 72px -12px var(--lp-secondary-glow),
+    0 0 48px -8px var(--lp-glow-primary),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+:is(.dark *) .lp-glass-card:hover {
   border-color: rgba(59, 130, 246, 0.25);
   box-shadow:
     0 4px 8px rgba(0, 0, 0, 0.25),
@@ -1071,10 +1318,21 @@ html {
   background: rgba(59, 130, 246, 0.2);
 }
 
-/* Landing CTA — “motion poster” mesh: distinct from light lp-page canvas */
+/* Landing CTA — light vs dark are fully split (no shared gradient) */
 .lp-cta-section {
   position: relative;
   isolation: isolate;
+}
+html:not(.dark) .lp-cta-section {
+  background: linear-gradient(
+    168deg,
+    #eef6ff 0%,
+    #f7fbff 32%,
+    #f0f7fd 62%,
+    #fdeef3 100%
+  );
+}
+html.dark .lp-cta-section {
   background: linear-gradient(
     168deg,
     #12081c 0%,
@@ -1082,6 +1340,12 @@ html {
     #0f1628 58%,
     #060a12 100%
   );
+}
+html:not(.dark) .lp-cta-section .lp-cta-mesh-blob {
+  opacity: 0.5;
+}
+html.dark .lp-cta-section .lp-cta-mesh-blob {
+  opacity: 1;
 }
 .lp-cta-mesh-blob {
   position: absolute;
@@ -1117,11 +1381,30 @@ html {
 .lp-cta-noise {
   position: absolute;
   inset: 0;
-  opacity: 0.04;
   pointer-events: none;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-.lp-cta-gradient-text {
+html:not(.dark) .lp-cta-noise {
+  opacity: 0.025;
+}
+html.dark .lp-cta-noise {
+  opacity: 0.04;
+}
+html:not(.dark) .lp-cta-gradient-text {
+  background: linear-gradient(
+    135deg,
+    #3d7eb8 0%,
+    #d97a9a 30%,
+    #62c4d0 62%,
+    #7eb8ff 100%
+  );
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: lp-gradient-shift 8s ease infinite;
+}
+html.dark .lp-cta-gradient-text {
   background: linear-gradient(
     135deg,
     #fde68a 0%,
@@ -1135,17 +1418,59 @@ html {
   background-clip: text;
   animation: lp-gradient-shift 8s ease infinite;
 }
-.lp-cta-primary-btn {
+html:not(.dark) .lp-cta-primary-btn {
+  background: linear-gradient(120deg, #7eb8ff 0%, #62c4d0 48%, #e8a0b8 100%);
+  border: 1px solid rgba(162, 210, 255, 0.65);
+  box-shadow:
+    0 4px 24px rgba(98, 196, 208, 0.35),
+    0 0 40px -10px rgba(255, 209, 220, 0.45);
+}
+html:not(.dark) .lp-cta-primary-btn:hover {
+  box-shadow:
+    0 8px 36px rgba(255, 209, 220, 0.4),
+    0 6px 32px rgba(98, 196, 208, 0.38);
+}
+html.dark .lp-cta-primary-btn {
   background: linear-gradient(120deg, #ea580c 0%, #db2777 45%, #c026d3 100%);
   border: 1px solid rgba(251, 191, 36, 0.35);
   box-shadow:
     0 4px 24px rgba(219, 39, 119, 0.25),
     0 0 48px -12px rgba(251, 146, 60, 0.35);
 }
-.lp-cta-primary-btn:hover {
+html.dark .lp-cta-primary-btn:hover {
   box-shadow:
     0 8px 40px rgba(219, 39, 119, 0.35),
     0 0 64px -8px rgba(251, 191, 36, 0.25);
+}
+
+/* CTA copy + chrome (theme-split) */
+html:not(.dark) .lp-cta-kicker {
+  background: rgba(255, 209, 220, 0.35) !important;
+  border-color: rgba(162, 210, 255, 0.55) !important;
+  color: #1b262c !important;
+}
+html.dark .lp-cta-kicker {
+  background: rgba(244, 114, 182, 0.12) !important;
+  border-color: rgba(251, 191, 36, 0.35) !important;
+  color: #fde68a !important;
+}
+html:not(.dark) .lp-cta-heading-line {
+  color: var(--lp-text-hi) !important;
+}
+html.dark .lp-cta-heading-line {
+  color: #faf5ff !important;
+}
+html:not(.dark) .lp-cta-sparkle {
+  color: rgba(90, 140, 190, 0.45) !important;
+}
+html:not(.dark) .lp-cta-sparkle-pink {
+  color: rgba(232, 140, 160, 0.5) !important;
+}
+html.dark .lp-cta-sparkle {
+  color: rgba(251, 191, 36, 0.35) !important;
+}
+html.dark .lp-cta-sparkle-pink {
+  color: rgba(244, 114, 182, 0.35) !important;
 }
 @media (prefers-reduced-motion: reduce) {
   .lp-cta-mesh-a,
@@ -1162,15 +1487,213 @@ html {
   clip-path: circle(0% at 50% 50%);
   transition: clip-path 900ms cubic-bezier(0.76, 0, 0.24, 1);
   will-change: clip-path;
+}
+html:not(.dark) .circle-reveal {
+  box-shadow: inset 0 0 100px rgba(162, 210, 255, 0.12);
+}
+html.dark .circle-reveal {
   box-shadow: inset 0 0 120px rgba(59, 130, 246, 0.06);
 }
 .circle-reveal.active {
   clip-path: circle(150% at 50% 50%);
 }
 
+/* Stats band */
+html:not(.dark) .lp-stats-section {
+  background: linear-gradient(180deg, #e8f3fc 0%, #f2f9ff 100%);
+}
+html.dark .lp-stats-section {
+  background: linear-gradient(180deg, #162236 0%, #111827 100%);
+}
+html:not(.dark) .lp-stats-kicker {
+  color: #2a7fc4;
+}
+html.dark .lp-stats-kicker {
+  color: #22d3ee;
+}
+html:not(.dark) .lp-stats-heading {
+  color: var(--lp-text-hi);
+}
+html.dark .lp-stats-heading {
+  color: #e2e8f0;
+}
+html:not(.dark) .lp-stats-sub {
+  color: var(--lp-muted-foreground);
+}
+html.dark .lp-stats-sub {
+  color: #94a3b8;
+}
+html:not(.dark) .lp-stats-label {
+  color: var(--lp-muted-foreground);
+}
+html.dark .lp-stats-label {
+  color: #94a3b8;
+}
+html:not(.dark) .lp-stats-deco {
+  border-color: rgba(162, 210, 255, 0.4) !important;
+}
+html.dark .lp-stats-deco {
+  border-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Testimonials */
+html:not(.dark) .lp-testimonials-outer {
+  background: linear-gradient(180deg, #f2f9ff 0%, #edf5fc 100%);
+}
+html.dark .lp-testimonials-outer {
+  background: linear-gradient(180deg, #111827 0%, #152030 100%);
+}
+html:not(.dark) .lp-testimonials-inner {
+  background: linear-gradient(180deg, #f7fbff 0%, #f0f7fd 50%, #eaf4fc 100%);
+}
+html.dark .lp-testimonials-inner {
+  background: linear-gradient(180deg, #162035 0%, #142030 50%, #111827 100%);
+}
+html:not(.dark) .lp-testimonials-radial {
+  background: radial-gradient(
+    ellipse 70% 45% at 50% 32%,
+    rgba(162, 210, 255, 0.35),
+    transparent 55%
+  );
+}
+html.dark .lp-testimonials-radial {
+  background: radial-gradient(
+    ellipse 70% 45% at 50% 32%,
+    rgba(59, 130, 246, 0.07),
+    transparent 55%
+  );
+}
+html:not(.dark) .lp-testimonials-eyebrow {
+  color: #6b5a9e;
+}
+html.dark .lp-testimonials-eyebrow {
+  color: #a78bfa;
+}
+html:not(.dark) .lp-testimonials-title {
+  color: var(--lp-text-hi);
+}
+html.dark .lp-testimonials-title {
+  color: #f8fafc;
+}
+html:not(.dark) .lp-testimonials-lead {
+  color: var(--lp-muted-foreground);
+}
+html.dark .lp-testimonials-lead {
+  color: #94a3b8;
+}
+html:not(.dark) .lp-testimonial-card-divider {
+  border-top-color: rgba(209, 233, 255, 0.95) !important;
+}
+html.dark .lp-testimonial-card-divider {
+  border-top-color: rgba(255, 255, 255, 0.06) !important;
+}
+html:not(.dark) .lp-testimonials-quote-mark {
+  color: rgba(162, 210, 255, 0.45) !important;
+}
+html.dark .lp-testimonials-quote-mark {
+  color: rgba(59, 130, 246, 0.3) !important;
+}
+
 /* ─── Landing Features — 2D plane: diagonal shell, ribbon, nodes ─── */
 .lp-features-section {
   clip-path: polygon(0 0, 100% 2.8%, 100% 100%, 0 97.2%);
+}
+html:not(.dark) .lp-features-section {
+  background: linear-gradient(165deg, #fbfdff 0%, #eef6ff 40%, #f5faff 100%);
+}
+html.dark .lp-features-section {
+  background: linear-gradient(165deg, #070b14 0%, #0f172a 38%, #0c1220 100%);
+}
+html:not(.dark) .lp-features-section-glow {
+  background:
+    radial-gradient(ellipse 90% 50% at 15% 20%, rgba(162, 210, 255, 0.4), transparent 50%),
+    radial-gradient(ellipse 70% 45% at 85% 75%, rgba(255, 209, 220, 0.32), transparent 55%);
+}
+html.dark .lp-features-section-glow {
+  background:
+    radial-gradient(ellipse 90% 50% at 15% 20%, rgba(34, 211, 238, 0.07), transparent 50%),
+    radial-gradient(ellipse 70% 45% at 85% 75%, rgba(167, 139, 250, 0.06), transparent 55%);
+}
+html:not(.dark) .lp-features-kicker {
+  color: #2a7fc4 !important;
+  border-color: rgba(162, 210, 255, 0.55) !important;
+  background: rgba(232, 243, 252, 0.9) !important;
+}
+html.dark .lp-features-kicker {
+  color: #67e8f9 !important;
+  border-color: rgba(103, 232, 249, 0.25) !important;
+  background: rgba(103, 232, 249, 0.06) !important;
+}
+html:not(.dark) .lp-features-title {
+  color: var(--lp-text-hi) !important;
+}
+html.dark .lp-features-title {
+  color: #f8fafc !important;
+}
+html:not(.dark) .lp-features-lead {
+  color: var(--lp-muted-foreground) !important;
+}
+html.dark .lp-features-lead {
+  color: #94a3b8 !important;
+}
+html:not(.dark) .lp-feature-card-surface {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(248, 251, 255, 0.9) 100%
+  );
+  border: 1px solid rgba(209, 233, 255, 0.9);
+  box-shadow:
+    0 12px 36px rgba(100, 160, 190, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+html:not(.dark) .lp-feature-card-surface:hover {
+  box-shadow:
+    0 22px 48px rgba(162, 210, 255, 0.22),
+    0 0 0 1px color-mix(in srgb, var(--lp-feature-accent, #7eb8ff) 28%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+html.dark .lp-feature-card-surface {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+html.dark .lp-feature-card-surface:hover {
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.35),
+    0 0 0 1px color-mix(in srgb, var(--lp-feature-accent, #a78bfa) 22%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+html:not(.dark) .lp-feature-card-title {
+  color: var(--lp-text-hi) !important;
+}
+html.dark .lp-feature-card-title {
+  color: #f1f5f9 !important;
+}
+html:not(.dark) .lp-feature-card-desc {
+  color: var(--lp-muted-foreground) !important;
+}
+html.dark .lp-feature-card-desc {
+  color: #94a3b8 !important;
+}
+.lp-features-hex-grid {
+  background-size: 60px 52px;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='52' viewBox='0 0 60 52' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 4 L56 18 L56 46 L30 60 L4 46 L4 18 Z' fill='none' stroke='%23256080' stroke-width='0.65'/%3E%3C/svg%3E");
+}
+html:not(.dark) .lp-features-hex-grid {
+  opacity: 0.22 !important;
+}
+html.dark .lp-features-hex-grid {
+  opacity: 0.07 !important;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='52' viewBox='0 0 60 52' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 4 L56 18 L56 46 L30 60 L4 46 L4 18 Z' fill='none' stroke='%2367e8f9' stroke-width='0.5'/%3E%3C/svg%3E");
+}
+html:not(.dark) .lp-features-plane-wrap > svg {
+  opacity: 0.48 !important;
+}
+html.dark .lp-features-plane-wrap > svg {
+  opacity: 0.45 !important;
 }
 @media (max-width: 768px) {
   .lp-features-section {
@@ -1210,8 +1733,17 @@ html {
 .lp-features-hex-a {
   animation: lp-features-hex-drift 18s ease-in-out infinite;
 }
+html:not(.dark) .lp-features-hex-a {
+  opacity: 0.52 !important;
+}
+html:not(.dark) .lp-features-hex-b {
+  opacity: 0.48 !important;
+}
 .lp-features-hex-b {
   animation: lp-features-hex-drift 22s ease-in-out 2s infinite reverse;
+}
+html:not(.dark) .lp-features-tri {
+  opacity: 0.5 !important;
 }
 @keyframes lp-features-tri-pulse {
   0%,
@@ -1255,6 +1787,16 @@ html {
   /* Split contrast: left = deeper + radial “spotlight”; right = flat, slightly lighter slab */
   --auth-bg-left: #020308;
   --auth-bg-right: #131a26;
+  --auth-hero-text: #ffffff;
+  --auth-link-emphasis: #ffffff;
+}
+
+html:not(.dark) .auth-page {
+  --auth-accent-mint: #3d9aaa;
+  --auth-bg-left: #e3f2ff;
+  --auth-bg-right: #f2f9ff;
+  --auth-hero-text: #1b262c;
+  --auth-link-emphasis: #2a7fc4;
 }
 
 .auth-split-left {
@@ -1277,9 +1819,32 @@ html {
     );
 }
 
+html:not(.dark) .auth-split-left {
+  background-image:
+    radial-gradient(
+      ellipse 90% 82% at 18% 28%,
+      rgba(162, 210, 255, 0.55) 0%,
+      transparent 56%
+    ),
+    radial-gradient(
+      ellipse 72% 64% at 78% 82%,
+      rgba(255, 209, 220, 0.42) 0%,
+      transparent 52%
+    ),
+    radial-gradient(
+      ellipse 120% 100% at 40% 100%,
+      rgba(110, 198, 204, 0.28) 0%,
+      transparent 58%
+    );
+}
+
 .auth-split-right {
   background-color: var(--auth-bg-right);
   box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.055);
+}
+
+html:not(.dark) .auth-split-right {
+  box-shadow: inset 1px 0 0 rgba(209, 233, 255, 0.95);
 }
 
 .auth-laptop-scene {
@@ -1402,6 +1967,24 @@ html {
     0 0 40px -12px var(--lp-glow-cyan);
 }
 
+html:not(.dark) .auth-input {
+  background: var(--lp-input-bg);
+  border-color: var(--lp-glass-border);
+  color: var(--lp-card-foreground);
+}
+
+html:not(.dark) .auth-input:focus {
+  box-shadow:
+    0 0 0 3px rgba(162, 210, 255, 0.35),
+    0 0 28px -6px var(--lp-glow-primary),
+    0 0 40px -12px var(--lp-secondary-glow);
+}
+
+html:not(.dark) .auth-input:hover:not(:focus) {
+  border-color: rgba(162, 210, 255, 0.65);
+  box-shadow: 0 0 0 1px rgba(255, 209, 220, 0.35);
+}
+
 .auth-social-btn {
   display: inline-flex;
   align-items: center;
@@ -1428,6 +2011,22 @@ html {
   box-shadow: 0 8px 28px -8px var(--lp-glow-primary);
 }
 
+html:not(.dark) .auth-social-btn {
+  background: var(--lp-input-bg);
+  border-color: var(--lp-glass-border);
+  color: var(--lp-card-foreground);
+  transition:
+    transform 0.4s var(--ease-spring),
+    border-color 0.3s ease,
+    box-shadow 0.35s ease;
+}
+html:not(.dark) .auth-social-btn:hover {
+  border-color: rgba(255, 209, 220, 0.75);
+  box-shadow:
+    0 8px 28px -8px var(--lp-glow-primary),
+    0 4px 20px -6px var(--lp-secondary-glow);
+}
+
 .auth-primary-btn {
   position: relative;
   width: 100%;
@@ -1449,17 +2048,40 @@ html {
     0 4px 24px -4px rgba(34, 211, 238, 0.35),
     0 0 40px -12px rgba(59, 130, 246, 0.35);
   transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease,
+    transform 0.4s var(--ease-spring),
+    box-shadow 0.35s var(--ease-spring),
     filter 0.25s ease;
 }
 
 .auth-primary-btn:hover:not(:disabled) {
-  transform: translateY(-2px) scale(1.01);
+  transform: translateY(-2px) scale(1.02);
   box-shadow:
     0 8px 36px -4px rgba(34, 211, 238, 0.45),
     0 0 56px -8px rgba(59, 130, 246, 0.4);
   filter: brightness(1.05);
+}
+
+html:not(.dark) .auth-primary-btn {
+  text-shadow: 0 1px 1px rgba(27, 38, 44, 0.12);
+  box-shadow:
+    0 4px 22px -4px rgba(98, 196, 208, 0.5),
+    0 0 40px -8px var(--lp-secondary-glow);
+}
+
+html:not(.dark) .auth-primary-btn:hover:not(:disabled) {
+  box-shadow:
+    0 10px 40px -4px rgba(255, 209, 220, 0.55),
+    0 8px 36px -4px rgba(98, 196, 208, 0.45);
+}
+
+:is(.dark *) .auth-primary-btn {
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    filter 0.25s ease;
+}
+:is(.dark *) .auth-primary-btn:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.01);
 }
 
 .auth-primary-btn:disabled {
@@ -1587,6 +2209,34 @@ html {
     opacity: 0.85;
     transform: rotate(45deg) scale(1.25);
   }
+}
+
+/* Light theme: decorative lines read clearly on #f2f9ff */
+html:not(.dark) .app-backdrop-mesh {
+  opacity: 1;
+}
+html:not(.dark) .app-backdrop-grid-fade {
+  color: rgba(20, 65, 110, 0.34);
+}
+html:not(.dark) svg .app-backdrop-path-dash,
+html:not(.dark) svg .app-backdrop-path-dash-slow {
+  stroke: rgba(15, 75, 125, 0.68) !important;
+}
+html:not(.dark) svg circle.app-backdrop-ring-a,
+html:not(.dark) svg circle.app-backdrop-ring-b {
+  stroke: rgba(12, 70, 120, 0.62) !important;
+}
+html:not(.dark) svg circle.app-backdrop-ring-a {
+  opacity: 0.55 !important;
+}
+html:not(.dark) svg circle.app-backdrop-ring-b {
+  opacity: 0.48 !important;
+}
+html:not(.dark) .app-backdrop-twinkle {
+  border-color: rgba(30, 95, 140, 0.42) !important;
+}
+html:not(.dark) .app-backdrop-twinkle-delayed {
+  border-color: rgba(120, 60, 100, 0.38) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

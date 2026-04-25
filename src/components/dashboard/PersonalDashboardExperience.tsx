@@ -88,12 +88,14 @@ function MicroStat({
       transition={{ delay, duration: 0.35, ease: [0.33, 1, 0.68, 1] }}
       className="rounded-xl border border-outline-variant/45 bg-surface-container/35 px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-xl"
     >
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-on-surface-variant/50">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400">
         {label}
       </p>
-      <p className="mt-1.5 text-xl font-bold tabular-nums tracking-tight text-on-surface">{value}</p>
+      <p className="mt-1.5 text-xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-slate-100">
+        {value}
+      </p>
       {hint ? (
-        <p className="mt-1 text-[11px] leading-snug text-on-surface-variant/42">{hint}</p>
+        <p className="mt-1 text-[11px] leading-snug text-slate-600 dark:text-slate-500">{hint}</p>
       ) : null}
     </motion.div>
   );
@@ -132,9 +134,9 @@ function GlassPanel({
   return (
     <div className="flex h-full flex-col rounded-xl border border-outline-variant/50 bg-surface-container/30 p-5 shadow-[0_16px_48px_rgba(0,0,0,0.18)] backdrop-blur-xl">
       <div className="mb-4">
-        <h3 className="text-sm font-semibold tracking-tight text-on-surface">{title}</h3>
+        <h3 className="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-100">{title}</h3>
         {subtitle ? (
-          <p className="mt-0.5 text-[11px] text-on-surface-variant/48">{subtitle}</p>
+          <p className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-400">{subtitle}</p>
         ) : null}
       </div>
       <div className="min-h-0 flex-1">{children}</div>
@@ -193,16 +195,16 @@ export function PersonalDashboardExperience({
         className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
       >
         <div>
-          <div className="flex items-center gap-2 text-primary">
-            <Sparkles size={18} className="opacity-80" />
-            <span className="text-xs font-semibold uppercase tracking-widest opacity-70">
+          <div className="flex items-center gap-2">
+            <Sparkles size={18} className="text-blue-700/85 dark:text-cyan-400/85" />
+            <span className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400">
               Personal dashboard
             </span>
           </div>
           <h1 className="mt-1 text-3xl font-bold tracking-tight text-on-surface">
             Your practice at a glance
           </h1>
-          <p className="mt-1 text-sm text-on-surface-variant/60">
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Overview snapshot — detailed charts and filters live in Deep analytics.
           </p>
         </div>
@@ -217,7 +219,7 @@ export function PersonalDashboardExperience({
           </button>
           <Link
             href="/dashboard/analytics"
-            className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/70 bg-surface-container/80 px-4 py-2 text-sm font-medium text-on-surface transition hover:border-primary/40 hover:bg-surface-container-high"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-400/45 bg-white/70 px-4 py-2 text-sm font-medium text-slate-800 shadow-sm backdrop-blur-sm transition hover:border-cyan-600/40 hover:bg-white/90 dark:border-white/20 dark:bg-white/[0.08] dark:text-slate-200 dark:hover:border-cyan-400/35 dark:hover:bg-white/[0.12]"
           >
             <Gauge size={16} className="opacity-70" />
             Deep analytics
@@ -225,7 +227,7 @@ export function PersonalDashboardExperience({
         </div>
       </motion.div>
 
-      <div className="mb-8 flex flex-wrap gap-2 border-b border-outline-variant/35 pb-3">
+      <div className="mb-8 flex flex-wrap gap-2 border-b border-slate-300/50 pb-3 dark:border-white/10">
         {TABS.map((t) => {
           const active = section === t.id;
           const Icon = t.icon;
@@ -234,13 +236,18 @@ export function PersonalDashboardExperience({
               key={t.id}
               type="button"
               onClick={() => setSection(t.id)}
-              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition ${
+              className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition ${
                 active
-                  ? "bg-primary/15 text-primary shadow-[0_0_24px_rgba(124,58,237,0.2)]"
-                  : "text-on-surface-variant hover:bg-surface-container-high/80 hover:text-on-surface"
+                  ? "border-violet-600/45 bg-violet-500/12 text-slate-900 shadow-[0_0_20px_rgba(124,58,237,0.15)] dark:border-violet-400/50 dark:bg-violet-500/20 dark:text-slate-100 dark:shadow-[0_0_26px_rgba(124,58,237,0.28)]"
+                  : "border-transparent text-slate-700 hover:border-slate-400/50 hover:bg-white/60 hover:text-slate-900 dark:text-slate-400 dark:hover:border-white/15 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
               }`}
             >
-              <Icon size={16} className="opacity-80" />
+              <Icon
+                size={16}
+                className={
+                  active ? "text-violet-700 dark:text-violet-200/90" : "text-slate-600 dark:opacity-80"
+                }
+              />
               {t.label}
             </button>
           );
@@ -338,9 +345,12 @@ export function PersonalDashboardExperience({
                   subtitle="Four dimensions — ring ticks show 25 / 50 / 75 / 100"
                 >
                   <CompetencyRadarChart data={radar} />
-                  <p className="mt-3 text-[11px] leading-relaxed text-on-surface-variant/45">
+                  <p className="mt-3 text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
                     Derived from your session scores. For type mix, timelines, and filters, use{" "}
-                    <Link href="/dashboard/analytics" className="font-medium text-primary/90 hover:underline">
+                    <Link
+                      href="/dashboard/analytics"
+                      className="font-medium text-violet-700 underline-offset-2 hover:underline dark:text-primary"
+                    >
                       Deep analytics
                     </Link>
                     .
@@ -350,29 +360,31 @@ export function PersonalDashboardExperience({
 
               <div className="rounded-xl border border-outline-variant/45 bg-surface-container/35 p-5 shadow-[0_12px_40px_rgba(0,0,0,0.2)] backdrop-blur-xl">
                 <div className="mb-3 flex items-center gap-2">
-                  <Lightbulb size={16} className="text-primary/80" />
-                  <h3 className="text-sm font-semibold text-on-surface">Pro tips</h3>
+                  <Lightbulb size={16} className="text-violet-600 dark:text-primary/80" />
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Pro tips</h3>
                 </div>
                 {proTips.length > 0 ? (
                   <ul className="space-y-2.5">
                     {proTips.map((ins) => (
                       <li
                         key={ins.title}
-                        className="flex gap-2 text-sm leading-snug text-on-surface-variant"
+                        className="flex gap-2 text-sm leading-snug text-slate-700 dark:text-slate-400"
                       >
                         <span
-                          className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+                          className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-600 dark:bg-primary"
                           aria-hidden
                         />
                         <span>
-                          <span className="font-medium text-on-surface/95">{ins.title}:</span>{" "}
+                          <span className="font-medium text-slate-900 dark:text-slate-100">{ins.title}:</span>{" "}
                           {ins.body}
                         </span>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-sm text-on-surface-variant/55">Complete more sessions to unlock tips.</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-500">
+                    Complete more sessions to unlock tips.
+                  </p>
                 )}
               </div>
             </div>
@@ -380,7 +392,7 @@ export function PersonalDashboardExperience({
 
           {section === "sessions" && (
             <div className="flex flex-col gap-5">
-              <p className="text-sm text-on-surface-variant/65">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Expand a row for feedback, or open the full report.
               </p>
               {children}

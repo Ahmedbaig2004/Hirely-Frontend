@@ -1,5 +1,7 @@
 "use client";
 
+import { useTheme } from "next-themes";
+
 /**
  * Decorative background for app surfaces — gradients, orbs, grid, line art.
  * No blur filters; GPU-friendly transforms only. pointer-events: none.
@@ -37,12 +39,45 @@ const VARIANT = {
   },
 } as const;
 
+/** Stronger saturation/opacity on pastel backgrounds (light theme only) */
+const VARIANT_LIGHT = {
+  about: {
+    orbA: "from-sky-400/[0.28] via-cyan-500/[0.2] to-transparent",
+    orbB: "from-blue-500/[0.24] via-indigo-500/[0.16] to-transparent",
+    orbC: "from-amber-400/[0.14] to-transparent",
+    stroke: "stroke-sky-600/45",
+    mesh: "from-sky-400/[0.18] via-transparent to-violet-500/[0.12]",
+  },
+  pricing: {
+    orbA: "from-violet-500/[0.28] via-fuchsia-500/[0.18] to-transparent",
+    orbB: "from-sky-400/[0.22] via-blue-500/[0.18] to-transparent",
+    orbC: "from-indigo-500/[0.2] to-transparent",
+    stroke: "stroke-violet-600/42",
+    mesh: "from-violet-500/[0.16] via-transparent to-cyan-500/[0.12]",
+  },
+  dashboard: {
+    orbA: "from-sky-400/[0.26] via-cyan-500/[0.18] to-transparent",
+    orbB: "from-violet-500/[0.22] via-indigo-500/[0.15] to-transparent",
+    orbC: "from-emerald-500/[0.14] to-transparent",
+    stroke: "stroke-sky-600/44",
+    mesh: "from-sky-500/[0.15] via-transparent to-violet-500/[0.12]",
+  },
+  analytics: {
+    orbA: "from-sky-400/[0.28] via-cyan-500/[0.2] to-transparent",
+    orbB: "from-violet-500/[0.22] via-fuchsia-500/[0.15] to-transparent",
+    orbC: "from-emerald-500/[0.16] to-transparent",
+    stroke: "stroke-cyan-600/46",
+    mesh: "from-sky-400/[0.16] via-transparent to-violet-600/[0.14]",
+  },
+} as const;
+
 export function AppPageGraphicsBackdrop({
   variant,
 }: {
   variant: AppPageBackdropVariant;
 }) {
-  const v = VARIANT[variant];
+  const { resolvedTheme } = useTheme();
+  const v = resolvedTheme === "dark" ? VARIANT[variant] : VARIANT_LIGHT[variant];
 
   return (
     <div
@@ -54,7 +89,7 @@ export function AppPageGraphicsBackdrop({
 
       {/* Slow mesh wash */}
       <div
-        className={`absolute -inset-[40%] bg-gradient-to-br ${v.mesh} app-backdrop-mesh-shift opacity-90`}
+        className={`app-backdrop-mesh absolute -inset-[40%] bg-gradient-to-br ${v.mesh} app-backdrop-mesh-shift opacity-90`}
       />
 
       {/* Large gradient orbs — transform animations only */}

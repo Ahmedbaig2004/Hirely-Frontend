@@ -1,7 +1,9 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useId, useRef, useCallback, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { LpGradientText } from "./LpGradientText";
 
 /* ─── Feature cards data ─── */
 const features = [
@@ -122,8 +124,12 @@ const SLIDE_FROM_CORNER: { x: number; y: number }[] = [
 
 function FeaturePlane2D({ uid }: { uid: string }) {
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-      <svg className="absolute left-1/2 top-0 h-[120%] w-[140%] -translate-x-1/2 opacity-[0.45]" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+    <div className="lp-features-plane-wrap pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+      <svg
+        className="absolute left-1/2 top-0 h-[120%] w-[140%] -translate-x-1/2 opacity-[0.45]"
+        viewBox="0 0 1200 800"
+        preserveAspectRatio="xMidYMid slice"
+      >
         <defs>
           <linearGradient id={`${uid}-a`} x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.35" />
@@ -153,7 +159,7 @@ function FeaturePlane2D({ uid }: { uid: string }) {
         <path
           d="M100 640 Q500 560 900 620"
           fill="none"
-          stroke="rgba(167,139,250,0.15)"
+          stroke="var(--lp-feature-ribbon-3)"
           strokeWidth="0.75"
           strokeDasharray="6 12"
           className="lp-features-ribbon"
@@ -162,26 +168,20 @@ function FeaturePlane2D({ uid }: { uid: string }) {
       </svg>
 
       <svg className="lp-features-hex-a absolute -right-[8%] top-[12%] h-48 w-48 opacity-25" viewBox="0 0 100 100" aria-hidden>
-        <polygon points="50,5 95,28 95,72 50,95 5,72 5,28" fill="none" stroke="rgba(34,211,238,0.35)" strokeWidth="0.6" />
+        <polygon points="50,5 95,28 95,72 50,95 5,72 5,28" fill="none" stroke="var(--lp-feature-hex-a)" strokeWidth="0.6" />
       </svg>
       <svg className="lp-features-hex-b absolute -left-[4%] bottom-[18%] h-40 w-40 opacity-20" viewBox="0 0 100 100" aria-hidden>
-        <polygon points="50,5 95,28 95,72 50,95 5,72 5,28" fill="none" stroke="rgba(167,139,250,0.3)" strokeWidth="0.5" />
+        <polygon points="50,5 95,28 95,72 50,95 5,72 5,28" fill="none" stroke="var(--lp-feature-hex-b)" strokeWidth="0.5" />
       </svg>
 
       <svg className="lp-features-tri absolute left-[12%] top-[22%] h-24 w-24 opacity-30" viewBox="0 0 100 100" aria-hidden>
-        <polygon points="50,12 88,82 12,82" fill="none" stroke="rgba(59,130,246,0.25)" strokeWidth="1" />
+        <polygon points="50,12 88,82 12,82" fill="none" stroke="var(--lp-feature-tri-1)" strokeWidth="1" />
       </svg>
       <svg className="lp-features-tri absolute bottom-[28%] right-[18%] h-20 w-20 opacity-25" viewBox="0 0 100 100" style={{ animationDelay: "1.2s" }} aria-hidden>
-        <polygon points="50,12 88,82 12,82" fill="none" stroke="rgba(244,114,182,0.22)" strokeWidth="1" />
+        <polygon points="50,12 88,82 12,82" fill="none" stroke="var(--lp-feature-tri-2)" strokeWidth="1" />
       </svg>
 
-      <div
-        className="absolute inset-0 opacity-[0.07]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='52' viewBox='0 0 60 52' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 4 L56 18 L56 46 L30 60 L4 46 L4 18 Z' fill='none' stroke='%2367e8f9' stroke-width='0.5'/%3E%3C/svg%3E")`,
-          backgroundSize: "60px 52px",
-        }}
-      />
+      <div className="lp-features-hex-grid absolute inset-0" />
     </div>
   );
 }
@@ -250,24 +250,22 @@ function FeatureCard({
     >
       <div
         ref={cardRef}
+        className="lp-feature-card-surface"
         onMouseMove={handleMouseMove}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={handleMouseLeave}
-        style={{
-          clipPath: clip,
-          padding: 28,
-          minHeight: "100%",
-          cursor: "default",
-          position: "relative",
-          background: "linear-gradient(145deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%)",
-          border: "1px solid rgba(255,255,255,0.08)",
-          boxShadow: hovered
-            ? `0 24px 48px rgba(0,0,0,0.35), 0 0 0 1px ${feature.accentColor}35, inset 0 1px 0 rgba(255,255,255,0.1)`
-            : "0 16px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06)",
-          transition: "box-shadow 0.35s ease, border-color 0.35s ease",
-          backdropFilter: "blur(18px) saturate(1.35)",
-          WebkitBackdropFilter: "blur(18px) saturate(1.35)",
-        }}
+        style={
+          {
+            "--lp-feature-accent": feature.accentColor,
+            clipPath: clip,
+            padding: 28,
+            minHeight: "100%",
+            cursor: "default",
+            position: "relative",
+            backdropFilter: "blur(18px) saturate(1.35)",
+            WebkitBackdropFilter: "blur(18px) saturate(1.35)",
+          } as CSSProperties
+        }
       >
         <div
           aria-hidden
@@ -298,10 +296,10 @@ function FeatureCard({
         </div>
 
         <h3
+          className="lp-feature-card-title"
           style={{
             fontSize: 17,
             fontWeight: 700,
-            color: "#f1f5f9",
             marginBottom: 10,
             letterSpacing: "-0.02em",
           }}
@@ -309,9 +307,9 @@ function FeatureCard({
           {feature.title}
         </h3>
         <p
+          className="lp-feature-card-desc"
           style={{
             fontSize: 14,
-            color: "#94a3b8",
             lineHeight: 1.65,
             margin: 0,
           }}
@@ -332,18 +330,11 @@ export function FeatureSection() {
       className="lp-features-section scroll-mt-24"
       style={{
         position: "relative",
-        background: "linear-gradient(165deg, #070b14 0%, #0f172a 38%, #0c1220 100%)",
         padding: "clamp(72px, 12vw, 120px) clamp(20px, 4vw, 48px) clamp(88px, 14vw, 140px)",
         overflow: "hidden",
       }}
     >
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 90% 50% at 15% 20%, rgba(34,211,238,0.07), transparent 50%), radial-gradient(ellipse 70% 45% at 85% 75%, rgba(167,139,250,0.06), transparent 55%)",
-        }}
-      />
+      <div className="lp-features-section-glow pointer-events-none absolute inset-0" />
       <FeaturePlane2D uid={uid} />
 
       <div style={{ maxWidth: 1120, margin: "0 auto", position: "relative", zIndex: 2 }}>
@@ -355,6 +346,7 @@ export function FeatureSection() {
           style={{ marginBottom: "clamp(48px, 8vw, 72px)", textAlign: "left" }}
         >
           <div
+            className="lp-features-kicker"
             style={{
               display: "inline-block",
               marginBottom: 14,
@@ -363,33 +355,29 @@ export function FeatureSection() {
               fontWeight: 700,
               letterSpacing: "0.2em",
               textTransform: "uppercase",
-              color: "#67e8f9",
-              border: "1px solid rgba(103,232,249,0.25)",
-              clipPath: "polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))",
-              background: "rgba(103,232,249,0.06)",
+              clipPath:
+                "polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))",
             }}
           >
             Product surface
           </div>
           <h2
+            className="lp-features-title"
             style={{
               fontSize: "clamp(30px, 5vw, 50px)",
               fontWeight: 800,
-              color: "#f8fafc",
               lineHeight: 1.08,
               marginBottom: 16,
               maxWidth: 720,
             }}
           >
             Built for real{" "}
-            <span className="lp-gradient-text" style={{ fontStyle: "italic" }}>
-              hiring decisions
-            </span>
+            <LpGradientText italic>hiring decisions</LpGradientText>
           </h2>
           <p
+            className="lp-features-lead"
             style={{
               fontSize: 17,
-              color: "#94a3b8",
               maxWidth: 520,
               lineHeight: 1.75,
             }}

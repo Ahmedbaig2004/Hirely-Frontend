@@ -19,19 +19,18 @@ export function ContactPromoVideo() {
     <div
       role="img"
       aria-label="Animated preview of Hirely interview support chat"
-      className="relative mx-auto w-full max-w-xl overflow-hidden rounded-[2rem] border border-white/[0.09] shadow-[0_32px_80px_-40px_rgba(0,0,0,0.85)] lg:max-w-none"
+      className="relative mx-auto w-full max-w-xl overflow-hidden rounded-[2rem] border border-[var(--lp-glass-border)] bg-[var(--lp-glass)] shadow-[0_28px_72px_-36px_rgba(15,23,42,0.16)] backdrop-blur-[28px] backdrop-saturate-150 dark:border-white/[0.09] dark:bg-gradient-to-br dark:from-[rgb(15,23,42)] dark:via-[rgb(17,24,39)] dark:to-[rgb(12,20,35)] dark:shadow-[0_32px_80px_-40px_rgba(0,0,0,0.85)] dark:backdrop-blur-none lg:max-w-none"
       style={{
         aspectRatio: "16 / 10",
         minHeight: "min(52vw, 420px)",
         maxHeight: "560px",
-        background: "linear-gradient(165deg, rgb(15, 23, 42) 0%, rgb(17, 24, 39) 45%, rgb(12, 20, 35) 100%)",
       }}
     >
       {/* Animated mesh / orbs */}
       {!reduceMotion && (
         <>
           <motion.div
-            className="pointer-events-none absolute -left-1/4 top-0 h-[120%] w-[70%] rounded-full opacity-[0.55] blur-[80px]"
+            className="pointer-events-none absolute -left-1/4 top-0 h-[120%] w-[70%] rounded-full opacity-[0.28] blur-[80px] dark:opacity-[0.55]"
             style={{
               background:
                 "radial-gradient(circle at 40% 40%, rgba(34, 211, 238, 0.45), transparent 55%)",
@@ -40,7 +39,7 @@ export function ContactPromoVideo() {
             transition={loop}
           />
           <motion.div
-            className="pointer-events-none absolute -right-1/4 bottom-0 h-[110%] w-[65%] rounded-full opacity-[0.5] blur-[90px]"
+            className="pointer-events-none absolute -right-1/4 bottom-0 h-[110%] w-[65%] rounded-full opacity-[0.22] blur-[90px] dark:opacity-[0.5]"
             style={{
               background:
                 "radial-gradient(circle at 60% 50%, rgba(139, 92, 246, 0.5), transparent 58%)",
@@ -49,7 +48,7 @@ export function ContactPromoVideo() {
             transition={{ ...loop, duration: 16 }}
           />
           <motion.div
-            className="pointer-events-none absolute left-1/2 top-1/2 h-[min(90%,420px)] w-[min(90%,520px)] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.12]"
+            className="pointer-events-none absolute left-1/2 top-1/2 h-[min(90%,420px)] w-[min(90%,520px)] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.06] dark:opacity-[0.12]"
             style={{
               background:
                 "conic-gradient(from 180deg at 50% 50%, rgba(59,130,246,0.4), transparent, rgba(34,211,238,0.35), transparent)",
@@ -62,16 +61,11 @@ export function ContactPromoVideo() {
 
       {/* Soft grid */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.07]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-        }}
+        className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(15,23,42,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.05)_1px,transparent_1px)] bg-[length:48px_48px] opacity-[0.55] dark:bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] dark:opacity-[0.07]"
         aria-hidden
       />
 
-      <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.35]" aria-hidden>
+      <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.2] dark:opacity-[0.35]" aria-hidden>
         <defs>
           <linearGradient id={`contactArc-${gid}`} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="rgba(34,211,238,0.5)" />
@@ -94,33 +88,33 @@ export function ContactPromoVideo() {
       {/* Foreground UI card — chat-style loop */}
       <div className="relative z-[1] flex h-full flex-col justify-between p-5 sm:p-7">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 rounded-full border border-white/[0.1] bg-black/25 px-3 py-1.5 backdrop-blur-md">
+          <div className="flex items-center gap-2 rounded-full border border-[var(--lp-glass-border)] bg-[var(--lp-inner-well)] px-3 py-1.5 backdrop-blur-md dark:border-white/[0.1] dark:bg-black/25">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/50 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
             </span>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-300">
               Live preview
             </span>
           </div>
-          <span className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-[10px] font-medium text-slate-400">
+          <span className="rounded-lg border border-[var(--lp-inner-well-border)] bg-[var(--lp-inner-well)] px-2 py-1 text-[10px] font-medium text-slate-600 backdrop-blur-sm dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-400 dark:backdrop-blur-none">
             Hirely
           </span>
         </div>
 
         <motion.div
-          className="mx-auto w-full max-w-[340px] rounded-2xl border border-white/[0.1] bg-slate-950/55 p-4 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.65)] backdrop-blur-xl sm:p-5"
+          className="mx-auto w-full max-w-[340px] rounded-2xl border border-[var(--lp-glass-border)] bg-[var(--lp-glass)] p-4 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.16)] backdrop-blur-xl dark:border-white/[0.1] dark:bg-slate-950/55 dark:shadow-[0_24px_60px_-20px_rgba(0,0,0,0.65)] sm:p-5"
           initial={false}
           animate={reduceMotion ? {} : { y: [0, -6, 0] }}
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         >
-          <div className="mb-3 flex items-center gap-2 border-b border-white/[0.06] pb-3">
+          <div className="mb-3 flex items-center gap-2 border-b border-[var(--lp-inner-well-border)] pb-3 dark:border-white/[0.06]">
             <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-cyan-500/30 to-violet-600/40 text-xs font-bold text-white">
               AI
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-100">Interview coach</p>
-              <p className="text-[11px] text-slate-500">Typical response · 2s</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Interview coach</p>
+              <p className="text-[11px] text-slate-600 dark:text-slate-500">Typical response · 2s</p>
             </div>
           </div>
           <BubbleLoop reduceMotion={!!reduceMotion} />
@@ -143,7 +137,7 @@ export function ContactPromoVideo() {
               />
             ))}
           </div>
-          <p className="max-w-[200px] text-right text-[11px] leading-snug text-slate-500">
+          <p className="max-w-[200px] text-right text-[11px] leading-snug text-slate-600 dark:text-slate-500">
             Practice interviews with feedback that mirrors real hiring bar.
           </p>
         </div>
@@ -151,7 +145,7 @@ export function ContactPromoVideo() {
 
       {/* Bottom gloss */}
       <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/50 to-transparent"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-slate-200/35 to-transparent dark:from-black/50"
         aria-hidden
       />
     </div>
@@ -162,7 +156,7 @@ function BubbleLoop({ reduceMotion }: { reduceMotion: boolean }) {
   return (
     <div className="space-y-3">
       <div className="flex justify-start">
-        <span className="max-w-[92%] rounded-2xl border border-white/[0.08] bg-white/[0.06] px-3.5 py-2.5 text-[13px] leading-snug text-slate-200">
+        <span className="max-w-[92%] rounded-2xl border border-[var(--lp-inner-well-border)] bg-[var(--lp-inner-well)] px-3.5 py-2.5 text-[13px] leading-snug text-slate-800 backdrop-blur-sm dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-200 dark:backdrop-blur-none">
           Can I try before I buy?
         </span>
       </div>
@@ -176,7 +170,7 @@ function BubbleLoop({ reduceMotion }: { reduceMotion: boolean }) {
         animate={reduceMotion ? {} : { opacity: [0.65, 1, 0.65] }}
         transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
       >
-        <span className="inline-flex items-center gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.06] px-3.5 py-2.5 text-[13px] text-slate-300">
+        <span className="inline-flex items-center gap-2 rounded-2xl border border-[var(--lp-inner-well-border)] bg-[var(--lp-inner-well)] px-3.5 py-2.5 text-[13px] text-slate-700 backdrop-blur-sm dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300 dark:backdrop-blur-none">
           How fast is the feedback?
           <span className="flex gap-0.5">
             {[0, 1, 2].map((d) => (

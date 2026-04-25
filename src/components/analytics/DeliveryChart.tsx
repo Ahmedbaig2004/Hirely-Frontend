@@ -1,6 +1,7 @@
 "use client";
 
 import { useId } from "react";
+import { useTheme } from "next-themes";
 import {
   BarChart,
   Bar,
@@ -16,7 +17,7 @@ import {
   AXIS_COLOR,
   GRID_FAINT,
   TOOLTIP_STYLE,
-  CHART_COLORS,
+  pickChartColors,
   CHART_ANIM_MS,
 } from "./chartTheme";
 
@@ -33,7 +34,7 @@ interface Props {
 }
 
 const NO_DATA = (
-  <div className="flex items-center justify-center h-[220px] lp-muted text-sm">
+  <div className="flex items-center justify-center h-[220px] lp-sub text-sm">
     No delivery data available — requires audio or transcribed answers
   </div>
 );
@@ -41,6 +42,9 @@ const NO_DATA = (
 export function DeliveryChart({ delivery }: Props) {
   const uid = useId().replace(/:/g, "");
   const reduceMotion = useReducedMotion();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+  const C = pickChartColors(!isDark);
   const animMs = reduceMotion ? 0 : CHART_ANIM_MS;
 
   const hasData =
@@ -56,9 +60,9 @@ export function DeliveryChart({ delivery }: Props) {
 
   const patternData = hasData
     ? [
-        { name: "Fillers", value: delivery.avgFillers ?? 0, color: CHART_COLORS.amber },
-        { name: "Hedging", value: delivery.avgHedging ?? 0, color: CHART_COLORS.rose },
-        { name: "Restarts", value: delivery.avgRestarts ?? 0, color: CHART_COLORS.cyan },
+        { name: "Fillers", value: delivery.avgFillers ?? 0, color: C.amber },
+        { name: "Hedging", value: delivery.avgHedging ?? 0, color: C.rose },
+        { name: "Restarts", value: delivery.avgRestarts ?? 0, color: C.cyan },
       ]
     : [];
 
@@ -78,7 +82,7 @@ export function DeliveryChart({ delivery }: Props) {
     >
       {patternData.length > 0 && (
         <div>
-          <p className="label-caps lp-dim mb-4">avg per answer</p>
+          <p className="label-caps lp-sub mb-4">avg per answer</p>
           <div className="flex gap-4 flex-wrap">
             {patternData.map(({ name, value, color }, i) => (
               <motion.div
@@ -86,9 +90,13 @@ export function DeliveryChart({ delivery }: Props) {
                 initial={reduceMotion ? false : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.06 * i, duration: 0.35 }}
-                className="glass-card rounded-xl px-5 py-4 flex flex-col items-center gap-1 min-w-[96px] border border-white/[0.08]"
+                className={`glass-card rounded-xl px-5 py-4 flex flex-col items-center gap-1 min-w-[96px] border ${
+                  isDark ? "border-white/[0.08]" : "border-[rgba(57,72,103,0.18)]"
+                }`}
                 style={{
-                  boxShadow: `0 0 0 1px rgba(255,255,255,0.06), 0 12px 40px -12px ${color}44`,
+                  boxShadow: isDark
+                    ? `0 0 0 1px rgba(255,255,255,0.06), 0 12px 40px -12px ${color}44`
+                    : `0 1px 0 rgba(255,255,255,0.9), 0 10px 32px -8px ${color}55, 0 0 0 1px rgba(57,72,103,0.08)`,
                 }}
               >
                 <span
@@ -100,7 +108,7 @@ export function DeliveryChart({ delivery }: Props) {
                 >
                   {value.toFixed(1)}
                 </span>
-                <span className="text-xs lp-muted">{name}</span>
+                <span className="text-xs lp-sub">{name}</span>
               </motion.div>
             ))}
           </div>
@@ -109,7 +117,7 @@ export function DeliveryChart({ delivery }: Props) {
 
       {qualityData.length > 0 && (
         <div>
-          <p className="label-caps lp-dim mb-4">quality scores (0–100)</p>
+          <p className="label-caps lp-sub mb-4">quality scores (0–100)</p>
           <ResponsiveContainer width="100%" height={168}>
             <BarChart
               data={qualityData}
@@ -119,12 +127,12 @@ export function DeliveryChart({ delivery }: Props) {
             >
               <defs>
                 <linearGradient id={`qualRel-${uid}`} x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#059669" />
-                  <stop offset="100%" stopColor={CHART_COLORS.emeraldLight} />
+                  <stop offset="0%" stopColor={C.emerald} />
+                  <stop offset="100%" stopColor={C.emeraldLight} />
                 </linearGradient>
                 <linearGradient id={`qualSpec-${uid}`} x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#5B21B6" />
-                  <stop offset="100%" stopColor={CHART_COLORS.cyan} />
+                  <stop offset="0%" stopColor={C.violet} />
+                  <stop offset="100%" stopColor={C.cyan} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="4 8" stroke={GRID_FAINT} horizontal={false} />
@@ -148,8 +156,8 @@ export function DeliveryChart({ delivery }: Props) {
               <Tooltip
                 contentStyle={TOOLTIP_STYLE}
                 formatter={(v) => [`${v ?? "—"}`, "Score"]}
-                labelStyle={{ color: "rgba(255,255,255,0.55)" }}
-                cursor={{ fill: "rgba(34,211,238,0.06)" }}
+                labelStyle={{ color: "var(--chart-axis-muted)" }}
+                cursor={{ fill: "rgba(14, 116, 144, 0.08)" }}
               />
               <Bar
                 dataKey="value"

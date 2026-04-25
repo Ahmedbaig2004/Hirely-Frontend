@@ -10,7 +10,12 @@ import {
   Legend,
 } from "recharts";
 import { motion, useReducedMotion } from "framer-motion";
-import { TOOLTIP_STYLE, DECISION_COLORS, CHART_ANIM_MS } from "./chartTheme";
+import {
+  TOOLTIP_STYLE,
+  DECISION_COLORS,
+  CHART_ANIM_MS,
+  DECISION_RING_STROKE,
+} from "./chartTheme";
 
 interface DecisionRow {
   decision: string;
@@ -23,7 +28,7 @@ interface Props {
 }
 
 const NO_DATA = (
-  <div className="flex items-center justify-center h-[280px] lp-muted text-sm">
+  <div className="flex items-center justify-center h-[280px] lp-sub text-sm">
     No completed interviews yet
   </div>
 );
@@ -65,7 +70,7 @@ export function DecisionBreakdown({ decisionBreakdown, totalInterviews }: Props)
             dataKey="count"
             nameKey="decision"
             paddingAngle={4}
-            stroke="rgba(8,8,16,0.85)"
+            stroke={DECISION_RING_STROKE}
             strokeWidth={2}
             isAnimationActive={animMs > 0}
             animationDuration={animMs}
@@ -85,11 +90,11 @@ export function DecisionBreakdown({ decisionBreakdown, totalInterviews }: Props)
           <Tooltip
             contentStyle={TOOLTIP_STYLE}
             formatter={(value, name) => [`${value} interview${value !== 1 ? "s" : ""}`, String(name)]}
-            labelStyle={{ color: "rgba(255,255,255,0.55)" }}
+            labelStyle={{ color: "var(--chart-axis-muted)" }}
           />
           <Legend
             formatter={(value) => (
-              <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>{value}</span>
+              <span className="text-[11px] text-on-surface-variant/85">{value}</span>
             )}
             iconSize={8}
             iconType="circle"
@@ -107,7 +112,7 @@ export function DecisionBreakdown({ decisionBreakdown, totalInterviews }: Props)
         >
           {totalInterviews}
         </span>
-        <span className="text-xs lp-muted mt-0.5 tracking-wide">total</span>
+        <span className="text-xs lp-sub mt-0.5 tracking-wide">total</span>
       </div>
     </motion.div>
   );

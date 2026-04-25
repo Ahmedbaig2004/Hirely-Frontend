@@ -1,5 +1,7 @@
 "use client";
 
+import { useTheme } from "next-themes";
+
 export type InterviewTypeFilter = "all" | "JOB_SPECIFIC" | "TECHNICAL" | "BEHAVIORAL";
 export type DateRangeFilter = "7d" | "30d" | "90d" | "all";
 
@@ -22,22 +24,32 @@ const RANGE_OPTIONS: { value: DateRangeFilter; label: string }[] = [
   { value: "all", label: "All time" },
 ];
 
-const activePill: React.CSSProperties = {
-  borderColor: "rgba(124,58,237,0.5)",
-  boxShadow: "0 0 14px rgba(124,58,237,0.18)",
-  color: "rgba(255,255,255,0.95)",
-};
-
-const inactivePill: React.CSSProperties = {
-  color: "rgba(255,255,255,0.45)",
-};
-
 interface FilterBarProps {
   value: AnalyticsFilters;
   onChange: (f: AnalyticsFilters) => void;
 }
 
 export function FilterBar({ value, onChange }: FilterBarProps) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
+  const activePill: React.CSSProperties = isDark
+    ? {
+        borderColor: "rgba(124,58,237,0.5)",
+        boxShadow: "0 0 14px rgba(124,58,237,0.18)",
+        color: "rgba(255,255,255,0.95)",
+      }
+    : {
+        borderColor: "rgba(91, 33, 182, 0.45)",
+        boxShadow: "0 2px 12px rgba(91, 33, 182, 0.2), 0 0 0 1px rgba(91, 33, 182, 0.12)",
+        color: "rgb(49, 46, 129)",
+        background: "rgba(237, 233, 254, 0.75)",
+      };
+
+  const inactivePill: React.CSSProperties = isDark
+    ? { color: "rgba(255,255,255,0.45)" }
+    : { color: "var(--lp-text-body)" };
+
   return (
     <div className="flex flex-wrap items-center gap-4 mb-8">
       {/* Type filter */}

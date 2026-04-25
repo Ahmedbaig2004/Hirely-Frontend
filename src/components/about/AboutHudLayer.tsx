@@ -12,7 +12,7 @@ export function AboutHudLayer() {
       {LABELS.map((label, i) => (
         <span
           key={label}
-          className="about-hud-float absolute font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-cyan-300"
+          className="about-hud-float absolute font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-cyan-700 dark:text-cyan-300"
           style={{
             left: `${8 + (i * 17) % 75}%`,
             top: `${12 + (i * 23) % 70}%`,

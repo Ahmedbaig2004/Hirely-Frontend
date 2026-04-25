@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { LpGradientText } from "./LpGradientText";
 
 const testimonials = [
   {
@@ -186,32 +187,36 @@ function TestimonialCard({
           flexDirection: "column",
         }}
       >
-        <div style={{ fontSize: 32, color: "rgba(59,130,246,0.3)", lineHeight: 1, marginBottom: 8 }}>
+        <div
+          className="lp-testimonials-quote-mark"
+          style={{ fontSize: 32, lineHeight: 1, marginBottom: 8 }}
+        >
           &#x201C;&#x201C;
         </div>
 
         <Stars count={testimonial.rating} />
 
-        <p
-          style={{
-            fontSize: 14,
-            color: "var(--lp-muted-foreground)",
-            lineHeight: 1.7,
-            marginTop: 12,
-            flex: 1,
-          }}
-        >
+                    <p
+                      style={{
+                        fontSize: 14,
+                        color: "var(--lp-text-body)",
+                        lineHeight: 1.7,
+                        marginTop: 12,
+                        flex: 1,
+                      }}
+                    >
           &ldquo;{testimonial.text}&rdquo;
         </p>
 
         <div
+          className="lp-testimonial-card-divider"
           style={{
             display: "flex",
             alignItems: "center",
             gap: 10,
             marginTop: 16,
             paddingTop: 14,
-            borderTop: "1px solid rgba(255,255,255,0.06)",
+            borderTop: "1px solid transparent",
           }}
         >
           <div
@@ -232,7 +237,7 @@ function TestimonialCard({
           </div>
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, color: "var(--lp-foreground)" }}>{testimonial.name}</div>
-            <div style={{ fontSize: 11, color: "var(--lp-muted-foreground)" }}>{testimonial.role}</div>
+            <div style={{ fontSize: 11, color: "var(--lp-text-sub)" }}>{testimonial.role}</div>
           </div>
         </div>
       </div>
@@ -291,9 +296,8 @@ export function TestimonialsSection() {
       <section
         id="testimonials"
         ref={sectionRef}
-        className="scroll-mt-24"
+        className="lp-testimonials-outer scroll-mt-24"
         style={{
-          background: "linear-gradient(180deg, #111827 0%, #152030 100%)",
           padding: "48px 0 0",
           position: "relative",
           overflow: "hidden",
@@ -302,11 +306,10 @@ export function TestimonialsSection() {
         <div
           className={
             reduceMotion
-              ? "relative overflow-hidden"
-              : `circle-reveal relative overflow-hidden ${circleOpen ? "active" : ""}`
+              ? "lp-testimonials-inner relative overflow-hidden"
+              : `lp-testimonials-inner circle-reveal relative overflow-hidden ${circleOpen ? "active" : ""}`
           }
           style={{
-            background: "linear-gradient(180deg, #162035 0%, #142030 50%, #111827 100%)",
             padding: "72px 24px 96px",
             minHeight: !reduceMotion && circleOpen && !clipDone ? "min(85vh, 820px)" : undefined,
           }}
@@ -315,11 +318,11 @@ export function TestimonialsSection() {
           }}
         >
           <div
+            className="lp-testimonials-radial"
             aria-hidden
             style={{
               position: "absolute",
               inset: 0,
-              background: "radial-gradient(ellipse 70% 45% at 50% 32%, rgba(59, 130, 246, 0.07), transparent 55%)",
               pointerEvents: "none",
             }}
           />
@@ -334,10 +337,10 @@ export function TestimonialsSection() {
               style={{ textAlign: "center", marginBottom: 48 }}
             >
               <span
+                className="lp-testimonials-eyebrow"
                 style={{
                   fontSize: 12,
                   fontWeight: 600,
-                  color: "#a78bfa",
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",
                   display: "block",
@@ -347,20 +350,20 @@ export function TestimonialsSection() {
                 Community
               </span>
               <h2
+                className="lp-testimonials-title"
                 style={{
                   fontSize: "clamp(28px, 4vw, 44px)",
                   fontWeight: 800,
-                  color: "#e2e8f0",
                   lineHeight: 1.2,
                   marginBottom: 16,
                 }}
               >
-                Voice of the <span className="lp-gradient-text">Community</span>
+                Voice of the <LpGradientText>Community</LpGradientText>
               </h2>
               <p
+                className="lp-testimonials-lead"
                 style={{
                   fontSize: 16,
-                  color: "#94a3b8",
                   maxWidth: 520,
                   margin: "0 auto",
                   lineHeight: 1.6,

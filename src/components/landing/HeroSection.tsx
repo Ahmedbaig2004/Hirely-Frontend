@@ -2,9 +2,14 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useTheme } from "next-themes";
+import { getLpGradientAccentStyle } from "./lpGradientAccent";
 import { HeroVisual } from "./HeroVisual";
 
 export function HeroSection() {
+  const { resolvedTheme } = useTheme();
+  const light = resolvedTheme !== "dark";
+
   return (
     <section
       id="hero"
@@ -49,13 +54,16 @@ export function HeroSection() {
               gap: 6,
               padding: "5px 14px",
               borderRadius: 999,
-              background: "rgba(59, 130, 246, 0.1)",
-              border: "1px solid rgba(59, 130, 246, 0.2)",
+              background: light ? "rgba(37, 99, 235, 0.2)" : "rgba(59, 130, 246, 0.1)",
+              border: light ? "1px solid rgba(29, 78, 216, 0.55)" : "1px solid rgba(59, 130, 246, 0.2)",
               fontSize: 11,
-              fontWeight: 600,
-              color: "#93c5fd",
+              fontWeight: 700,
+              color: light ? "#1e3a8a" : "#93c5fd",
               letterSpacing: "0.08em",
               textTransform: "uppercase",
+              ...(light
+                ? { textShadow: "0 1px 0 rgba(255, 255, 255, 0.9), 0 0 20px rgba(255, 255, 255, 0.35)" }
+                : {}),
             }}
           >
             Prototype v0.1
@@ -67,12 +75,15 @@ export function HeroSection() {
               gap: 6,
               padding: "5px 14px",
               borderRadius: 999,
-              background: "rgba(34, 211, 238, 0.08)",
-              border: "1px solid rgba(34, 211, 238, 0.18)",
+              background: light ? "rgba(14, 165, 233, 0.2)" : "rgba(34, 211, 238, 0.08)",
+              border: light ? "1px solid rgba(3, 105, 161, 0.55)" : "1px solid rgba(34, 211, 238, 0.18)",
               fontSize: 11,
-              fontWeight: 600,
-              color: "#67e8f9",
+              fontWeight: 700,
+              color: light ? "#0c4a6e" : "#67e8f9",
               letterSpacing: "0.04em",
+              ...(light
+                ? { textShadow: "0 1px 0 rgba(255, 255, 255, 0.9), 0 0 20px rgba(255, 255, 255, 0.35)" }
+                : {}),
             }}
           >
             Resume + JD anchored
@@ -88,7 +99,7 @@ export function HeroSection() {
             fontSize: "clamp(40px, 6vw, 72px)",
             fontWeight: 300,
             lineHeight: 1.12,
-            color: "#e2e8f0",
+            color: light ? "#0f172a" : "#e2e8f0",
             marginBottom: 24,
             letterSpacing: "-0.02em",
             fontFamily: "Georgia, 'Times New Roman', serif",
@@ -96,9 +107,7 @@ export function HeroSection() {
         >
           The room before
           <br />
-          <span className="lp-gradient-text" style={{ fontStyle: "italic" }}>
-            the room.
-          </span>
+          <span style={getLpGradientAccentStyle(true)}>the room.</span>
         </motion.h1>
 
         {/* Subtitle */}
@@ -108,10 +117,17 @@ export function HeroSection() {
           transition={{ delay: 0.7, duration: 0.6 }}
           style={{
             fontSize: "clamp(14px, 1.8vw, 17px)",
-            color: "#94a3b8",
+            color: light ? "#0f172a" : "#94a3b8",
             lineHeight: 1.7,
             maxWidth: 540,
             marginBottom: 40,
+            fontWeight: light ? 500 : 400,
+            ...(light
+              ? {
+                  textShadow:
+                    "0 1px 0 rgba(255, 255, 255, 0.95), 0 0 24px rgba(255, 255, 255, 0.45), 0 2px 8px rgba(255, 255, 255, 0.35)",
+                }
+              : {}),
           }}
         >
           HIRELY generates interview questions from your resume and target
@@ -161,19 +177,24 @@ export function HeroSection() {
               padding: "13px 24px",
               borderRadius: 999,
               background: "transparent",
-              border: "1px solid rgba(255,255,255,0.12)",
-              color: "#e2e8f0",
+              border: light ? "1px solid rgba(27,38,44,0.2)" : "1px solid rgba(255,255,255,0.12)",
+              color: light ? "#1b262c" : "#e2e8f0",
               fontSize: 14,
               fontWeight: 500,
               textDecoration: "none",
               transition: "border-color 0.3s, background 0.3s",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
-              e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+              if (light) {
+                e.currentTarget.style.borderColor = "rgba(27,38,44,0.35)";
+                e.currentTarget.style.background = "rgba(255,255,255,0.45)";
+              } else {
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
+                e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+              }
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+              e.currentTarget.style.borderColor = light ? "rgba(27,38,44,0.2)" : "rgba(255,255,255,0.12)";
               e.currentTarget.style.background = "transparent";
             }}
           >
@@ -190,19 +211,24 @@ export function HeroSection() {
               padding: "13px 24px",
               borderRadius: 999,
               background: "transparent",
-              border: "1px solid rgba(255,255,255,0.12)",
-              color: "#e2e8f0",
+              border: light ? "1px solid rgba(27,38,44,0.2)" : "1px solid rgba(255,255,255,0.12)",
+              color: light ? "#1b262c" : "#e2e8f0",
               fontSize: 14,
               fontWeight: 500,
               textDecoration: "none",
               transition: "border-color 0.3s, background 0.3s",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
-              e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+              if (light) {
+                e.currentTarget.style.borderColor = "rgba(27,38,44,0.35)";
+                e.currentTarget.style.background = "rgba(255,255,255,0.45)";
+              } else {
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
+                e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+              }
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+              e.currentTarget.style.borderColor = light ? "rgba(27,38,44,0.2)" : "rgba(255,255,255,0.12)";
               e.currentTarget.style.background = "transparent";
             }}
           >
@@ -239,12 +265,23 @@ export function HeroSection() {
                 alignItems: "center",
                 gap: 5,
                 fontSize: 13,
-                color: "#94a3b8",
+                fontWeight: light ? 600 : 500,
+                color: light ? "#0f172a" : "#94a3b8",
                 textDecoration: "none",
                 transition: "color 0.2s",
+                ...(light
+                  ? {
+                      textShadow:
+                        "0 1px 0 rgba(255, 255, 255, 0.92), 0 0 18px rgba(255, 255, 255, 0.4)",
+                    }
+                  : {}),
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = "#e2e8f0"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = "#94a3b8"; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = light ? "#1d4ed8" : "#e2e8f0";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = light ? "#0f172a" : "#94a3b8";
+              }}
             >
               {link.label}
               <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -272,10 +309,33 @@ export function HeroSection() {
           gap: 8,
         }}
       >
-        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.2em", color: "#64748b", textTransform: "uppercase" }}>
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.2em",
+            color: light ? "#0f172a" : "#64748b",
+            textTransform: "uppercase",
+            ...(light
+              ? {
+                  textShadow:
+                    "0 1px 0 rgba(255, 255, 255, 0.95), 0 0 16px rgba(255, 255, 255, 0.45)",
+                }
+              : {}),
+          }}
+        >
           Scroll to explore
         </span>
-        <div style={{ width: 1, height: 24, background: "linear-gradient(to bottom, #64748b, transparent)" }} />
+        <div
+          style={{
+            width: 2,
+            borderRadius: 1,
+            height: 24,
+            background: light
+              ? "linear-gradient(to bottom, #1e40af, rgba(30, 64, 175, 0.15))"
+              : "linear-gradient(to bottom, #64748b, transparent)",
+          }}
+        />
       </motion.div>
 
       {/* Bottom gradient fade into next section */}

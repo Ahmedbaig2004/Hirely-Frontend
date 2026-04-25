@@ -125,7 +125,7 @@ export default function InterviewDetail() {
       >
         <button
           onClick={() => router.push("/dashboard")}
-          className="flex items-center text-on-surface-variant hover:text-on-surface mb-6 transition group opacity-55 hover:opacity-90"
+          className="group mb-6 flex items-center text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
         >
           <ArrowLeft size={18} className="mr-2 group-hover:-translate-x-1 transition-transform" />
           Back to Dashboard
@@ -135,8 +135,10 @@ export default function InterviewDetail() {
         <div className="glass-card-raised p-8 rounded-2xl mb-8">
           <div className="flex flex-col md:flex-row justify-between md:items-start mb-6 gap-4">
             <div>
-              <h1 className="text-3xl font-extrabold text-on-surface tracking-tight opacity-90">Interview Report</h1>
-              <p className="text-on-surface-variant text-sm mt-1 opacity-50">
+              <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+                Interview Report
+              </h1>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                 {data.jobDescription
                   ? data.jobDescription.substring(0, 60) + "..."
                   : data.interviewType === "TECHNICAL"
@@ -148,7 +150,9 @@ export default function InterviewDetail() {
             </div>
             <div className="flex items-center gap-4 glass-card p-3 rounded-xl">
               <div className="text-right">
-                <span className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider opacity-50">Score</span>
+                <span className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  Score
+                </span>
                 <span
                   className={`text-3xl font-black ${getScoreTextColor(data.finalScore)}`}
                   style={{ textShadow: getScoreGlow(data.finalScore) }}
@@ -160,16 +164,20 @@ export default function InterviewDetail() {
                 className={`h-10 w-1 rounded-full ${data.finalScore >= 70 ? "bg-emerald-500" : "bg-amber-500"}`}
               ></div>
               <div>
-                <span className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider opacity-50">Result</span>
-                <span className="text-lg font-bold text-on-surface opacity-80">{feedback.decision}</span>
+                <span className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  Result
+                </span>
+                <span className="text-lg font-bold text-slate-900 dark:text-slate-100">{feedback.decision}</span>
               </div>
             </div>
           </div>
 
           {/* Executive Summary */}
           <div className="mb-8">
-            <h3 className="label-caps mb-2">Executive Summary</h3>
-            <p className="text-on-surface-variant leading-relaxed glass-card p-4 rounded-lg border-l-4 border-primary opacity-80">
+            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-cyan-800 dark:text-cyan-400/90">
+              Executive Summary
+            </h3>
+            <p className="glass-card rounded-lg border-l-4 border-cyan-600/50 p-4 text-base leading-relaxed text-slate-700 dark:border-primary dark:text-slate-300">
               {feedback.summary}
             </p>
           </div>
@@ -184,16 +192,16 @@ export default function InterviewDetail() {
                 onClick={() => setGapExpanded((prev) => !prev)}
                 className="w-full flex justify-between items-center cursor-pointer"
               >
-                <h3 className="font-bold text-amber-300 flex items-center gap-2">
+                <h3 className="flex items-center gap-2 font-bold text-amber-900 dark:text-amber-300">
                   <TrendingUp size={20} /> Resume Gap Analysis
                 </h3>
                 <div className="flex items-center gap-3">
-                  <span className="bg-amber-500/15 text-amber-300 text-xs font-bold px-3 py-1 rounded-full border border-amber-500/20">
+                  <span className="rounded-full border border-amber-500/35 bg-amber-500/15 px-3 py-1 text-xs font-bold text-amber-950 dark:text-amber-200">
                     Match Score: {feedback.originalGapAnalysis.matchScore}%
                   </span>
                   <ChevronDown
                     size={16}
-                    className={`text-amber-400/60 transition-transform duration-300 ${gapExpanded ? "rotate-180" : ""}`}
+                    className={`text-amber-800 transition-transform duration-300 dark:text-amber-400/60 ${gapExpanded ? "rotate-180" : ""}`}
                   />
                 </div>
               </button>
@@ -209,12 +217,12 @@ export default function InterviewDetail() {
                     className="overflow-hidden"
                   >
                     <div className="pt-4">
-                      <p className="text-amber-400/80 text-sm leading-relaxed mb-4">
+                      <p className="mb-4 text-sm leading-relaxed text-amber-950/90 dark:text-amber-200/90">
                         {feedback.originalGapAnalysis.feedback}
                       </p>
                       {feedback.originalGapAnalysis.missingSkills?.length > 0 && (
                         <div>
-                          <span className="text-xs font-bold text-amber-400/60 uppercase tracking-wide block mb-2">
+                          <span className="mb-2 block text-xs font-bold uppercase tracking-wide text-amber-900 dark:text-amber-400/80">
                             Missing Skills Detected:
                           </span>
                           <div className="flex flex-wrap gap-2">
@@ -238,26 +246,26 @@ export default function InterviewDetail() {
 
           {/* Strengths & Weaknesses */}
           <div className="grid md:grid-cols-2 gap-6 mb-8">
-            <div className="glass-card p-6 rounded-xl">
-              <h3 className="font-bold text-emerald-400 mb-4 flex items-center gap-2">
+            <div className="glass-card rounded-xl p-6">
+              <h3 className="mb-4 flex items-center gap-2 font-bold text-emerald-800 dark:text-emerald-400">
                 <CheckCircle size={20} /> Key Strengths
               </h3>
               <ul className="space-y-3">
                 {feedback.strengths?.map((s: string, i: number) => (
-                  <li key={i} className="text-sm text-on-surface-variant flex items-start gap-2 opacity-70">
+                  <li key={i} className="flex items-start gap-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
                     <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                     {s}
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="glass-card p-6 rounded-xl">
-              <h3 className="font-bold text-rose-400 mb-4 flex items-center gap-2">
+            <div className="glass-card rounded-xl p-6">
+              <h3 className="mb-4 flex items-center gap-2 font-bold text-rose-800 dark:text-rose-400">
                 <XCircle size={20} /> Areas for Improvement
               </h3>
               <ul className="space-y-3">
                 {feedback.weaknesses?.map((s: string, i: number) => (
-                  <li key={i} className="text-sm text-on-surface-variant flex items-start gap-2 opacity-70">
+                  <li key={i} className="flex items-start gap-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
                     <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
                     {s}
                   </li>
@@ -268,11 +276,11 @@ export default function InterviewDetail() {
 
           {/* Recommendations */}
           {feedback.recommendations && (
-            <div className="glass-card p-6 rounded-xl border-l-4 border-primary">
-              <h3 className="font-bold text-primary mb-3 flex items-center gap-2">
+            <div className="glass-card rounded-xl border-l-4 border-cyan-600/60 p-6 dark:border-primary">
+              <h3 className="mb-3 flex items-center gap-2 font-bold text-cyan-800 dark:text-cyan-400">
                 <Lightbulb size={20} /> Growth Plan & Recommendations
               </h3>
-              <p className="text-on-surface-variant text-sm leading-relaxed opacity-70">{feedback.recommendations}</p>
+              <p className="text-base leading-relaxed text-slate-700 dark:text-slate-300">{feedback.recommendations}</p>
             </div>
           )}
         </div>
@@ -280,7 +288,7 @@ export default function InterviewDetail() {
         {/* 4. SCORE BREAKDOWN */}
         {feedback.scores && (
           <div className="glass-card-raised p-8 rounded-2xl mb-8">
-            <h3 className="label-caps mb-6 flex items-center gap-2">
+            <h3 className="mb-6 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-cyan-800 dark:text-cyan-400/90">
               <Gauge size={16} /> Score Breakdown
             </h3>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -311,9 +319,11 @@ export default function InterviewDetail() {
                 return (
                   <div key={label}>
                     <div className="flex justify-between items-baseline mb-2">
-                      <span className="text-sm font-semibold text-on-surface-variant opacity-70">
+                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-400">
                         {label}
-                        {weight && <span className="text-[10px] opacity-50 ml-1">({weight})</span>}
+                        {weight && (
+                          <span className="ml-1 text-[10px] text-slate-500 dark:text-slate-500">({weight})</span>
+                        )}
                       </span>
                       <span className={`text-lg font-black ${getScoreTextColor(value)}`}>
                         {Math.round(value)}%
@@ -329,13 +339,14 @@ export default function InterviewDetail() {
                 );
               })}
             </div>
-            <p className="text-xs text-on-surface-variant mt-4 opacity-30">
+            <p className="mt-4 text-xs text-slate-600 dark:text-slate-500">
               Content Quality = Technical accuracy + Delivery quality | Combined = 60% Content + 40% Vocal
             </p>
           </div>
         )}
 
         {/* 5. VOCAL DELIVERY — Actionable metrics + honest framing */}
+<<<<<<< HEAD
         {feedback.voiceSummary && (() => {
           const voiceTurnsForScore = data.turns.filter(
             (t: any) => t.voiceAnalysis?.status === "completed" && typeof t.voiceAnalysis?.confidenceLevel === "number"
@@ -356,11 +367,16 @@ export default function InterviewDetail() {
           return (
           <div className="glass-card p-6 rounded-xl border-l-4 border-primary mb-8">
             <div className="flex flex-wrap justify-between items-start mb-5 gap-4">
+=======
+        {feedback.voiceSummary && (
+          <div className="glass-card mb-8 rounded-xl border-l-4 border-cyan-600/60 p-6 dark:border-primary">
+            <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+>>>>>>> b581ad9ad9622b6369b0b7c5faf6da2c619dde7d
               <div>
-                <h3 className="font-bold text-primary flex items-center gap-2 mb-1">
+                <h3 className="mb-1 flex items-center gap-2 font-bold text-cyan-800 dark:text-cyan-400">
                   <Mic size={20} /> Vocal Delivery
                 </h3>
-                <p className="text-xs text-on-surface-variant opacity-40">
+                <p className="text-xs text-slate-600 dark:text-slate-500">
                   How interviewers typically perceive your vocal patterns
                 </p>
               </div>
@@ -435,12 +451,11 @@ export default function InterviewDetail() {
               };
 
               const statusStyles: Record<string, { border: string; text: string; bg: string }> = {
-                "Helped Your Score":    { border: "border-emerald-500/50", text: "text-emerald-400", bg: "bg-emerald-500/10" },
-                "Held Back Your Score": { border: "border-amber-500/50",   text: "text-amber-400",   bg: "bg-amber-500/10" },
-                "Minimal Impact":       { border: "lp-border-sub",       text: "lp-muted",     bg: "lp-surface-lo" },
-                // WPM pace fallback labels
-                "Good":                 { border: "border-emerald-500/50", text: "text-emerald-400", bg: "bg-emerald-500/10" },
-                "Needs Improvement":    { border: "border-amber-500/50",   text: "text-amber-400",   bg: "bg-amber-500/10" },
+                "Helped Your Score": { border: "border-emerald-500/50", text: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-500/10" },
+                "Held Back Your Score": { border: "border-amber-500/50", text: "text-amber-800 dark:text-amber-400", bg: "bg-amber-500/10" },
+                "Minimal Impact": { border: "border-slate-300/80 dark:lp-border-sub", text: "text-slate-700 dark:lp-muted", bg: "bg-slate-100/80 dark:lp-surface-lo" },
+                "Good": { border: "border-emerald-500/50", text: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-500/10" },
+                "Needs Improvement": { border: "border-amber-500/50", text: "text-amber-800 dark:text-amber-400", bg: "bg-amber-500/10" },
               };
 
               return (
@@ -453,7 +468,9 @@ export default function InterviewDetail() {
                         <p className="text-xs lp-body leading-relaxed mb-1">{finalSummary.focus_note}</p>
                       )}
                       {finalSummary.best_trait && (
-                        <p className="text-xs text-violet-400/80 leading-relaxed font-medium">{finalSummary.best_trait}</p>
+                        <p className="text-xs font-medium leading-relaxed text-violet-900 dark:text-violet-300/90">
+                          {finalSummary.best_trait}
+                        </p>
                       )}
                       {finalSummary.reminder && (
                         <p className="text-[11px] lp-dim leading-relaxed mt-2 italic">{finalSummary.reminder}</p>
@@ -464,7 +481,9 @@ export default function InterviewDetail() {
                   {/* Category Overview — 4 boxes from ui_sync */}
                   {uiSync?.categories && (
                     <div>
-                      <span className="label-caps text-violet-400/70 mb-2 block">Category Overview</span>
+                      <span className="label-caps mb-2 block text-violet-900 dark:text-violet-400/80">
+                        Category Overview
+                      </span>
                       <div className="grid grid-cols-2 gap-3">
                         {Object.entries(uiSync.categories as Record<string, any>).map(([key, cat]: [string, any]) => {
                           const styles = statusStyles[cat.status] ?? statusStyles["Minimal Impact"];
@@ -499,7 +518,9 @@ export default function InterviewDetail() {
                   {/* Priority Improvements */}
                   {improvements.length > 0 && (
                     <div>
-                      <span className="label-caps text-rose-400/70 mb-2 block">Priority Improvements</span>
+                      <span className="label-caps mb-2 block text-rose-800 dark:text-rose-400/80">
+                        Priority Improvements
+                      </span>
                       <div className="space-y-2">
                         {improvements.map((item: any, i: number) => (
                           <motion.div
@@ -510,7 +531,7 @@ export default function InterviewDetail() {
                             className="glass-card p-3 rounded-xl border-l-4 border-rose-500/50"
                           >
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400/70">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-rose-800 dark:text-rose-400/70">
                                 {VOICE_FEATURE_LABELS[item.feature] || item.label}
                               </span>
                               {item.category && item.category !== "Other" && (
@@ -529,7 +550,9 @@ export default function InterviewDetail() {
                   {/* Strengths */}
                   {strengths.length > 0 && (
                     <div>
-                      <span className="label-caps text-emerald-400/70 mb-2 block">Your Strengths</span>
+                      <span className="label-caps mb-2 block text-emerald-800 dark:text-emerald-400/80">
+                        Your Strengths
+                      </span>
                       <div className="space-y-2">
                         {strengths.map((item: any, i: number) => (
                           <motion.div
@@ -540,7 +563,7 @@ export default function InterviewDetail() {
                             className="glass-card p-3 rounded-xl border-l-4 border-emerald-500/50"
                           >
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400/70">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400/70">
                                 {VOICE_FEATURE_LABELS[item.feature] || item.label}
                               </span>
                               {item.category && item.category !== "Other" && (
@@ -560,9 +583,12 @@ export default function InterviewDetail() {
             })()}
 
             {/* Honest framing note */}
-            <div className="bg-surface-container-low p-3 rounded-lg mb-4">
-              <p className="text-[11px] text-on-surface-variant opacity-45 leading-relaxed">
-                <span className="font-bold text-emerald-400/70">These insights are driven by your actual voice data</span> — the AI identified which vocal traits most influenced your score.
+            <div className="mb-4 rounded-lg bg-surface-container-low p-3">
+              <p className="text-[11px] leading-relaxed text-slate-700 dark:text-slate-400">
+                <span className="font-bold text-emerald-800 dark:text-emerald-400/90">
+                  These insights are driven by your actual voice data
+                </span>{" "}
+                — the AI identified which vocal traits most influenced your score.
                 The Perception Score also factors in natural voice characteristics that interviewers subconsciously react to but you cannot change — this is why the score may not fully reflect your improvement.
               </p>
             </div>
@@ -570,13 +596,13 @@ export default function InterviewDetail() {
             {/* Keep Gemini insights but filter out jargon-heavy ones */}
             {feedback.voiceSummary.allInsights?.length > 0 && (
               <details className="group">
-                <summary className="text-xs font-bold text-on-surface-variant uppercase tracking-wider cursor-pointer hover:text-on-surface transition select-none opacity-40 hover:opacity-70">
+                <summary className="cursor-pointer select-none text-xs font-bold uppercase tracking-wider text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200">
                   Detailed AI Observations
                 </summary>
-                <ul className="space-y-2 mt-3">
+                <ul className="mt-3 space-y-2">
                   {feedback.voiceSummary.allInsights.map((insight: string, i: number) => (
-                    <li key={i} className="text-sm text-on-surface-variant flex items-start gap-2 opacity-60">
-                      <MessageCircle size={14} className="mt-0.5 shrink-0 text-primary" />
+                    <li key={i} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
+                      <MessageCircle size={14} className="mt-0.5 shrink-0 text-cyan-700 dark:text-primary" />
                       {insight}
                     </li>
                   ))}
@@ -683,20 +709,20 @@ export default function InterviewDetail() {
           const uniqueImprovements = [...new Set(improvements)];
 
           return (
-            <div className="glass-card p-6 rounded-xl border-l-4 border-cyan-500 mb-8">
-              <div className="flex flex-wrap justify-between items-start mb-5 gap-4">
+            <div className="glass-card mb-8 rounded-xl border-l-4 border-cyan-600 p-6 dark:border-cyan-500">
+              <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <h3 className="font-bold text-cyan-400 flex items-center gap-2 mb-1">
+                  <h3 className="mb-1 flex items-center gap-2 font-bold text-cyan-800 dark:text-cyan-400">
                     <FileText size={20} /> Delivery Analysis
                   </h3>
-                  <p className="text-xs text-on-surface-variant opacity-40">
+                  <p className="text-xs text-slate-600 dark:text-slate-500">
                     How you communicated your answers — structure, clarity, and language patterns
                   </p>
                 </div>
                 {feedback.scores?.delivery != null && (
                   <div className="flex flex-col items-center gap-1">
                     <CircularProgress value={feedback.scores.delivery} size={88} />
-                    <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wide opacity-40">
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                       Delivery Score
                     </span>
                   </div>
@@ -705,33 +731,37 @@ export default function InterviewDetail() {
 
               {/* Metric cards row */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-                <div className="bg-surface-container-low p-3 rounded-lg text-center">
-                  <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Filler Words</span>
-                  <span className={`text-lg font-bold ${totalFillers <= 3 ? "text-emerald-400" : totalFillers <= 8 ? "text-amber-400" : "text-rose-400"}`}>
+                <div className="rounded-lg bg-surface-container-low p-3 text-center">
+                  <span className="mb-1 block text-xs text-slate-600 dark:text-slate-500">Filler Words</span>
+                  <span
+                    className={`text-lg font-bold ${totalFillers <= 3 ? "text-emerald-700 dark:text-emerald-400" : totalFillers <= 8 ? "text-amber-700 dark:text-amber-400" : "text-rose-700 dark:text-rose-400"}`}
+                  >
                     {totalFillers}
                   </span>
                 </div>
-                <div className="bg-surface-container-low p-3 rounded-lg text-center">
-                  <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Hedging Phrases</span>
-                  <span className={`text-lg font-bold ${totalHedging <= 2 ? "text-emerald-400" : totalHedging <= 5 ? "text-amber-400" : "text-rose-400"}`}>
+                <div className="rounded-lg bg-surface-container-low p-3 text-center">
+                  <span className="mb-1 block text-xs text-slate-600 dark:text-slate-500">Hedging Phrases</span>
+                  <span
+                    className={`text-lg font-bold ${totalHedging <= 2 ? "text-emerald-700 dark:text-emerald-400" : totalHedging <= 5 ? "text-amber-700 dark:text-amber-400" : "text-rose-700 dark:text-rose-400"}`}
+                  >
                     {totalHedging}
                   </span>
                 </div>
-                <div className="bg-surface-container-low p-3 rounded-lg text-center">
-                  <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Relevance</span>
+                <div className="rounded-lg bg-surface-container-low p-3 text-center">
+                  <span className="mb-1 block text-xs text-slate-600 dark:text-slate-500">Relevance</span>
                   <span className={`text-lg font-bold ${getScoreTextColor(avgRelevance)}`}>
                     {Math.round(avgRelevance)}%
                   </span>
-                  <span className="block text-[10px] text-on-surface-variant mt-1 opacity-30">
+                  <span className="mt-1 block text-[10px] text-slate-500 dark:text-slate-500">
                     How well answers addressed questions
                   </span>
                 </div>
-                <div className="bg-surface-container-low p-3 rounded-lg text-center">
-                  <span className="block text-xs text-on-surface-variant mb-1 opacity-40">Specificity</span>
+                <div className="rounded-lg bg-surface-container-low p-3 text-center">
+                  <span className="mb-1 block text-xs text-slate-600 dark:text-slate-500">Specificity</span>
                   <span className={`text-lg font-bold ${getScoreTextColor(avgSpecificity)}`}>
                     {Math.round(avgSpecificity)}%
                   </span>
-                  <span className="block text-[10px] text-on-surface-variant mt-1 opacity-30">
+                  <span className="mt-1 block text-[10px] text-slate-500 dark:text-slate-500">
                     Concrete examples vs vague statements
                   </span>
                 </div>
@@ -740,7 +770,7 @@ export default function InterviewDetail() {
               {/* Filler words breakdown */}
               {Object.keys(allFillers).length > 0 && (
                 <div className="mb-4 bg-surface-container-low p-4 rounded-lg">
-                  <span className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2 opacity-50">
+                  <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-400">
                     Filler Words Detected
                   </span>
                   <div className="flex flex-wrap gap-2">
@@ -751,16 +781,17 @@ export default function InterviewDetail() {
                           key={word}
                           className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
                             (count as number) >= 3
-                              ? "bg-rose-500/10 text-rose-400 border-rose-500/20"
-                              : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                              ? "border-rose-500/30 bg-rose-500/10 text-rose-900 dark:text-rose-400"
+                              : "border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-400"
                           }`}
                         >
                           &ldquo;{word}&rdquo; x{count as number}
                         </span>
                       ))}
                   </div>
-                  <p className="text-[11px] text-on-surface-variant mt-2 opacity-40">
-                    Try replacing fillers with a brief pause — silence sounds more confident than &ldquo;um&rdquo; or &ldquo;like&rdquo;.
+                  <p className="mt-2 text-[11px] text-slate-600 dark:text-slate-500">
+                    Try replacing fillers with a brief pause — silence sounds more confident than &ldquo;um&rdquo; or
+                    &ldquo;like&rdquo;.
                   </p>
                 </div>
               )}
@@ -768,21 +799,22 @@ export default function InterviewDetail() {
               {/* Hedging phrases breakdown */}
               {allHedging.length > 0 && (
                 <div className="mb-4 bg-surface-container-low p-4 rounded-lg">
-                  <span className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2 opacity-50">
+                  <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-400">
                     Hedging Phrases Detected
                   </span>
                   <div className="flex flex-wrap gap-2">
                     {allHedging.map((phrase, i) => (
                       <span
                         key={i}
-                        className="text-xs font-bold px-2.5 py-1 rounded-full border bg-amber-500/10 text-amber-400 border-amber-500/20"
+                        className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-950 dark:text-amber-400"
                       >
                         &ldquo;{phrase}&rdquo;
                       </span>
                     ))}
                   </div>
-                  <p className="text-[11px] text-on-surface-variant mt-2 opacity-40">
-                    Hedging weakens your statements. Instead of &ldquo;I think maybe we could...&rdquo;, say &ldquo;We should...&rdquo; — be direct and assertive.
+                  <p className="mt-2 text-[11px] text-slate-600 dark:text-slate-500">
+                    Hedging weakens your statements. Instead of &ldquo;I think maybe we could...&rdquo;, say
+                    &ldquo;We should...&rdquo; — be direct and assertive.
                   </p>
                 </div>
               )}
@@ -790,13 +822,13 @@ export default function InterviewDetail() {
               {/* Structure feedback per question */}
               {structureFeedbacks.length > 0 && (
                 <div className="mb-4 bg-surface-container-low p-4 rounded-lg">
-                  <span className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2 opacity-50">
+                  <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-400">
                     Answer Structure
                   </span>
                   <ul className="space-y-1.5">
                     {structureFeedbacks.map((sf, i) => (
-                      <li key={i} className="text-xs text-on-surface-variant flex items-start gap-2 opacity-65">
-                        <span className="shrink-0 text-cyan-400 font-bold">Q{i + 1}:</span>
+                      <li key={i} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300">
+                        <span className="shrink-0 font-bold text-cyan-800 dark:text-cyan-400">Q{i + 1}:</span>
                         {sf}
                       </li>
                     ))}
@@ -806,7 +838,7 @@ export default function InterviewDetail() {
 
               {/* Sentence restarts */}
               {totalRestarts > 0 && (
-                <div className="flex items-center gap-2 text-xs text-amber-400/70 mb-4">
+                <div className="mb-4 flex items-center gap-2 text-xs text-amber-900 dark:text-amber-400/80">
                   <AlertTriangle size={12} />
                   {totalRestarts} sentence restart{totalRestarts > 1 ? "s" : ""} detected — practice completing your thoughts before starting a new sentence.
                 </div>
@@ -815,13 +847,13 @@ export default function InterviewDetail() {
               {/* Top improvements */}
               {uniqueImprovements.length > 0 && (
                 <div className="bg-surface-container-low p-4 rounded-lg border-l-4 border-cyan-500/40">
-                  <span className="block text-xs font-bold text-cyan-400 uppercase tracking-wider mb-2 opacity-70">
+                  <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-cyan-800 dark:text-cyan-400">
                     How to Improve
                   </span>
                   <ul className="space-y-2">
                     {uniqueImprovements.map((tip, i) => (
-                      <li key={i} className="text-sm text-on-surface-variant flex items-start gap-2 opacity-70">
-                        <Lightbulb size={14} className="mt-0.5 shrink-0 text-cyan-400" />
+                      <li key={i} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
+                        <Lightbulb size={14} className="mt-0.5 shrink-0 text-cyan-700 dark:text-cyan-400" />
                         {tip}
                       </li>
                     ))}
@@ -833,9 +865,9 @@ export default function InterviewDetail() {
         })()}
 
         {/* 7. TRANSCRIPT */}
-        <div className="flex items-center gap-2 mb-6">
-          <h2 className="text-2xl font-bold text-on-surface opacity-90">Transcript</h2>
-          <span className="glass-card text-on-surface-variant text-xs font-bold px-2 py-1 rounded-full opacity-70">
+        <div className="mb-6 flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Transcript</h2>
+          <span className="glass-card rounded-full px-2 py-1 text-xs font-bold text-slate-700 dark:text-slate-400">
             {data.turns.length} Questions
           </span>
         </div>
@@ -851,10 +883,10 @@ export default function InterviewDetail() {
             >
               {/* Metadata Header */}
               <div className="flex flex-wrap gap-2 mb-4">
-                <span className="bg-surface-container text-on-surface-variant text-xs font-bold px-2 py-1 rounded uppercase tracking-wide opacity-60">
+                <span className="rounded bg-surface-container px-2 py-1 text-xs font-bold uppercase tracking-wide text-slate-700 dark:text-slate-400">
                   Q{i + 1}
                 </span>
-                <span className="flex items-center bg-cyan-500/10 text-cyan-400 text-xs font-bold px-2 py-1 rounded border border-cyan-500/20">
+                <span className="flex items-center rounded border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-xs font-bold text-cyan-900 dark:text-cyan-400">
                   <Tag size={12} className="mr-1" /> {turn.topic || "General"}
                 </span>
                 <span
@@ -878,14 +910,7 @@ export default function InterviewDetail() {
                   </span>
                 )}
                 {turn.answerMode === "chat" && (
-                  <span
-                    className="flex items-center text-xs font-bold px-2 py-1 rounded border"
-                    style={{
-                      background: "var(--md-sys-color-surface-container)",
-                      color: "var(--md-sys-color-on-surface-variant)",
-                      borderColor: "var(--md-sys-color-outline-variant)",
-                    }}
-                  >
+                  <span className="flex items-center rounded border border-slate-300 bg-slate-100 px-2 py-1 text-xs font-bold text-slate-800 dark:border-outline-variant dark:bg-surface-container dark:text-slate-300">
                     <MessageSquare size={12} className="mr-1" />
                     Chat Answer
                   </span>
@@ -895,10 +920,10 @@ export default function InterviewDetail() {
                   <span
                     className={`flex items-center text-xs font-bold px-2 py-1 rounded border ${
                       turn.voiceAnalysis.speakingFluency >= 0.8
-                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400"
                         : turn.voiceAnalysis.speakingFluency >= 0.5
-                        ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                        : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                        ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400"
+                        : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"
                     }`}
                   >
                     Fluency {(turn.voiceAnalysis.speakingFluency * 100).toFixed(0)}%
@@ -909,10 +934,10 @@ export default function InterviewDetail() {
                   <span
                     className={`flex items-center text-xs font-bold px-2 py-1 rounded border ${
                       turn.voiceAnalysis.pauseRatio <= 0.2
-                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400"
                         : turn.voiceAnalysis.pauseRatio <= 0.4
-                        ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                        : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                        ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400"
+                        : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"
                     }`}
                   >
                     Pauses {(turn.voiceAnalysis.pauseRatio * 100).toFixed(0)}%
@@ -923,10 +948,10 @@ export default function InterviewDetail() {
                   <span
                     className={`flex items-center text-xs font-bold px-2 py-1 rounded border ${
                       turn.deliveryFeedback.relevanceScore >= 70
-                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400"
                         : turn.deliveryFeedback.relevanceScore >= 50
-                        ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                        : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                        ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400"
+                        : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"
                     }`}
                   >
                     Relevance {Math.round(turn.deliveryFeedback.relevanceScore)}%
@@ -935,17 +960,17 @@ export default function InterviewDetail() {
               </div>
 
               {/* Question */}
-              <p className="font-semibold text-on-surface mb-4 text-lg opacity-85">{turn.question}</p>
+              <p className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">{turn.question}</p>
 
               {/* Answer */}
-              <div className="bg-surface-container-low p-4 rounded-lg text-on-surface-variant mb-4 border-l-4 border-outline-variant italic opacity-70">
+              <div className="mb-4 rounded-lg border-l-4 border-slate-300/90 bg-surface-container-low p-4 italic text-slate-700 dark:border-outline-variant dark:text-slate-300">
                 &quot;{turn.answer}&quot;
               </div>
 
               {/* Feedback Footer */}
-              <div className="mt-4 pt-4 border-t border-outline-variant flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-                <div className="text-sm text-on-surface-variant opacity-70">
-                  <span className="font-bold text-primary mr-2">Feedback:</span>
+              <div className="mt-4 flex flex-col items-start justify-between gap-4 border-t border-outline-variant pt-4 md:flex-row md:items-center">
+                <div className="text-sm text-slate-700 dark:text-slate-300">
+                  <span className="mr-2 font-bold text-cyan-800 dark:text-primary">Feedback:</span>
                   {turn.feedback}
                 </div>
                 <div
@@ -961,7 +986,7 @@ export default function InterviewDetail() {
               {/* Audio Playback */}
               {turn.audioUrl && (
                 <div className="mt-4 pt-4 border-t border-outline-variant">
-                  <span className="block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2 opacity-40">
+                  <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                     Your Recording
                   </span>
                   <audio
@@ -977,13 +1002,13 @@ export default function InterviewDetail() {
               {turn.deliveryFeedback && (
                 <div className="mt-4 pt-4 border-t border-outline-variant space-y-2">
                   {turn.deliveryFeedback.topStrength && (
-                    <div className="flex items-start gap-2 text-sm text-emerald-400/80">
+                    <div className="flex items-start gap-2 text-sm text-emerald-800 dark:text-emerald-400/90">
                       <CheckCircle size={14} className="mt-0.5 shrink-0" />
                       <span>{turn.deliveryFeedback.topStrength}</span>
                     </div>
                   )}
                   {turn.deliveryFeedback.topImprovement && (
-                    <div className="flex items-start gap-2 text-sm text-amber-400/80">
+                    <div className="flex items-start gap-2 text-sm text-amber-900 dark:text-amber-400/90">
                       <AlertTriangle size={14} className="mt-0.5 shrink-0" />
                       <span>{turn.deliveryFeedback.topImprovement}</span>
                     </div>
@@ -991,12 +1016,12 @@ export default function InterviewDetail() {
                   {(turn.deliveryFeedback.fillerCount > 0 || turn.deliveryFeedback.hedgingCount > 0) && (
                     <div className="flex flex-wrap gap-2 mt-1">
                       {turn.deliveryFeedback.fillerCount > 0 && (
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${turn.deliveryFeedback.fillerCount <= 2 ? "bg-amber-500/10 text-amber-400 border-amber-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20"}`}>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${turn.deliveryFeedback.fillerCount <= 2 ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400" : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"}`}>
                           {turn.deliveryFeedback.fillerCount} filler{turn.deliveryFeedback.fillerCount > 1 ? "s" : ""}
                         </span>
                       )}
                       {turn.deliveryFeedback.hedgingCount > 0 && (
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${turn.deliveryFeedback.hedgingCount <= 2 ? "bg-amber-500/10 text-amber-400 border-amber-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20"}`}>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${turn.deliveryFeedback.hedgingCount <= 2 ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400" : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"}`}>
                           {turn.deliveryFeedback.hedgingCount} hedge{turn.deliveryFeedback.hedgingCount > 1 ? "s" : ""}
                         </span>
                       )}
@@ -1072,9 +1097,9 @@ function CircularProgress({
 // --- HELPER FUNCTIONS ---
 
 function getScoreTextColor(score: number): string {
-  if (score >= 80) return "text-emerald-400";
-  if (score >= 50) return "text-amber-400";
-  return "text-rose-400";
+  if (score >= 80) return "text-emerald-700 dark:text-emerald-400";
+  if (score >= 50) return "text-amber-700 dark:text-amber-400";
+  return "text-rose-700 dark:text-rose-400";
 }
 
 function getScoreGlow(score: number): string {
@@ -1085,9 +1110,9 @@ function getScoreGlow(score: number): string {
 
 function getScoreColor(score: number, bg = false) {
   if (bg) {
-    if (score >= 80) return "bg-emerald-500/15 text-emerald-400";
-    if (score >= 50) return "bg-amber-500/15 text-amber-400";
-    return "bg-rose-500/15 text-rose-400";
+    if (score >= 80) return "bg-emerald-500/15 text-emerald-800 dark:text-emerald-400";
+    if (score >= 50) return "bg-amber-500/15 text-amber-800 dark:text-amber-400";
+    return "bg-rose-500/15 text-rose-800 dark:text-rose-400";
   }
   return getScoreTextColor(score);
 }
@@ -1113,15 +1138,15 @@ function getScoreBarStyle(score: number): React.CSSProperties {
 
 function getDifficultyColor(difficulty: string | null | undefined = "Medium"): string {
   const d = (difficulty || "Medium").toLowerCase();
-  if (d === "hard") return "bg-rose-500/10 text-rose-400 border-rose-500/20";
-  if (d === "medium") return "bg-cyan-500/10 text-cyan-400 border-cyan-500/20";
-  return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+  if (d === "hard") return "border-rose-500/30 bg-rose-500/10 text-rose-800 dark:text-rose-400";
+  if (d === "medium") return "border-cyan-500/30 bg-cyan-500/10 text-cyan-900 dark:text-cyan-400";
+  return "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400";
 }
 
 function getConfidenceBadgeStyle(label: string | null | undefined): string {
   const l = (label || "").toLowerCase();
-  if (l.includes("high")) return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-  if (l.includes("moderate") || l.includes("medium")) return "bg-amber-500/10 text-amber-400 border-amber-500/20";
-  if (l.includes("low") || l.includes("need")) return "bg-rose-500/10 text-rose-400 border-rose-500/20";
-  return "bg-surface-container text-on-surface-variant border-outline-variant opacity-60";
+  if (l.includes("high")) return "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400";
+  if (l.includes("moderate") || l.includes("medium")) return "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-400";
+  if (l.includes("low") || l.includes("need")) return "border-rose-500/30 bg-rose-500/10 text-rose-800 dark:text-rose-400";
+  return "border-slate-300/80 bg-slate-100/80 text-slate-700 dark:border-outline-variant dark:bg-surface-container dark:text-slate-400";
 }
