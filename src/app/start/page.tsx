@@ -37,6 +37,20 @@ const STACKS = [
 const DIFFICULTIES = ["Easy", "Medium", "Hard"] as const;
 const QUESTION_COUNTS = [5, 8, 10] as const;
 
+/** Setup row pills — selected glow vs faded idle (light + dark) */
+const START_PILL_SELECTED =
+  "cursor-pointer flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 border-2 border-violet-500/65 bg-white text-slate-900 shadow-[0_4px_22px_-6px_rgba(124,58,237,0.4)] ring-1 ring-violet-400/30 dark:border-violet-400/55 dark:bg-gradient-to-br dark:from-violet-950 dark:to-slate-950 dark:text-violet-50 dark:shadow-[0_0_36px_-8px_rgba(167,139,250,0.48)] dark:ring-violet-400/35";
+
+const START_PILL_IDLE =
+  "cursor-pointer flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 border border-slate-300/45 bg-white/55 text-slate-600 opacity-[0.82] hover:opacity-100 hover:border-slate-400/55 hover:bg-white/90 hover:shadow-sm dark:border-white/[0.09] dark:bg-white/[0.045] dark:text-slate-400 dark:opacity-[0.62] dark:hover:opacity-[0.94] dark:hover:border-white/[0.16] dark:hover:bg-white/[0.09]";
+
+/** Interview mode grid — column layout */
+const START_MODE_SELECTED =
+  "cursor-pointer relative flex flex-col items-center gap-1.5 rounded-xl py-3 px-2 text-sm font-semibold transition-all duration-200 border-2 border-violet-500/65 bg-white text-slate-900 shadow-[0_4px_22px_-6px_rgba(124,58,237,0.4)] ring-1 ring-violet-400/30 dark:border-violet-400/55 dark:bg-gradient-to-br dark:from-violet-950 dark:to-slate-950 dark:text-violet-50 dark:shadow-[0_0_36px_-8px_rgba(167,139,250,0.48)] dark:ring-violet-400/35";
+
+const START_MODE_IDLE =
+  "cursor-pointer relative flex flex-col items-center gap-1.5 rounded-xl py-3 px-2 text-sm font-semibold transition-all duration-200 border border-slate-300/45 bg-white/55 text-slate-600 opacity-[0.82] hover:opacity-100 hover:border-slate-400/55 hover:bg-white/90 hover:shadow-sm dark:border-white/[0.09] dark:bg-white/[0.045] dark:text-slate-400 dark:opacity-[0.62] dark:hover:opacity-[0.94] dark:hover:border-white/[0.16] dark:hover:bg-white/[0.09]";
+
 const JOB_SPECIFIC_LOADING_STEPS = [
   { label: "Parsing your resume...",             Icon: FileText      },
   { label: "Identifying skills & experience...", Icon: Sparkles      },
@@ -92,7 +106,7 @@ function CustomQuestionCountField({
           aria-label="Decrease question count"
           onClick={() => setN(current - 1)}
           disabled={current <= 1}
-          className="flex h-9 w-9 shrink-0 items-center justify-center text-slate-600 transition-colors hover:bg-slate-200/90 disabled:cursor-not-allowed disabled:opacity-35 dark:text-slate-200 dark:hover:bg-white/10"
+          className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center text-slate-600 transition-colors hover:bg-slate-200/90 disabled:cursor-not-allowed disabled:opacity-35 dark:text-slate-200 dark:hover:bg-white/10"
         >
           <Minus className="h-4 w-4" strokeWidth={2.5} />
         </button>
@@ -117,7 +131,7 @@ function CustomQuestionCountField({
           aria-label="Increase question count"
           onClick={() => setN(current + 1)}
           disabled={current >= 10}
-          className="flex h-9 w-9 shrink-0 items-center justify-center text-slate-600 transition-colors hover:bg-slate-200/90 disabled:cursor-not-allowed disabled:opacity-35 dark:text-slate-200 dark:hover:bg-white/10"
+          className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center text-slate-600 transition-colors hover:bg-slate-200/90 disabled:cursor-not-allowed disabled:opacity-35 dark:text-slate-200 dark:hover:bg-white/10"
         >
           <Plus className="h-4 w-4" strokeWidth={2.5} />
         </button>
@@ -776,11 +790,7 @@ export default function StartPage() {
                                     key={d}
                                     type="button"
                                     onClick={() => setConfig({ ...config, difficulty: d })}
-                                    className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
-                                      config.difficulty === d
-                                        ? "glass-card border border-violet-500/40 lp-hi shadow-[0_0_20px_rgba(124,58,237,0.15)]"
-                                        : "glass-card border border-transparent dark:border-white/10 lp-muted hover:lp-body"
-                                    }`}
+                                    className={config.difficulty === d ? START_PILL_SELECTED : START_PILL_IDLE}
                                   >
                                     {d}
                                   </button>
@@ -796,11 +806,7 @@ export default function StartPage() {
                                     key={n}
                                     type="button"
                                     onClick={() => setConfig({ ...config, questionCount: n })}
-                                    className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
-                                      config.questionCount === n
-                                        ? "glass-card border border-violet-500/40 lp-hi shadow-[0_0_20px_rgba(124,58,237,0.15)]"
-                                        : "glass-card border border-transparent dark:border-white/10 lp-muted hover:lp-body"
-                                    }`}
+                                    className={config.questionCount === n ? START_PILL_SELECTED : START_PILL_IDLE}
                                   >
                                     {n}
                                   </button>
@@ -825,11 +831,7 @@ export default function StartPage() {
                                     key={d}
                                     type="button"
                                     onClick={() => setConfig({ ...config, difficulty: d })}
-                                    className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
-                                      config.difficulty === d
-                                        ? "glass-card border border-violet-500/40 lp-hi shadow-[0_0_20px_rgba(124,58,237,0.15)]"
-                                        : "glass-card border border-transparent dark:border-white/10 lp-muted hover:lp-body"
-                                    }`}
+                                    className={config.difficulty === d ? START_PILL_SELECTED : START_PILL_IDLE}
                                   >
                                     {d}
                                   </button>
@@ -845,11 +847,7 @@ export default function StartPage() {
                                     key={n}
                                     type="button"
                                     onClick={() => setConfig({ ...config, questionCount: n })}
-                                    className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
-                                      config.questionCount === n
-                                        ? "glass-card border border-violet-500/40 lp-hi shadow-[0_0_20px_rgba(124,58,237,0.15)]"
-                                        : "glass-card border border-transparent dark:border-white/10 lp-muted hover:lp-body"
-                                    }`}
+                                    className={config.questionCount === n ? START_PILL_SELECTED : START_PILL_IDLE}
                                   >
                                     {n}
                                   </button>
@@ -872,11 +870,7 @@ export default function StartPage() {
                                 key={v}
                                 type="button"
                                 onClick={() => setInterviewerVoice(v)}
-                                className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
-                                  interviewerVoice === v
-                                    ? "glass-card border border-violet-500/40 lp-hi shadow-[0_0_20px_rgba(124,58,237,0.15)]"
-                                    : "glass-card border border-transparent dark:border-white/10 lp-muted hover:lp-body"
-                                }`}
+                                className={interviewerVoice === v ? START_PILL_SELECTED : START_PILL_IDLE}
                               >
                                 {v === "female" ? "Female" : "Male"}
                               </button>
@@ -899,22 +893,24 @@ export default function StartPage() {
                                 key={mode}
                                 type="button"
                                 onClick={() => setInterviewMode(mode)}
-                                className={`relative flex flex-col items-center gap-1.5 rounded-xl py-3 px-2 text-sm font-semibold transition-all duration-200 ${
-                                  interviewMode === mode
-                                    ? "glass-card border border-violet-500/40 lp-hi shadow-[0_0_20px_rgba(124,58,237,0.15)]"
-                                    : "glass-card border border-transparent dark:border-white/10 lp-muted hover:lp-body"
-                                }`}
+                                className={interviewMode === mode ? START_MODE_SELECTED : START_MODE_IDLE}
                               >
                                 <Icon
                                   size={18}
                                   className={
                                     interviewMode === mode
-                                      ? "text-violet-400"
-                                      : "text-slate-600 dark:text-slate-300"
+                                      ? "text-violet-600 dark:text-violet-300"
+                                      : "text-slate-500 dark:text-slate-400"
                                   }
                                 />
                                 <span>{label}</span>
-                                <span className="text-[10px] font-normal text-slate-600 dark:text-slate-400">
+                                <span
+                                  className={`text-[10px] font-normal ${
+                                    interviewMode === mode
+                                      ? "text-violet-600 dark:text-violet-300"
+                                      : "text-slate-500 dark:text-slate-400"
+                                  }`}
+                                >
                                   {desc}
                                 </span>
                               </button>
@@ -935,7 +931,7 @@ export default function StartPage() {
                               <button
                                 type="button"
                                 onClick={requestDevicePermissions}
-                                className="w-full rounded-xl py-2.5 text-sm font-semibold glass-card border border-cyan-500/30 text-cyan-400 hover:border-cyan-500/50 transition-all duration-200"
+                                className="w-full cursor-pointer rounded-xl py-2.5 text-sm font-semibold glass-card border border-cyan-500/30 text-cyan-400 transition-all duration-200 hover:border-cyan-500/50"
                               >
                                 Grant Device Permissions
                               </button>
@@ -960,7 +956,7 @@ export default function StartPage() {
                                 <select
                                   value={selectedMicId ?? ""}
                                   onChange={(e) => setSelectedMicId(e.target.value || null)}
-                                  className="sm:flex-1 min-w-0 rounded-xl px-3 py-2.5 text-sm outline-none text-on-surface"
+                                  className="sm:flex-1 min-w-0 cursor-pointer rounded-xl px-3 py-2.5 text-sm outline-none text-on-surface"
                                   style={{
                                     background: "var(--md-sys-color-surface-container-low)",
                                     border: "1px solid var(--md-sys-color-outline-variant)",
@@ -977,7 +973,7 @@ export default function StartPage() {
                                 <button
                                   type="button"
                                   onClick={micTestActive ? () => stopMicTest(true) : startMicTest}
-                                  className={`shrink-0 sm:self-auto rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 ${
+                                  className={`shrink-0 cursor-pointer sm:self-auto rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 ${
                                     micTestActive
                                       ? "glass-card border-2 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 bg-emerald-500/[0.12]"
                                       : micTestCompleted
@@ -1346,7 +1342,7 @@ export default function StartPage() {
                         stopCameraCheck();
                         setStage("analysis");
                       }}
-                      className="w-full text-center text-sm lp-muted transition-colors hover:lp-body"
+                      className="w-full cursor-pointer text-center text-sm lp-muted transition-colors hover:lp-body"
                     >
                       ← Back
                     </button>

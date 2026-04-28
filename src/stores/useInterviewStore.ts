@@ -79,7 +79,8 @@ export const useInterviewStore = create<InterviewState>()(
       selectedCameraId: null,
       setSelectedCameraId: (id) => set({ selectedCameraId: id }),
 
-      setSessionId: (id) => set({ sessionId: id }),
+      // New session → current-question index must start at 1 (not a stale persisted value).
+      setSessionId: (id) => set({ sessionId: id, questionCount: 1 }),
       setQuestion: (text) => set({ currentQuestion: text }),
       setQuestionCount: (count) => set({ questionCount: count }),
       setLoading: (status) => set({ loading: status }),

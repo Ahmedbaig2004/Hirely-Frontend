@@ -31,6 +31,13 @@ const OPTIONS: SidebarOption[] = [
   },
 ];
 
+/** Matches setup pills on /start — selected glow vs faded idle (light + dark). */
+const SIDEBAR_SELECTED =
+  "cursor-pointer rounded-2xl border-2 border-violet-500/65 bg-white p-4 text-left shadow-[0_6px_26px_-10px_rgba(124,58,237,0.42)] ring-1 ring-violet-400/30 backdrop-blur-md transition-all duration-200 dark:border-violet-400/55 dark:bg-gradient-to-br dark:from-violet-950 dark:to-slate-950 dark:shadow-[0_0_36px_-8px_rgba(167,139,250,0.48)] dark:ring-violet-400/35";
+
+const SIDEBAR_IDLE =
+  "cursor-pointer rounded-2xl border border-slate-300/45 bg-white/55 p-4 text-left opacity-[0.82] backdrop-blur-md transition-all duration-200 hover:border-slate-400/55 hover:bg-white/90 hover:opacity-100 hover:shadow-sm dark:border-white/[0.09] dark:bg-white/[0.045] dark:opacity-[0.62] dark:hover:border-white/[0.16] dark:hover:bg-white/[0.09] dark:hover:opacity-[0.94]";
+
 interface Props {
   selected: InterviewType;
   onSelect: (type: InterviewType) => void;
@@ -49,28 +56,32 @@ export function InterviewTypeSidebar({ selected, onSelect }: Props) {
             key={type}
             type="button"
             onClick={() => onSelect(type)}
-            className={`rounded-2xl border p-4 text-left backdrop-blur-md transition-all duration-200 ${
-              isActive
-                ? "border-cyan-600/35 bg-gradient-to-br from-cyan-500/18 to-violet-600/10 shadow-[0_8px_28px_-8px_rgba(14,116,144,0.2)] dark:border-cyan-400/35 dark:from-cyan-500/[0.12] dark:to-violet-600/[0.08] dark:shadow-[0_0_28px_-6px_rgba(34,211,238,0.25)]"
-                : "border-slate-300/70 bg-white/55 hover:border-cyan-600/30 hover:bg-white/75 dark:border-white/[0.06] dark:bg-white/[0.03] dark:hover:border-cyan-400/20 dark:hover:bg-white/[0.05]"
-            }`}
+            className={isActive ? SIDEBAR_SELECTED : SIDEBAR_IDLE}
           >
-            <div className="flex items-center gap-3 mb-1">
+            <div className="mb-1 flex items-center gap-3">
               <Icon
                 size={16}
                 className={
-                  isActive ? "text-cyan-600 dark:text-cyan-300" : "text-slate-600 dark:text-slate-300"
+                  isActive
+                    ? "text-violet-600 dark:text-violet-300"
+                    : "text-slate-500 dark:text-slate-400"
                 }
               />
               <span
                 className={`text-sm font-semibold ${
-                  isActive ? "text-slate-900 dark:text-slate-50" : "text-slate-800 dark:text-slate-200"
+                  isActive ? "text-slate-900 dark:text-violet-50" : "text-slate-700 dark:text-slate-300"
                 }`}
               >
                 {label}
               </span>
             </div>
-            <p className="pl-7 text-xs leading-snug text-slate-600 dark:text-slate-400">
+            <p
+              className={`pl-7 text-xs leading-snug ${
+                isActive
+                  ? "text-slate-600 dark:text-violet-200/85"
+                  : "text-slate-500 dark:text-slate-400"
+              }`}
+            >
               {description}
             </p>
           </button>

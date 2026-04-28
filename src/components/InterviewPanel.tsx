@@ -749,6 +749,11 @@ export default function InterviewPanel() {
   // NORMAL INTERVIEW RENDER
   // ─────────────────────────────────────────────────────────────
   const totalPlanned = config?.questionCount;
+  /** 1-based index; clamp so UI never shows e.g. "3 / 1" if storage was inconsistent. */
+  const displayQuestionNum =
+    totalPlanned != null && totalPlanned > 0
+      ? Math.min(Math.max(1, questionCount), totalPlanned)
+      : Math.max(1, questionCount);
 
   return (
     <div className="relative z-10 flex min-h-[calc(100dvh-var(--app-report-page-pt))] flex-col items-center">
@@ -793,7 +798,7 @@ export default function InterviewPanel() {
                 Question
               </span>
               <span className="text-sm font-bold tabular-nums text-slate-900 dark:text-slate-100">
-                {questionCount}
+                {displayQuestionNum}
                 {totalPlanned != null && (
                   <span className="text-slate-500 font-semibold">
                     {" "}
@@ -811,7 +816,7 @@ export default function InterviewPanel() {
                 <div
                   className="h-full rounded-full transition-[width] duration-500 ease-out"
                   style={{
-                    width: `${Math.min(100, (questionCount / totalPlanned) * 100)}%`,
+                    width: `${Math.min(100, (displayQuestionNum / totalPlanned) * 100)}%`,
                     background:
                       "linear-gradient(90deg, var(--md-sys-color-primary), var(--md-sys-color-tertiary))",
                   }}
