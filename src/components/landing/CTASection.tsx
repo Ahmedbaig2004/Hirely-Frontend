@@ -4,6 +4,21 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useTheme } from "next-themes";
+import {
+  BrainCircuit,
+  CheckCircle2,
+  Clock,
+  Home,
+  Info,
+  LayoutList,
+  Lightbulb,
+  Loader2,
+  Mic,
+  Settings,
+  Sparkles,
+  Users,
+  Video,
+} from "lucide-react";
 import { LpGradientText } from "./LpGradientText";
 
 const APP_MOCKUP_PALETTE = {
@@ -12,69 +27,269 @@ const APP_MOCKUP_PALETTE = {
     shellBorder: "1px solid rgba(244,114,182,0.22)",
     shellShadow:
       "0 -20px 80px rgba(244,114,182,0.12), 0 -40px 120px rgba(251,146,60,0.08), inset 0 1px 0 rgba(255,255,255,0.06)",
-    sidebarBg: "rgba(255,255,255,0.02)",
-    sidebarBorder: "1px solid rgba(255,255,255,0.04)",
+    sidebarBg: "rgba(255,255,255,0.03)",
+    sidebarBorder: "1px solid rgba(255,255,255,0.06)",
     icon: "#94a3b8",
-    panelBg: "rgba(255,255,255,0.02)",
-    panelBorder: "1px solid rgba(255,255,255,0.04)",
+    iconActive: "#e879f9",
+    panelBg: "rgba(248,252,255,0.04)",
+    panelBorder: "1px solid rgba(255,255,255,0.06)",
     muted: "#94a3b8",
-    title: "#e2e8f0",
-    badgeBg: "rgba(52,211,153,0.1)",
+    title: "#f1f5f9",
+    kicker: "#64748b",
+    badgeBg: "rgba(52,211,153,0.12)",
     badgeFg: "#34d399",
-    tabRule: "1px solid rgba(255,255,255,0.04)",
-    tabActive: "#e879f9",
-    tabInactive: "#64748b",
-    searchBg: "rgba(255,255,255,0.03)",
-    searchBorder: "1px solid rgba(255,255,255,0.05)",
-    searchMuted: "#64748b",
-    entryName: "#e2e8f0",
-    entryTime: "#64748b",
-    entryBody: "#94a3b8",
-    vidNameBg: "rgba(17,24,39,0.6)",
-    vidNameFg: "#fff",
-    controlBg: "rgba(17,24,39,0.85)",
-    controlMuted: "#94a3b8",
-    controlTime: "#64748b",
-    waveEmpty: "rgba(255,255,255,0.06)",
-    playIcon: "#fff",
+    pillDoneBg: "rgba(16,185,129,0.14)",
+    pillDoneBd: "1px solid rgba(16,185,129,0.35)",
+    pillLiveBg: "rgba(255,255,255,0.06)",
+    pillLiveBd: "1px solid rgba(167,139,250,0.35)",
+    tipBg: "rgba(255,255,255,0.06)",
+    tipBd: "1px solid rgba(167,139,250,0.25)",
+    stageTint: "rgba(15,23,42,0.35)",
+    gridLine: "rgba(148,163,184,0.14)",
+    blobA: "rgba(56,189,248,0.35)",
+    blobB: "rgba(253,224,71,0.28)",
+    blobC: "rgba(167,139,250,0.32)",
+    questionInk: "#e2e8f0",
+    listenCardBg: "rgba(255,255,255,0.94)",
+    listenCardBd: "1px solid rgba(226,232,240,0.85)",
+    listenMuted: "#64748b",
+    micGlow: "rgba(45,212,191,0.35)",
+    waveBar: "#14b8a6",
+    doneBtn: "linear-gradient(135deg, #059669, #10b981)",
+    footerBg: "rgba(15,23,42,0.92)",
+    footerMuted: "#94a3b8",
+    ringTrack: "rgba(148,163,184,0.2)",
+    accentPurple: "#a855f7",
+    accentTeal: "#2dd4bf",
+    dashedLine: "rgba(148,163,184,0.35)",
   },
   light: {
     shellBg: "rgba(255,255,255,0.97)",
     shellBorder: "1px solid rgba(219,39,119,0.28)",
     shellShadow:
       "0 28px 72px rgba(80, 60, 120, 0.14), 0 12px 32px rgba(251, 146, 60, 0.1), inset 0 1px 0 rgba(255,255,255,1)",
-    sidebarBg: "rgba(244,249,255,0.95)",
-    sidebarBorder: "1px solid rgba(57,72,103,0.12)",
-    icon: "#5c6b82",
-    panelBg: "rgba(255,255,255,0.98)",
+    sidebarBg: "rgba(244,249,255,0.98)",
+    sidebarBorder: "1px solid rgba(57,72,103,0.1)",
+    icon: "#64748b",
+    iconActive: "#7c3aed",
+    panelBg: "rgba(255,255,255,0.92)",
     panelBorder: "1px solid rgba(57,72,103,0.1)",
-    muted: "#5c6b82",
-    title: "#1b262c",
-    badgeBg: "rgba(16,185,129,0.12)",
+    muted: "#64748b",
+    title: "#0f172a",
+    kicker: "#64748b",
+    badgeBg: "rgba(16,185,129,0.14)",
     badgeFg: "#047857",
-    tabRule: "1px solid rgba(57,72,103,0.12)",
-    tabActive: "#a21caf",
-    tabInactive: "#64748b",
-    searchBg: "rgba(248,251,255,0.98)",
-    searchBorder: "1px solid rgba(57,72,103,0.14)",
-    searchMuted: "#64748b",
-    entryName: "#1b262c",
-    entryTime: "#64748b",
-    entryBody: "#475569",
-    vidNameBg: "rgba(255,255,255,0.92)",
-    vidNameFg: "#1b262c",
-    controlBg: "rgba(241,245,249,0.98)",
-    controlMuted: "#5c6b82",
-    controlTime: "#64748b",
-    waveEmpty: "rgba(27,38,44,0.08)",
-    playIcon: "#fff",
+    pillDoneBg: "rgba(236,253,245,0.95)",
+    pillDoneBd: "1px solid rgba(16,185,129,0.35)",
+    pillLiveBg: "rgba(255,255,255,0.98)",
+    pillLiveBd: "1px solid rgba(167,139,250,0.35)",
+    tipBg: "rgba(248,250,252,0.95)",
+    tipBd: "1px solid rgba(226,232,240,0.95)",
+    stageTint: "rgba(241,245,249,0.5)",
+    gridLine: "rgba(57,72,103,0.08)",
+    blobA: "rgba(125,211,252,0.55)",
+    blobB: "rgba(253,224,71,0.4)",
+    blobC: "rgba(196,181,253,0.5)",
+    questionInk: "#0f172a",
+    listenCardBg: "rgba(255,255,255,0.98)",
+    listenCardBd: "1px solid rgba(226,232,240,0.95)",
+    listenMuted: "#64748b",
+    micGlow: "rgba(45,212,191,0.25)",
+    waveBar: "#0d9488",
+    doneBtn: "linear-gradient(135deg, #059669, #14b8a6)",
+    footerBg: "rgba(248,250,252,0.98)",
+    footerMuted: "#64748b",
+    ringTrack: "rgba(148,163,184,0.25)",
+    accentPurple: "#7c3aed",
+    accentTeal: "#14b8a6",
+    dashedLine: "rgba(71,85,105,0.28)",
   },
 } as const;
 
-/* ─── App Mockup (warm accent — distinct from lp blue canvas) ─── */
+type MockupPalette =
+  | (typeof APP_MOCKUP_PALETTE)["dark"]
+  | (typeof APP_MOCKUP_PALETTE)["light"];
+
+function PipelineRing({
+  pct,
+  track,
+  from,
+  to,
+}: {
+  pct: number;
+  track: string;
+  from: string;
+  to: string;
+}) {
+  const r = 26;
+  const cx = 32;
+  const cy = 32;
+  const circumference = 2 * Math.PI * r;
+  const offset = circumference - (pct / 100) * circumference;
+  return (
+    <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden>
+      <defs>
+        <linearGradient id="mock-ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={from} />
+          <stop offset="100%" stopColor={to} />
+        </linearGradient>
+      </defs>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={track} strokeWidth="5" />
+      <motion.circle
+        cx={cx}
+        cy={cy}
+        r={r}
+        fill="none"
+        stroke="url(#mock-ring-grad)"
+        strokeWidth="5"
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        initial={{ strokeDashoffset: circumference }}
+        animate={{ strokeDashoffset: offset }}
+        transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+        transform={`rotate(-90 ${cx} ${cy})`}
+      />
+    </svg>
+  );
+}
+
+function StageBackdrop({ p }: { p: MockupPalette }) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        borderRadius: "0 12px 0 0",
+        overflow: "hidden",
+        pointerEvents: "none",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: p.stageTint,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          opacity: 0.9,
+          backgroundImage: `linear-gradient(${p.gridLine} 1px, transparent 1px), linear-gradient(90deg, ${p.gridLine} 1px, transparent 1px)`,
+          backgroundSize: "20px 20px",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: "-12%",
+          left: "-8%",
+          width: "58%",
+          height: "58%",
+          borderRadius: "50%",
+          background: `radial-gradient(circle, ${p.blobA} 0%, transparent 72%)`,
+          filter: "blur(2px)",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          bottom: "-6%",
+          left: "12%",
+          width: "46%",
+          height: "46%",
+          borderRadius: "50%",
+          background: `radial-gradient(circle, ${p.blobB} 0%, transparent 70%)`,
+          filter: "blur(2px)",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: "4%",
+          right: "-10%",
+          width: "52%",
+          height: "56%",
+          borderRadius: "50%",
+          background: `radial-gradient(circle, ${p.blobC} 0%, transparent 70%)`,
+          filter: "blur(2px)",
+        }}
+      />
+      <svg
+        width="100%"
+        height="100%"
+        style={{ position: "absolute", inset: 0, opacity: 0.55 }}
+        preserveAspectRatio="none"
+      >
+        <path
+          d="M 0 48 C 120 88, 200 24, 320 52 S 520 20, 640 56 L 640 360 L 0 360 Z"
+          fill="none"
+          stroke={p.dashedLine}
+          strokeWidth="1"
+          strokeDasharray="5 7"
+          vectorEffect="non-scaling-stroke"
+        />
+        <path
+          d="M 0 120 C 140 96, 260 168, 400 132 S 540 180, 640 148"
+          fill="none"
+          stroke={p.dashedLine}
+          strokeWidth="1"
+          strokeDasharray="4 6"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+    </div>
+  );
+}
+
+function WaveformBars({ color }: { color: string }) {
+  const heights = [22, 44, 32, 56, 38, 62, 34, 48, 28, 52, 36, 40];
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+        gap: 3,
+        height: 44,
+      }}
+    >
+      {heights.map((h, i) => (
+        <motion.div
+          key={i}
+          style={{
+            width: 4,
+            borderRadius: 3,
+            background: color,
+            transformOrigin: "bottom",
+          }}
+          animate={{ height: [h * 0.35, h, h * 0.45, h * 0.9] }}
+          transition={{
+            duration: 1.2 + i * 0.06,
+            repeat: Infinity,
+            repeatType: "mirror",
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ─── App Mockup — Hirely interview journey (prep → live listening) ─── */
 function AppMockup() {
   const { resolvedTheme } = useTheme();
   const p = resolvedTheme === "light" ? APP_MOCKUP_PALETTE.light : APP_MOCKUP_PALETTE.dark;
+
+  const rail = [
+    { Icon: Home, active: true },
+    { Icon: Video, active: false },
+    { Icon: LayoutList, active: false },
+    { Icon: Clock, active: false },
+    { Icon: Users, active: false },
+    { Icon: Settings, active: false },
+  ];
 
   return (
     <div
@@ -87,234 +302,369 @@ function AppMockup() {
         boxShadow: p.shellShadow,
       }}
     >
-      <div style={{ display: "flex", minHeight: 360 }}>
-        {/* Left sidebar */}
+      <div style={{ display: "flex", minHeight: 384 }}>
+        {/* Icon rail */}
         <div
           style={{
             width: 44,
+            flexShrink: 0,
             background: p.sidebarBg,
             borderRight: p.sidebarBorder,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            paddingTop: 16,
-            gap: 16,
+            paddingTop: 14,
+            gap: 14,
           }}
         >
-          {["⌂", "📷", "☰", "⏱", "👥", "⚙"].map((icon, i) => (
+          {rail.map(({ Icon, active }, i) => (
             <div
               key={i}
               style={{
-                width: 24,
-                height: 24,
+                width: 28,
+                height: 28,
+                borderRadius: 10,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 12,
-                opacity: i === 0 ? 0.85 : 0.45,
-                color: p.icon,
+                background: active ? "rgba(167,139,250,0.15)" : "transparent",
+                border: active ? "1px solid rgba(167,139,250,0.35)" : "1px solid transparent",
+                color: active ? p.iconActive : p.icon,
+                opacity: active ? 1 : 0.55,
               }}
             >
-              {icon}
+              <Icon size={15} strokeWidth={2} />
             </div>
           ))}
         </div>
 
-        {/* Left panel — Transcript */}
+        {/* Prep pipeline — mirrors “Preparing your interview” */}
         <div
           style={{
-            flex: "0 0 40%",
+            flex: "0 0 42%",
+            maxWidth: 280,
             background: p.panelBg,
             borderRight: p.panelBorder,
-            padding: 16,
+            padding: "14px 14px 12px",
             display: "flex",
             flexDirection: "column",
-            gap: 12,
+            gap: 10,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 12, color: p.muted }}>←</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: p.title }}>Weekly dev sync</span>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+            <div>
+              <p
+                style={{
+                  fontSize: 9,
+                  letterSpacing: "0.14em",
+                  fontWeight: 700,
+                  color: p.kicker,
+                  marginBottom: 4,
+                  textTransform: "uppercase",
+                }}
+              >
+                Session setup
+              </p>
+              <h3 style={{ fontSize: 14, fontWeight: 800, color: p.title, lineHeight: 1.25, margin: 0 }}>
+                Preparing your interview
+              </h3>
+              <p style={{ fontSize: 10, color: p.muted, margin: "6px 0 0", lineHeight: 1.45 }}>
+                We personalize questions from your profile—resume, role fit, and focus areas.
+              </p>
             </div>
             <div
               style={{
-                fontSize: 10,
-                padding: "2px 8px",
+                fontSize: 9,
+                padding: "4px 8px",
                 borderRadius: 999,
                 background: p.badgeBg,
                 color: p.badgeFg,
-                fontWeight: 600,
+                fontWeight: 700,
+                whiteSpace: "nowrap",
               }}
             >
-              Development
+              Live prep
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: 12, fontSize: 10, color: p.muted }}>
-            <span>📅 Apr 10, 2026</span>
-            <span>🕐 2:30 PM</span>
-          </div>
-
-          <div
+          <p
             style={{
-              display: "flex",
-              gap: 16,
-              borderBottom: p.tabRule,
-              paddingBottom: 8,
+              fontSize: 9,
+              letterSpacing: "0.12em",
+              fontWeight: 700,
+              color: p.kicker,
+              margin: "4px 0 0",
+              textTransform: "uppercase",
             }}
           >
-            {["Summary", "Transcript", "Notes"].map((tab, i) => (
-              <span
-                key={tab}
-                style={{
-                  fontSize: 11,
-                  fontWeight: i === 0 ? 600 : 400,
-                  color: i === 0 ? p.tabActive : p.tabInactive,
-                  borderBottom: i === 0 ? `2px solid ${p.tabActive}` : "none",
-                  paddingBottom: 4,
-                }}
-              >
-                {tab}
-              </span>
-            ))}
-          </div>
+            This usually takes ~15 seconds
+          </p>
 
-          <div
-            style={{
-              padding: "6px 10px",
-              borderRadius: 8,
-              background: p.searchBg,
-              border: p.searchBorder,
-              fontSize: 11,
-              color: p.searchMuted,
-            }}
-          >
-            🔍 Search transcript...
-          </div>
-
-          {[
-            { initials: "AK", color: "#c026d3", name: "Alex Kim", time: "2:31 PM", text: "Let's review the sprint progress..." },
-            { initials: "SJ", color: "#ea580c", name: "Sarah J.", time: "2:33 PM", text: "The auth module is complete. Running at 99.2% uptime..." },
-            { initials: "AK", color: "#c026d3", name: "Alex Kim", time: "2:35 PM", text: "Great work. What about the API redesign?" },
-          ].map((entry, i) => (
-            <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-              <div
-                style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: "50%",
-                  flexShrink: 0,
-                  background: entry.color,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 8,
-                  fontWeight: 700,
-                  color: "#fff",
-                }}
-              >
-                {entry.initials}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "8px 10px",
+                borderRadius: 12,
+                background: p.pillDoneBg,
+                border: p.pillDoneBd,
+              }}
+            >
+              <CheckCircle2 size={16} style={{ color: p.badgeFg, flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 11, fontWeight: 600, color: p.title, margin: 0 }}>Interview context ready</p>
+                <p style={{ fontSize: 9, color: p.muted, margin: "2px 0 0" }}>Resume & role signals merged</p>
               </div>
-              <div>
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: p.entryName }}>{entry.name}</span>
-                  <span style={{ fontSize: 9, color: p.entryTime }}>{entry.time}</span>
-                </div>
-                <p style={{ fontSize: 11, color: p.entryBody, margin: "2px 0 0", lineHeight: 1.5 }}>{entry.text}</p>
+              <span style={{ fontSize: 9, fontWeight: 700, color: p.badgeFg }}>Done</span>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "8px 10px",
+                borderRadius: 12,
+                background: p.pillLiveBg,
+                border: p.pillLiveBd,
+              }}
+            >
+              <Loader2
+                size={16}
+                className="animate-spin"
+                style={{ color: p.accentPurple, flexShrink: 0 }}
+              />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 11, fontWeight: 600, color: p.title, margin: 0 }}>Generating interview questions</p>
+                <p style={{ fontSize: 9, color: p.muted, margin: "2px 0 0" }}>Tailoring difficulty & topics…</p>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
 
-        {/* Right panel — Video grid */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-          <div
-            style={{
-              flex: 1,
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gridTemplateRows: "1fr 1fr",
-              gap: 2,
-              padding: 2,
-            }}
-          >
-            {[
-              { name: "Alex Kim", gradient: "linear-gradient(135deg, #a21caf, #1e1b2e)" },
-              { name: "Sarah J.", gradient: "linear-gradient(135deg, #c2410c, #1e1b2e)" },
-              { name: "Mike T.", gradient: "linear-gradient(135deg, #0891b2, #1e1b2e)" },
-              { name: "Lisa W.", gradient: "linear-gradient(135deg, #059669, #1e1b2e)" },
-            ].map((person, i) => (
-              <div
-                key={i}
-                style={{
-                  background: person.gradient,
-                  borderRadius: i === 0 ? "0" : "0",
-                  position: "relative",
-                  minHeight: 80,
-                }}
-              >
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: 6,
-                    left: 6,
-                    padding: "2px 8px",
-                    borderRadius: 4,
-                    background: p.vidNameBg,
-                    fontSize: 10,
-                    color: p.vidNameFg,
-                    fontWeight: 500,
-                  }}
-                >
-                  {person.name}
-                </div>
-              </div>
-            ))}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: "auto", paddingTop: 10 }}>
+            <PipelineRing pct={82} track={p.ringTrack} from={p.accentPurple} to={p.accentTeal} />
+            <div>
+              <p style={{ fontSize: 22, fontWeight: 900, color: p.title, letterSpacing: "-0.03em", margin: 0, lineHeight: 1 }}>
+                82%
+              </p>
+              <p style={{ fontSize: 9, color: p.muted, margin: "4px 0 0", maxWidth: 120, lineHeight: 1.35 }}>
+                Setup progress (estimated from stage)
+              </p>
+            </div>
           </div>
 
           <div
             style={{
-              padding: "8px 12px",
-              background: p.controlBg,
+              marginTop: 10,
+              padding: "8px 10px",
+              borderRadius: 12,
+              background: p.tipBg,
+              border: p.tipBd,
               display: "flex",
-              alignItems: "center",
-              gap: 12,
+              gap: 8,
+              alignItems: "flex-start",
             }}
           >
             <div
               style={{
-                width: 28,
-                height: 28,
-                borderRadius: "50%",
-                background: "linear-gradient(135deg, #f97316, #db2777)",
+                width: 26,
+                height: 26,
+                borderRadius: 10,
+                background: "rgba(167,139,250,0.18)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                flexShrink: 0,
               }}
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill={p.playIcon}>
-                <polygon points="5,3 19,12 5,21" />
-              </svg>
+              <Lightbulb size={13} style={{ color: p.accentPurple }} />
             </div>
-            <span style={{ fontSize: 10, color: p.controlMuted }}>1x</span>
+            <div>
+              <p
+                style={{
+                  fontSize: 8,
+                  fontWeight: 800,
+                  letterSpacing: "0.12em",
+                  color: p.accentPurple,
+                  margin: 0,
+                  textTransform: "uppercase",
+                }}
+              >
+                While you wait
+              </p>
+              <p style={{ fontSize: 10, color: p.muted, margin: "4px 0 0", lineHeight: 1.45 }}>
+                Breathe evenly—clear beats fast. The AI scores clarity, not pace.
+              </p>
+              <div style={{ display: "flex", gap: 4, marginTop: 8 }}>
+                {[1, 2, 3, 4].map((dot) => (
+                  <div
+                    key={dot}
+                    style={{
+                      flex: 1,
+                      height: 3,
+                      borderRadius: 2,
+                      background: dot === 1 ? p.accentPurple : "rgba(148,163,184,0.25)",
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Live stage — question + listening card */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", position: "relative", minWidth: 0 }}>
+          <StageBackdrop p={p} />
+          <div
+            style={{
+              position: "relative",
+              zIndex: 2,
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              padding: "14px 14px 10px",
+              textAlign: "center",
+            }}
+          >
             <div
               style={{
-                flex: 1,
-                height: 4,
-                borderRadius: 2,
-                display: "flex",
-                overflow: "hidden",
-                gap: 1,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "4px 10px",
+                borderRadius: 999,
+                background: "rgba(167,139,250,0.12)",
+                border: "1px solid rgba(167,139,250,0.28)",
+                marginBottom: 10,
               }}
             >
-              <div style={{ flex: 3, background: "#f97316", borderRadius: 2 }} />
-              <div style={{ flex: 2, background: "#e879f9", borderRadius: 2 }} />
-              <div style={{ flex: 2, background: "#22d3ee", borderRadius: 2 }} />
-              <div style={{ flex: 1, background: "#34d399", borderRadius: 2 }} />
-              <div style={{ flex: 4, background: p.waveEmpty, borderRadius: 2 }} />
+              <Sparkles size={11} style={{ color: p.accentPurple }} />
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", color: p.accentPurple }}>
+                Technical • Question 2 of 5
+              </span>
             </div>
-            <span style={{ fontSize: 10, color: p.controlTime }}>23:41</span>
+
+            <p
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: p.questionInk,
+                lineHeight: 1.45,
+                margin: 0,
+                maxWidth: 260,
+              }}
+            >
+              Tell me about yourself and your professional background.
+            </p>
+
+            <div style={{ flex: 1, minHeight: 8 }} />
+
+            <div
+              style={{
+                width: "100%",
+                maxWidth: 220,
+                borderRadius: 18,
+                padding: "12px 12px 10px",
+                background: p.listenCardBg,
+                border: p.listenCardBd,
+                boxShadow: "0 18px 40px rgba(15,23,42,0.08)",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 14,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: `radial-gradient(circle at 30% 30%, ${p.micGlow}, rgba(255,255,255,0))`,
+                    border: "1px solid rgba(45,212,191,0.35)",
+                  }}
+                >
+                  <Mic size={18} style={{ color: "#0f766e" }} strokeWidth={2.2} />
+                </div>
+              </div>
+              <p
+                style={{
+                  fontSize: 8,
+                  letterSpacing: "0.14em",
+                  fontWeight: 800,
+                  color: p.listenMuted,
+                  margin: "0 0 10px",
+                  textTransform: "uppercase",
+                }}
+              >
+                Listening
+              </p>
+              <WaveformBars color={p.waveBar} />
+              <motion.button
+                type="button"
+                style={{
+                  marginTop: 12,
+                  width: "100%",
+                  border: "none",
+                  borderRadius: 999,
+                  padding: "9px 12px",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "#fff",
+                  cursor: "default",
+                  background: p.doneBtn,
+                  boxShadow: "0 8px 22px rgba(16,185,129,0.28)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                }}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+              >
+                <BrainCircuit size={14} />
+                Done speaking
+              </motion.button>
+            </div>
+          </div>
+
+          <div
+            style={{
+              position: "relative",
+              zIndex: 2,
+              padding: "8px 12px",
+              background: p.footerBg,
+              borderTop: p.panelBorder,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 8,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <Info size={12} style={{ color: p.accentPurple, opacity: 0.85, flexShrink: 0 }} aria-hidden />
+              <span style={{ fontSize: 9, fontWeight: 700, color: p.footerMuted, letterSpacing: "0.04em" }}>
+                Heads-up
+              </span>
+              <span style={{ fontSize: 9, color: p.footerMuted, opacity: 0.85 }}>
+                You can re-read the question while you answer.
+              </span>
+            </div>
+            <div style={{ display: "flex", gap: 3 }}>
+              {[0, 1, 2].map((d) => (
+                <span
+                  key={d}
+                  style={{
+                    width: 5,
+                    height: 5,
+                    borderRadius: "50%",
+                    background: d === 0 ? p.accentPurple : "rgba(148,163,184,0.35)",
+                  }}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -343,7 +693,10 @@ export function CTASection() {
     <section
       ref={ref}
       className="lp-cta-section"
-      style={{ padding: "120px 48px 0", overflow: "hidden" }}
+      style={{
+        padding: "120px 48px clamp(48px, 8vw, 88px)",
+        overflow: "hidden",
+      }}
     >
       <div
         className="lp-cta-mesh-blob lp-cta-mesh-a"

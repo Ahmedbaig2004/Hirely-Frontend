@@ -44,14 +44,14 @@ function ThresholdArch({
       <mesh castShadow receiveShadow>
         <torusKnotGeometry args={[0.95, 0.24, 220, 36, 2, 3]} />
         <meshPhysicalMaterial
-          color={isLight ? "#5b8fc9" : "#0d1e3a"}
-          emissive={isLight ? "#2563eb" : "#2f76f0"}
-          emissiveIntensity={isLight ? 0.38 : 0.22}
-          metalness={isLight ? 0.78 : 0.92}
+          color={isLight ? "#7dd3fc" : "#0d1e3a"}
+          emissive={isLight ? "#38bdf8" : "#2f76f0"}
+          emissiveIntensity={isLight ? 0.26 : 0.22}
+          metalness={isLight ? 0.28 : 0.92}
           roughness={isLight ? 0.22 : 0.15}
           clearcoat={1}
           clearcoatRoughness={0.08}
-          reflectivity={isLight ? 0.75 : 0.9}
+          reflectivity={isLight ? 0.82 : 0.9}
         />
       </mesh>
     </group>
@@ -94,7 +94,7 @@ function FloatingDocument({
         thickness={0.04}
         ior={1.5}
         chromaticAberration={0.02}
-        color={isLight ? "#ddeaf7" : "#c5ced9"}
+        color={isLight ? "#dbeafe" : "#c5ced9"}
       />
     </mesh>
   );
@@ -115,13 +115,13 @@ function VoiceRibbon({ reducedMotion, isLight }: { reducedMotion: boolean; isLig
   return (
     <mesh ref={mesh} geometry={geo} rotation={[Math.PI / 2.5, 0, 0]}>
       <meshStandardMaterial
-        color={isLight ? "#3d5a78" : "#94a3b8"}
-        emissive={isLight ? "#0369a1" : "#22d3ee"}
-        emissiveIntensity={isLight ? 0.2 : 0.04}
-        metalness={0.9}
-        roughness={0.3}
+        color={isLight ? "#38bdf8" : "#94a3b8"}
+        emissive={isLight ? "#bae6fd" : "#22d3ee"}
+        emissiveIntensity={isLight ? 0.14 : 0.04}
+        metalness={isLight ? 0.55 : 0.85}
+        roughness={isLight ? 0.28 : 0.3}
         transparent
-        opacity={isLight ? 0.62 : 0.35}
+        opacity={isLight ? 0.52 : 0.35}
       />
     </mesh>
   );
@@ -142,13 +142,13 @@ function OrbitRing({ reducedMotion, isLight }: { reducedMotion: boolean; isLight
     <mesh ref={mesh} rotation={[0.45, 0.3, 0]}>
       <torusGeometry args={[2.0, 0.016, 16, 140]} />
       <meshStandardMaterial
-        color={isLight ? "#075985" : "#06b6d4"}
-        emissive={isLight ? "#0284c7" : "#06b6d4"}
-        emissiveIntensity={isLight ? 0.24 : 0.05}
-        metalness={1}
-        roughness={0.32}
+        color={isLight ? "#22d3ee" : "#06b6d4"}
+        emissive={isLight ? "#a5f3fc" : "#06b6d4"}
+        emissiveIntensity={isLight ? 0.14 : 0.05}
+        metalness={isLight ? 0.65 : 1}
+        roughness={isLight ? 0.26 : 0.32}
         transparent
-        opacity={isLight ? 0.7 : 0.45}
+        opacity={isLight ? 0.58 : 0.45}
       />
     </mesh>
   );
@@ -164,23 +164,26 @@ function Scene({
   reducedMotion: boolean;
   isLight: boolean;
 }) {
-  /* Match `globals.css` :root `--lp-background` (#f2f9ff) so hero + page feel one surface */
+  /* Light: sky-cyan meshes over page-matched fog; dark unchanged */
   const bg = isLight ? "#f2f9ff" : "#060a12";
   return (
     <>
       <color attach="background" args={[bg]} />
       <fog attach="fog" args={[bg, isLight ? 5.5 : 4, isLight ? 15 : 12]} />
-      <ambientLight intensity={isLight ? 0.72 : 0.35} />
+      <ambientLight intensity={isLight ? 0.78 : 0.35} color={isLight ? "#e0f2fe" : "#ffffff"} />
       <spotLight
         position={[5, 8, 5]}
         angle={0.3}
         penumbra={0.7}
-        intensity={isLight ? 1.55 : 2.2}
+        intensity={isLight ? 1.42 : 2.2}
         color={isLight ? "#ffffff" : "#e1e6ed"}
         castShadow
       />
-      <pointLight position={[-4, -2, 3]} intensity={isLight ? 0.55 : 0.7} color="#38bdf8" />
-      <pointLight position={[3, 3, -3]} intensity={isLight ? 0.42 : 0.5} color="#0ea5e9" />
+      <pointLight position={[-4, -2, 3]} intensity={isLight ? 0.48 : 0.7} color={isLight ? "#38bdf8" : "#38bdf8"} />
+      <pointLight position={[3, 3, -3]} intensity={isLight ? 0.4 : 0.5} color={isLight ? "#7dd3fc" : "#0ea5e9"} />
+      <hemisphereLight
+        args={[isLight ? "#bae6fd" : "#404060", isLight ? "#f0f9ff" : "#060a12", isLight ? 0.35 : 0.2]}
+      />
 
       <Float
         speed={reducedMotion ? 0 : 0.3}

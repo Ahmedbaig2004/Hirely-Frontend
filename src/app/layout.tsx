@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Montserrat } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "../components/AuthProvider";
 import { ThemeProvider } from "../components/ThemeProvider";
@@ -21,6 +21,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const brandSans = Montserrat({
+  variable: "--font-brand",
+  subsets: ["latin"],
+  weight: ["700", "800", "900"],
+});
+
 export const metadata: Metadata = {
   title: "HIRELY AI",
   description: "AI Powered Mock Interviewer",
@@ -33,7 +39,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased relative min-h-screen`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${brandSans.variable} antialiased relative min-h-screen`}
+      >
         <ThemeProvider>
           <AuthProvider>
             <PreloaderProvider>

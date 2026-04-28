@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   BarChart3,
   HelpCircle,
   LayoutDashboard,
-  LogOut,
   Menu,
   Settings,
   X,
@@ -15,10 +14,10 @@ import {
 import { motion, useReducedMotion } from "framer-motion";
 import { useTheme } from "next-themes";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { supabase } from "@/lib/supabaseClient";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/components/lib/utils";
 import { usePreloaderContextOptional } from "@/components/landing/PreloaderContext";
+import { HirelyNavLockup } from "@/components/branding/HirelyNavLockup";
 
 const SCROLL_RANGE = 140;
 
@@ -27,7 +26,6 @@ const NAV_THEME = {
     linkActive: "#f1f5f9",
     linkMuted: "#94a3b8",
     linkHover: "#f8fafc",
-    logoText: "#e2e8f0",
     loginHover: "#e2e8f0",
     borderTop: "rgba(255,255,255,0.08)",
     mobileActiveBg: "rgba(59,130,246,0.12)",
@@ -37,8 +35,6 @@ const NAV_THEME = {
     menuBtnBorder: "1px solid rgba(255,255,255,0.1)",
     menuBtnBg: "rgba(255,255,255,0.04)",
     menuBtnColor: "#e2e8f0",
-    logoIconBg: "linear-gradient(135deg, #2563eb, #3b82f6)",
-    logoIconStroke: "#fff",
     ctaBg: "linear-gradient(135deg, #2563eb, #3b82f6)",
     ctaShadow: "0 2px 14px rgba(59,130,246,0.3)",
     ctaShadowHover: "0 6px 24px rgba(59,130,246,0.45)",
@@ -49,7 +45,6 @@ const NAV_THEME = {
     linkActive: "#1b262c",
     linkMuted: "rgba(57,72,103,0.72)",
     linkHover: "#0f172a",
-    logoText: "#1b262c",
     loginHover: "#2563eb",
     borderTop: "rgba(209,233,255,0.95)",
     mobileActiveBg: "rgba(162,210,255,0.28)",
@@ -59,8 +54,6 @@ const NAV_THEME = {
     menuBtnBorder: "1px solid rgba(209,233,255,0.95)",
     menuBtnBg: "rgba(255,255,255,0.72)",
     menuBtnColor: "#1b262c",
-    logoIconBg: "linear-gradient(135deg, #7eb8ff, #5eb8c4)",
-    logoIconStroke: "#ffffff",
     ctaBg: "linear-gradient(135deg, #7eb8ff, #62c4d0)",
     ctaShadow: "0 2px 14px rgba(98,196,208,0.4)",
     ctaShadowHover: "0 8px 28px rgba(255,209,220,0.55), 0 6px 24px rgba(98,196,208,0.45)",
@@ -74,7 +67,6 @@ const navLinks = [
   { label: "Home", href: "/" },
   { label: "About us", href: "/about" },
   { label: "Pricing", href: "/pricing" },
-  { label: "Contact us", href: "/contact" },
 ] as const;
 
 function useScrollT() {
@@ -94,8 +86,7 @@ function useScrollT() {
 }
 
 export function Navbar() {
-  const { user, setUser } = useAuthStore();
-  const router = useRouter();
+  const { user } = useAuthStore();
   const pathname = usePathname();
   const preloader = usePreloaderContextOptional();
   const logoVisible = preloader?.navbarLogoVisible ?? true;
@@ -131,12 +122,6 @@ export function Navbar() {
     return () => window.removeEventListener("keydown", onKey);
   }, [mobileOpen]);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    router.push("/auth");
-  };
-
   const sidePad = t * 96;
   const topPad = 12 + t * 22;
   const ease = reduceMotion ? "0.01s" : "0.68s";
@@ -146,7 +131,7 @@ export function Navbar() {
   const padY = 14 - t * 1.5;
   const padX = 20 - t * 11;
   const linkGap = 26 - t * 3;
-  const linkSize = 13.5;
+  const linkSize = 15; /* logo lockup uses its own px (see HirelyNavLockup textClassName) */
 
   const lightNav = navMounted && resolvedTheme === "light";
   const tc = lightNav ? NAV_THEME.light : NAV_THEME.dark;
@@ -246,6 +231,7 @@ export function Navbar() {
             <div style={{ justifySelf: "start", minWidth: 0 }}>
               <Link
                 href="/"
+                aria-label="Hirely home"
                 data-nav-cursor-target
                 data-navbar-logo
                 style={{
@@ -269,41 +255,15 @@ export function Navbar() {
                   e.currentTarget.style.transform = "scale(1)";
                 }}
               >
-                <div
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 8,
-                    background: tc.logoIconBg,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <svg
-                    width="13"
-                    height="13"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke={tc.logoIconStroke}
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polygon points="13,2 3,14 12,14 11,22 21,10 12,10" />
-                  </svg>
-                </div>
                 <span
                   data-navbar-logo-text
-                  style={{
-                    fontWeight: 600,
-                    fontSize: 13.5,
-                    letterSpacing: "0.06em",
-                    color: tc.logoText,
-                    fontFamily: "var(--font-geist-sans), system-ui, sans-serif",
-                  }}
+                  className="inline-flex items-center leading-none"
                 >
-                  HIRELY
+                  <HirelyNavLockup
+                    isLight={lightNav}
+                    withHMark
+                    textClassName="text-[25px] sm:text-[26px] leading-none text-[#0a0a0a] dark:text-white"
+                  />
                 </span>
               </Link>
             </div>
@@ -429,51 +389,7 @@ export function Navbar() {
                     <BarChart3 size={13} />
                     <span>Analytics</span>
                   </Link>
-                  <button
-                    type="button"
-                    onClick={handleSignOut}
-                    className="hidden lg:inline-flex"
-                    data-nav-cursor-target
-                    style={{
-                      alignItems: "center",
-                      gap: 6,
-                      padding: "6px 11px",
-                      borderRadius: 999,
-                      fontSize: 12,
-                      fontWeight: 500,
-                      color: tc.linkMuted,
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      transition: "color 0.2s ease",
-                    }}
-                  >
-                    <LogOut size={13} />
-                    <span>Sign Out</span>
-                  </button>
                 </>
-              )}
-
-              {!user && (
-                <Link
-                  href="/auth"
-                  data-nav-cursor-target
-                  style={{
-                    fontSize: 12.5,
-                    fontWeight: 500,
-                    color: tc.linkMuted,
-                    textDecoration: "none",
-                    transition: "color 0.2s ease, transform 0.15s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = tc.loginHover;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = tc.linkMuted;
-                  }}
-                >
-                  Login
-                </Link>
               )}
 
               <div data-nav-cursor-target>
@@ -515,6 +431,31 @@ export function Navbar() {
                 <Settings size={15} strokeWidth={2} aria-hidden />
                 <span className="hidden md:inline">Settings</span>
               </Link>
+
+              {!user && (
+                <Link
+                  href="/auth"
+                  data-nav-cursor-target
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    color: tc.linkMuted,
+                    textDecoration: "none",
+                    transition: "color 0.2s ease, transform 0.15s ease",
+                    padding: "4px 2px",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = tc.loginHover;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = tc.linkMuted;
+                  }}
+                >
+                  Login
+                </Link>
+              )}
 
               <Link
                 href="/start"
@@ -579,7 +520,7 @@ export function Navbar() {
                     style={{
                       padding: "12px 10px",
                       borderRadius: 10,
-                      fontSize: 15,
+                      fontSize: linkSize,
                       fontWeight: isActive ? 600 : 400,
                       color: isActive ? tc.linkActive : tc.linkMuted,
                       textDecoration: "none",
@@ -591,28 +532,13 @@ export function Navbar() {
                   </Link>
                 );
               })}
-              {!user && (
-                <Link
-                  href="/auth"
-                  onClick={() => setMobileOpen(false)}
-                  style={{
-                    padding: "12px 10px",
-                    borderRadius: 10,
-                    fontSize: 15,
-                    color: tc.linkMuted,
-                    textDecoration: "none",
-                  }}
-                >
-                  Login
-                </Link>
-              )}
               <Link
                 href="/help"
                 onClick={() => setMobileOpen(false)}
                 style={{
                   padding: "12px 10px",
                   borderRadius: 10,
-                  fontSize: 15,
+                  fontSize: linkSize,
                   fontWeight: pathname === "/help" ? 600 : 400,
                   color: pathname === "/help" ? tc.linkActive : tc.linkMuted,
                   textDecoration: "none",
@@ -627,7 +553,7 @@ export function Navbar() {
                 style={{
                   padding: "12px 10px",
                   borderRadius: 10,
-                  fontSize: 15,
+                  fontSize: linkSize,
                   fontWeight: pathname === "/settings" ? 600 : 400,
                   color: pathname === "/settings" ? tc.linkActive : tc.linkMuted,
                   textDecoration: "none",
@@ -639,6 +565,22 @@ export function Navbar() {
               >
                 Settings
               </Link>
+              {!user && (
+                <Link
+                  href="/auth"
+                  onClick={() => setMobileOpen(false)}
+                  style={{
+                    padding: "12px 10px",
+                    borderRadius: 10,
+                    fontSize: linkSize,
+                    fontWeight: 500,
+                    color: tc.linkMuted,
+                    textDecoration: "none",
+                  }}
+                >
+                  Login
+                </Link>
+              )}
             </div>
           )}
         </motion.nav>

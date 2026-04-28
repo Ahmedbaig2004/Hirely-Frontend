@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { HirelyNavLockup } from "@/components/branding/HirelyNavLockup";
 
 const footerLinks = {
   Product: [
     { label: "Features", href: "#features" },
     { label: "Pricing", href: "/pricing" },
     { label: "How It Works", href: "#how-it-works" },
-    { label: "FAQ", href: "/contact#faq" },
+    { label: "FAQ", href: "/help#faq-block" },
   ],
   Company: [
     { label: "About", href: "/about" },
@@ -38,12 +39,10 @@ export function Footer() {
 
   const bg = light ? "#f2f9ff" : "#0d1220";
   const borderTop = light ? "1px solid rgba(209,233,255,0.95)" : "1px solid rgba(255,255,255,0.04)";
-  const brandColor = light ? "#1b262c" : "#e2e8f0";
   const bodyMuted = light ? "rgba(57,72,103,0.82)" : "#64748b";
   const headingColor = light ? "#1b262c" : "#e2e8f0";
   const linkColor = light ? "rgba(30,41,59,0.92)" : "#64748b";
   const linkHover = light ? "#1d4ed8" : "#e2e8f0";
-  const logoGrad = light ? "linear-gradient(135deg, #7eb8ff, #5eb8c4)" : "linear-gradient(135deg, #2563eb, #3b82f6)";
   const iconStroke = light ? "#394867" : "#94a3b8";
   const socialBg = light ? "var(--lp-inner-well)" : "rgba(255,255,255,0.04)";
   const socialBorder = light ? "1px solid var(--lp-inner-well-border)" : "1px solid rgba(255,255,255,0.06)";
@@ -81,40 +80,10 @@ export function Footer() {
                 marginBottom: 16,
               }}
             >
-              <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 10,
-                  background: logoGrad,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#ffffff"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polygon points="13,2 3,14 12,14 11,22 21,10 12,10" />
-                </svg>
-              </div>
-              <span
-                style={{
-                  fontSize: 16,
-                  fontWeight: 700,
-                  color: brandColor,
-                  letterSpacing: "0.04em",
-                }}
-              >
-                HIRELY
-              </span>
+              <HirelyNavLockup
+                isLight={light}
+                textClassName="text-base leading-none sm:text-lg text-[#0a0a0a] dark:text-white"
+              />
             </div>
             <p
               style={{

@@ -6,6 +6,8 @@ import { useTheme } from "next-themes";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { usePreloaderContext } from "./PreloaderContext";
+import { BrandThreeBarE } from "@/components/branding/BrandThreeBarE";
+import { hirelyWordmarkMetrics } from "@/components/branding/hirelyWordmarkMetrics";
 
 const BRAND = "HIRELY";
 const DELAY_BEFORE_FLY_S = 1;
@@ -56,7 +58,6 @@ export function LandingPreloader() {
     setActive(true);
   }, [pathname]);
 
-  /* If loader unmounts (route change / Strict Mode), ensure we never leave GSAP opacity on the page. */
   useLayoutEffect(() => {
     return () => {
       const main = document.getElementById("landing-scroll-content");
@@ -79,8 +80,6 @@ export function LandingPreloader() {
       const letters = letterRefs.current.filter(Boolean) as HTMLSpanElement[];
 
       gsap.set(letters, { opacity: 0 });
-      /* Never hide #landing-scroll-content with opacity — if this timeline is killed (Strict Mode,
-         navigation, errors), opacity:0 would stick and the whole page looks blank/white. */
       gsap.set([left, right], { xPercent: 0 });
       gsap.set(bg, { opacity: 1, filter: "blur(0px)" });
       gsap.set(text, {
@@ -109,47 +108,50 @@ export function LandingPreloader() {
         stagger: 0.11,
         ease: "power2.out",
       });
-      outer.to({}, {
-        duration: DELAY_BEFORE_FLY_S,
-        onComplete: () => {
-          const pos = measureFlyTargets(text);
-          if (!pos) {
-            revealNavbarLogo();
-            gsap.set(root, { display: "none", pointerEvents: "none" });
-            return;
-          }
+      outer.to(
+        {},
+        {
+          duration: DELAY_BEFORE_FLY_S,
+          onComplete: () => {
+            const pos = measureFlyTargets(text);
+            if (!pos) {
+              revealNavbarLogo();
+              gsap.set(root, { display: "none", pointerEvents: "none" });
+              return;
+            }
 
-          innerFlyRef.current?.kill();
-          const fly = gsap.timeline({ onComplete: finishLoader });
-          innerFlyRef.current = fly;
+            innerFlyRef.current?.kill();
+            const fly = gsap.timeline({ onComplete: finishLoader });
+            innerFlyRef.current = fly;
 
-          fly.to(
-            bg,
-            {
-              opacity: 0.35,
-              filter: "blur(10px)",
-              duration: 0.9,
-              ease: "power2.inOut",
-            },
-            0,
-          );
-          fly.to(left, { xPercent: -100, duration: 1.15, ease: "expo.inOut" }, 0.05);
-          fly.to(right, { xPercent: 100, duration: 1.15, ease: "expo.inOut" }, 0.05);
-          fly.to(
-            text,
-            {
-              x: pos.dx,
-              y: pos.dy,
-              scale: pos.scale,
-              duration: 1.35,
-              ease: "expo.inOut",
-            },
-            0,
-          );
-          fly.to(text, { opacity: 0, duration: 0.2, ease: "power2.in" }, "-=0.15");
-          fly.to(bg, { opacity: 0, duration: 0.35, ease: "power2.inOut" }, "-=0.25");
+            fly.to(
+              bg,
+              {
+                opacity: 0.35,
+                filter: "blur(10px)",
+                duration: 0.9,
+                ease: "power2.inOut",
+              },
+              0,
+            );
+            fly.to(left, { xPercent: -100, duration: 1.15, ease: "expo.inOut" }, 0.05);
+            fly.to(right, { xPercent: 100, duration: 1.15, ease: "expo.inOut" }, 0.05);
+            fly.to(
+              text,
+              {
+                x: pos.dx,
+                y: pos.dy,
+                scale: pos.scale,
+                duration: 1.35,
+                ease: "expo.inOut",
+              },
+              0,
+            );
+            fly.to(text, { opacity: 0, duration: 0.2, ease: "power2.in" }, "-=0.15");
+            fly.to(bg, { opacity: 0, duration: 0.35, ease: "power2.inOut" }, "-=0.25");
+          },
         },
-      });
+      );
 
       return () => {
         outer.kill();
@@ -195,27 +197,43 @@ export function LandingPreloader() {
 
       <div
         ref={textRef}
-        className="relative flex select-none"
+        className="relative flex select-none items-end text-[#0a0a0a] dark:text-white"
         style={{
-          fontFamily: "var(--font-geist-sans), system-ui, sans-serif",
-          fontWeight: 700,
+          fontFamily: "var(--font-brand), system-ui, sans-serif",
+          fontWeight: hirelyWordmarkMetrics.fontWeight,
           fontSize: "clamp(2.75rem, 10vw, 4.25rem)",
-          letterSpacing: "0.08em",
-          color: isLight ? "#0c2748" : "#f1f5f9",
+          gap: hirelyWordmarkMetrics.letterSpacing,
+          letterSpacing: 0,
+          lineHeight: 1,
         }}
         aria-hidden
       >
-        {BRAND.split("").map((ch, i) => (
-          <span
-            key={`${ch}-${i}`}
-            ref={(el) => {
-              letterRefs.current[i] = el;
-            }}
-            style={{ display: "inline-block" }}
-          >
-            {ch}
-          </span>
-        ))}
+        {BRAND.split("").map((ch, i) => {
+          if (ch === "E") {
+            return (
+              <span
+                key="e"
+                ref={(el) => {
+                  letterRefs.current[i] = el;
+                }}
+                className="inline-block leading-none [line-height:1]"
+              >
+                <BrandThreeBarE variant="hero" />
+              </span>
+            );
+          }
+          return (
+            <span
+              key={`${ch}-${i}`}
+              ref={(el) => {
+                letterRefs.current[i] = el;
+              }}
+              className="inline-block leading-none"
+            >
+              {ch}
+            </span>
+          );
+        })}
       </div>
     </div>
   );

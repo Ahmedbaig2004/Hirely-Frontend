@@ -259,7 +259,6 @@ export default function Dashboard() {
       await axios.delete(`${backendUrl}/api/interviews/${id}?userId=${user?.id ?? ""}`);
       setInterviews((prev) => prev.filter((iv) => iv.id !== id));
       if (expandedId === id) setExpandedId(null);
-      toast.success("Interview deleted.");
     } catch (err: any) {
       toast.error("Failed to delete: " + (err.response?.data?.error || err.message));
     }

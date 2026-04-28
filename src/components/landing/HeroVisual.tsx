@@ -22,7 +22,7 @@ function HeroCanvasLoadingFallback() {
       className="absolute inset-0 flex items-center justify-center text-xs font-medium uppercase tracking-[0.25em]"
       style={{
         background: isLight ? "#f2f9ff" : "#060a12",
-        color: isLight ? "#475569" : "#64748b",
+        color: isLight ? "#0c4a6e" : "#64748b",
       }}
       aria-hidden
     >
@@ -44,7 +44,7 @@ export function HeroVisual() {
         className="absolute inset-0"
         style={{
           background: isLight
-            ? "radial-gradient(ellipse at 50% 38%, #ffffff 0%, #f2f9ff 45%, #e5f2fc 100%)"
+            ? "radial-gradient(ellipse at 50% 38%, #ffffff 0%, #f2f9ff 42%, #dbeafe 100%)"
             : "radial-gradient(ellipse at 50% 40%, #0c1629 0%, #060a12 100%)",
         }}
       />

@@ -1,7 +1,7 @@
 export default function Loading() {
   return (
     <main
-      className="lp-page min-h-screen p-8 font-sans"
+      className="lp-page min-h-screen overflow-hidden px-8 pb-8 pt-[var(--app-report-page-pt)] font-sans"
       style={{
         background: "transparent",
         color: "var(--lp-foreground)",

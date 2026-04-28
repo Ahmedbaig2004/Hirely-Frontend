@@ -92,7 +92,7 @@ export default function InterviewDetail() {
   if (loading || !data) {
     return (
       <main
-        className="lp-page relative min-h-screen p-8 font-sans overflow-hidden"
+        className="lp-page relative min-h-screen overflow-hidden px-8 pb-8 pt-[var(--app-report-page-pt)] font-sans"
         style={{
           background: "transparent",
           color: "var(--lp-foreground)",
@@ -127,7 +127,7 @@ export default function InterviewDetail() {
 
   return (
     <main
-      className="lp-page relative min-h-screen p-8 font-sans overflow-hidden"
+      className="lp-page relative z-0 min-h-screen overflow-hidden px-8 pb-8 pt-[var(--app-report-page-pt)] font-sans"
       style={{
         background: "transparent",
         color: "var(--lp-foreground)",
@@ -141,8 +141,9 @@ export default function InterviewDetail() {
         transition={{ duration: 0.4 }}
       >
         <button
+          type="button"
           onClick={() => router.push("/dashboard")}
-          className="group mb-6 flex items-center text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+          className="group mb-4 flex w-fit items-center text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
         >
           <ArrowLeft
             size={18}

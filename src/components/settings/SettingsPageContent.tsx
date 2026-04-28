@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { toast } from "react-toastify";
 import { useTheme } from "next-themes";
 import {
   ArrowLeft,
@@ -19,10 +19,16 @@ import {
   Moon,
   Palette,
   Shield,
+  LogOut,
   Sun,
   User,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { supabase } from "@/lib/supabaseClient";
+import {
+  uploadProfileAvatar,
+  removeProfileAvatarFromStorage,
+} from "@/lib/profileAvatar";
 import { pageStagger, fadeInUp } from "@/lib/motion";
 import { cn } from "@/components/lib/utils";
 
@@ -50,6 +56,34 @@ const defaultPrefs: Prefs = {
   marketingEmails: false,
 };
 
+/** Sun=0 … Sat=6. Unique labels (avoids S/M/T duplicates in the row). */
+const WEEKDAYS = [
+  { value: 0, abbr: "Sun", long: "Sunday" },
+  { value: 1, abbr: "Mon", long: "Monday" },
+  { value: 2, abbr: "Tue", long: "Tuesday" },
+  { value: 3, abbr: "Wed", long: "Wednesday" },
+  { value: 4, abbr: "Thu", long: "Thursday" },
+  { value: 5, abbr: "Fri", long: "Friday" },
+  { value: 6, abbr: "Sat", long: "Saturday" },
+] as const;
+
+const WEEKEND_PRESETS: { label: string; hint: string; days: readonly [number, ...number[]] }[] = [
+  { label: "Sat & Sun", hint: "Typical in US / UK / many regions", days: [6, 0] },
+  { label: "Fri & Sat", hint: "Gulf and others", days: [5, 6] },
+  { label: "Fri–Sun", hint: "Long weekend (Fri+Sat+Sun)", days: [5, 6, 0] },
+  { label: "Sun only", hint: "Single rest day", days: [0] },
+];
+
+function normalizeWeekendDays(input: unknown): number[] {
+  if (!Array.isArray(input)) return [...defaultPrefs.weekendDays];
+  const nums = input.filter(
+    (x): x is number => typeof x === "number" && x >= 0 && x <= 6 && x === Math.floor(x)
+  );
+  const uniq = [...new Set(nums)].sort((a, b) => a - b);
+  if (uniq.length === 0) return [...defaultPrefs.weekendDays];
+  return uniq;
+}
+
 const NAV = [
   { id: "account" as const, label: "Account", icon: User, desc: "Profile & sign-in" },
   { id: "preferences" as const, label: "Preferences", icon: Palette, desc: "Appearance & region" },
@@ -62,7 +96,12 @@ function loadPrefs(): Prefs {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultPrefs;
-    return { ...defaultPrefs, ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw) as Partial<Prefs>;
+    return {
+      ...defaultPrefs,
+      ...parsed,
+      weekendDays: normalizeWeekendDays(parsed.weekendDays),
+    };
   } catch {
     return defaultPrefs;
   }
@@ -78,6 +117,8 @@ function savePrefs(p: Partial<Prefs>) {
 export function SettingsPageContent() {
   const reduceMotion = useReducedMotion();
   const user = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
+  const router = useRouter();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [active, setActive] = useState<(typeof NAV)[number]["id"]>("account");
   const [prefs, setPrefs] = useState<Prefs>(defaultPrefs);
@@ -87,6 +128,14 @@ export function SettingsPageContent() {
   const [showPass, setShowPass] = useState(false);
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
+  const [accountBusy, setAccountBusy] = useState(false);
+  const [accountMsg, setAccountMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [pwMsg, setPwMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [pwBusy, setPwBusy] = useState(false);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [avatarMsg, setAvatarMsg] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const avatarInputId = useId();
 
   useEffect(() => setPrefs(loadPrefs()), []);
 
@@ -109,26 +158,168 @@ export function SettingsPageContent() {
     setPrefs(next);
   }, []);
 
-  const saveAccount = () => {
-    toast.success(user ? "Profile updated locally — sync coming soon." : "Sign in to sync profile to the cloud.");
-  };
-
-  const saveSecurity = () => {
-    if (!currentPw && !newPw) {
-      toast.info("Nothing to update.");
+  const saveAccount = async () => {
+    if (!user) return;
+    setAccountMsg(null);
+    setAccountBusy(true);
+    const full = [firstName, lastName].filter(Boolean).join(" ").trim();
+    const { data, error } = await supabase.auth.updateUser({ data: { full_name: full } });
+    setAccountBusy(false);
+    if (error) {
+      setAccountMsg({ type: "err", text: error.message });
       return;
     }
-    toast.success("Password change simulated — connect your auth backend to enable.");
-    setCurrentPw("");
-    setNewPw("");
+    if (data.user) setUser(data.user);
+    setAccountMsg({ type: "ok", text: "Profile name saved to your account." });
   };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    router.push("/auth");
+  };
+
+  const hasEmailPassword = Boolean(
+    user?.identities?.some((i) => i.provider === "email"),
+  );
+
+  const saveSecurity = async () => {
+    setPwMsg(null);
+    if (!user?.email) {
+      setPwMsg({ type: "err", text: "Not signed in." });
+      return;
+    }
+    if (!hasEmailPassword) {
+      setPwMsg({
+        type: "err",
+        text: "This account only uses a social sign-in. Use “Forgot password” on the login page with the same email to set a password, or contact support to add one.",
+      });
+      return;
+    }
+    if (!newPw.trim()) {
+      setPwMsg({ type: "err", text: "Enter a new password." });
+      return;
+    }
+    if (newPw.length < 6) {
+      setPwMsg({ type: "err", text: "New password must be at least 6 characters." });
+      return;
+    }
+    if (!currentPw) {
+      setPwMsg({ type: "err", text: "Enter your current password to confirm it’s you." });
+      return;
+    }
+    setPwBusy(true);
+    try {
+      const { error: signErr } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPw,
+      });
+      if (signErr) {
+        setPwMsg({ type: "err", text: "Current password is wrong or could not be verified. Try again." });
+        return;
+      }
+      const { data, error: updErr } = await supabase.auth.updateUser({ password: newPw });
+      if (updErr) {
+        setPwMsg({ type: "err", text: updErr.message });
+        return;
+      }
+      if (data.user) setUser(data.user);
+      setCurrentPw("");
+      setNewPw("");
+      setPwMsg({ type: "ok", text: "Password updated. On your next sign in, use this new password." });
+    } finally {
+      setPwBusy(false);
+    }
+  };
+
+  const openAvatarPicker = () => {
+    setAvatarMsg(null);
+    avatarInputRef.current?.click();
+  };
+
+  const onAvatarFile: React.ChangeEventHandler<HTMLInputElement> = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !user) return;
+    setAvatarMsg(null);
+    setAvatarBusy(true);
+    const prevPath = (user.user_metadata as { avatar_path?: string } | undefined)?.avatar_path;
+    const result = await uploadProfileAvatar(file, user.id);
+    if ("error" in result) {
+      setAvatarMsg(result.error);
+      setAvatarBusy(false);
+      return;
+    }
+    const existing = (user.user_metadata || {}) as Record<string, unknown>;
+    const { data, error } = await supabase.auth.updateUser({
+      data: {
+        ...existing,
+        avatar_url: result.publicUrl,
+        avatar_path: result.path,
+      },
+    });
+    if (!error && prevPath && prevPath !== result.path) {
+      void removeProfileAvatarFromStorage(prevPath);
+    }
+    setAvatarBusy(false);
+    if (error) {
+      setAvatarMsg(error.message);
+      return;
+    }
+    if (data.user) setUser(data.user);
+  };
+
+  const removeAvatar = async () => {
+    if (!user) return;
+    setAvatarMsg(null);
+    setAvatarBusy(true);
+    const meta = user.user_metadata as { avatar_path?: string } | undefined;
+    if (meta?.avatar_path) {
+      try {
+        await removeProfileAvatarFromStorage(meta.avatar_path);
+      } catch {
+        // continue clearing metadata
+      }
+    }
+    const existing = (user.user_metadata || {}) as Record<string, unknown>;
+    const { data, error } = await supabase.auth.updateUser({
+      data: { ...existing, avatar_url: null, avatar_path: null },
+    });
+    setAvatarBusy(false);
+    if (error) {
+      setAvatarMsg(error.message);
+      return;
+    }
+    if (data.user) setUser(data.user);
+  };
+
+  const applyWeekendPreset = useCallback(
+    (days: readonly [number, ...number[]]) => {
+      const sorted = normalizeWeekendDays([...days]);
+      persistPrefs({ weekendDays: sorted });
+    },
+    [persistPrefs],
+  );
 
   const toggleWeekend = (d: number) => {
     const set = new Set(prefs.weekendDays);
-    if (set.has(d)) set.delete(d);
-    else set.add(d);
+    if (set.has(d)) {
+      if (set.size <= 1) {
+        return;
+      }
+      set.delete(d);
+    } else {
+      set.add(d);
+    }
     persistPrefs({ weekendDays: [...set].sort((a, b) => a - b) });
   };
+
+  const weekendSummary = useMemo(() => {
+    const s = new Set(prefs.weekendDays);
+    return WEEKDAYS.filter((d) => s.has(d.value))
+      .map((d) => d.long)
+      .join(", ");
+  }, [prefs.weekendDays]);
 
   const themeCards = useMemo(
     () =>
@@ -190,7 +381,7 @@ export function SettingsPageContent() {
             <span className="text-slate-700 dark:text-slate-300">Settings</span>
           </motion.div>
 
-          <motion.div variants={fadeInUp} className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <motion.div variants={fadeInUp} className="flex flex-col gap-4">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-cyan-700 dark:text-cyan-400/95">
                 Control center
@@ -204,23 +395,6 @@ export function SettingsPageContent() {
               <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg dark:text-slate-400">
                 Tune how Hirely looks, notifies you, and keeps your account secure — all in one place.
               </p>
-            </div>
-            <div className="w-full sm:max-w-sm sm:shrink-0">
-              <div className="rounded-[1.75rem] border border-[var(--lp-glass-border)] bg-[var(--lp-glass)] p-5 shadow-[0_24px_80px_-32px_rgba(15,23,42,0.15)] ring-1 ring-cyan-500/20 backdrop-blur-xl dark:border-white/[0.08] dark:bg-gradient-to-br dark:from-slate-900/80 dark:to-slate-950/90 dark:shadow-[0_20px_60px_-24px_rgba(0,0,0,0.6)] dark:ring-cyan-500/15">
-                <div className="flex items-center gap-3">
-                  <div className="grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-blue-500/25 to-violet-600/30 shadow-sm dark:from-blue-500/30 dark:to-violet-600/40">
-                    <BookOpen className="h-6 w-6 text-cyan-800 dark:text-cyan-300/90" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-cyan-800 dark:text-cyan-400/90">
-                      Tip
-                    </p>
-                    <p className="mt-1 text-sm leading-snug text-slate-700 dark:text-slate-300">
-                      Changes save to this device instantly.
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
           </motion.div>
         </motion.div>
@@ -302,29 +476,58 @@ export function SettingsPageContent() {
                       </header>
 
                       <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-                        <div className="relative h-24 w-24 shrink-0">
-                          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-slate-100 via-white to-slate-200/90 ring-2 ring-cyan-500/20 dark:from-slate-700 dark:via-slate-800 dark:to-slate-900 dark:ring-white/10" />
-                          <div className="absolute inset-0 flex items-center justify-center text-2xl font-bold text-slate-700 dark:text-slate-400">
-                            {(firstName || email || "?").slice(0, 1).toUpperCase()}
+                        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full">
+                          <div
+                            className="absolute inset-0 rounded-full bg-gradient-to-br from-slate-100 via-white to-slate-200/90 ring-2 ring-cyan-500/20 dark:from-slate-700 dark:via-slate-800 dark:to-slate-900 dark:ring-white/10"
+                            aria-hidden
+                          />
+                          {user && (user.user_metadata as { avatar_url?: string } | undefined)?.avatar_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={(user.user_metadata as { avatar_url: string }).avatar_url}
+                              alt=""
+                              className="relative z-[1] h-full w-full rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 z-[1] flex items-center justify-center text-2xl font-bold text-slate-700 dark:text-slate-400">
+                              {(firstName || email || "?").slice(0, 1).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex min-w-0 flex-1 flex-col gap-2">
+                          <div className="flex flex-wrap gap-2">
+                            <input
+                              ref={avatarInputRef}
+                              id={avatarInputId}
+                              type="file"
+                              accept="image/png,image/jpeg,image/jpg,image/webp"
+                              className="sr-only"
+                              onChange={onAvatarFile}
+                            />
+                            <button
+                              type="button"
+                              disabled={!user || avatarBusy}
+                              className="rounded-xl border border-slate-300/90 bg-white px-4 py-2 text-sm font-medium text-slate-800 transition hover:border-cyan-600/40 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-slate-200 dark:hover:border-cyan-500/30"
+                              onClick={openAvatarPicker}
+                            >
+                              {avatarBusy ? "Uploading…" : "Upload photo"}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={!user || avatarBusy || !(user?.user_metadata as { avatar_url?: string })?.avatar_url}
+                              className="rounded-xl border border-slate-300/70 px-4 py-2 text-sm text-slate-600 transition hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/[0.08] dark:text-slate-500 dark:hover:text-rose-400"
+                              onClick={removeAvatar}
+                            >
+                              Remove
+                            </button>
                           </div>
+                          {avatarMsg && (
+                            <p className="text-xs leading-snug text-rose-600 dark:text-rose-400">{avatarMsg}</p>
+                          )}
+                          <p className="text-xs text-slate-600 dark:text-slate-500">
+                            PNG, JPEG, or WebP · max 15MB. Requires a public Storage bucket <code className="rounded bg-slate-200/80 px-1 dark:bg-white/10">avatars</code> — see <code className="rounded bg-slate-200/80 px-1 dark:bg-white/10">supabase/avatars-storage.sql</code>.
+                          </p>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            className="rounded-xl border border-slate-300/90 bg-white px-4 py-2 text-sm font-medium text-slate-800 transition hover:border-cyan-600/40 dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-slate-200 dark:hover:border-cyan-500/30"
-                            onClick={() => toast.info("Upload will be available when storage is connected.")}
-                          >
-                            Upload photo
-                          </button>
-                          <button
-                            type="button"
-                            className="rounded-xl border border-slate-300/70 px-4 py-2 text-sm text-slate-600 transition hover:text-rose-600 dark:border-white/[0.08] dark:text-slate-500 dark:hover:text-rose-400"
-                            onClick={() => toast.info("Removed locally — sync pending backend.")}
-                          >
-                            Remove
-                          </button>
-                        </div>
-                        <p className="text-xs text-slate-600 dark:text-slate-500 sm:ml-auto">PNG or JPEG · max 15MB</p>
                       </div>
 
                       <div className="grid gap-5 sm:grid-cols-2">
@@ -350,23 +553,62 @@ export function SettingsPageContent() {
                         </label>
                       </div>
 
-                      <label className="block">
+                      <div>
                         <span className="text-xs font-bold uppercase tracking-[0.25em] text-cyan-800 dark:text-cyan-400/90">
                           Work email
                         </span>
                         <input
                           type="email"
+                          readOnly
                           value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="mt-1.5 w-full rounded-xl border border-[var(--lp-glass-border)] bg-[var(--lp-input-bg)] px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-cyan-600/45 focus:ring-2 focus:ring-cyan-500/25 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-slate-100 dark:focus:border-cyan-400/35 dark:focus:ring-cyan-500/15"
+                          title="Email is managed in Supabase. Contact support to change it."
+                          className="mt-1.5 w-full cursor-not-allowed rounded-xl border border-[var(--lp-glass-border)] bg-slate-100/80 px-4 py-3 text-sm text-slate-600 outline-none dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-slate-400"
                         />
-                      </label>
+                        <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-500">
+                          Shown for reference. To change it, use your account provider or an email change flow in Supabase.
+                        </p>
+                      </div>
+
+                      {accountMsg && (
+                        <p
+                          className={cn(
+                            "text-sm",
+                            accountMsg.type === "ok"
+                              ? "text-emerald-700 dark:text-emerald-400/90"
+                              : "text-rose-600 dark:text-rose-400",
+                          )}
+                        >
+                          {accountMsg.text}
+                        </p>
+                      )}
 
                       <div className="flex justify-end border-t border-slate-200/90 pt-6 dark:border-white/[0.06]">
-                        <button type="button" className="btn-violet rounded-xl px-6 py-2.5 text-sm font-semibold" onClick={saveAccount}>
-                          Save changes
+                        <button
+                          type="button"
+                          disabled={accountBusy}
+                          className="btn-violet rounded-xl px-6 py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                          onClick={() => void saveAccount()}
+                        >
+                          {accountBusy ? "Saving…" : "Save changes"}
                         </button>
                       </div>
+
+                      {user && (
+                        <div className="border-t border-rose-200/80 pt-6 dark:border-rose-500/20">
+                          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Session</h3>
+                          <p className="mt-1 text-sm text-slate-600 dark:text-slate-500">
+                            Sign out of Hirely on this device. You can sign in again anytime.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={handleSignOut}
+                            className="mt-4 inline-flex items-center gap-2 rounded-xl border border-rose-300/80 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-800 transition hover:bg-rose-100 dark:border-rose-500/35 dark:bg-rose-500/10 dark:text-rose-100 dark:hover:bg-rose-500/20"
+                          >
+                            <LogOut size={16} strokeWidth={2} aria-hidden />
+                            Sign out
+                          </button>
+                        </div>
+                      )}
                     </motion.section>
                   )}
 
@@ -448,7 +690,6 @@ export function SettingsPageContent() {
                               const accent = e.target.value;
                               setPrefs((p) => ({ ...p, accent }));
                               savePrefs({ accent });
-                              toast.success("Accent updated");
                             }}
                             className="h-10 w-14 cursor-pointer rounded-lg border border-slate-300/90 bg-transparent p-0.5 dark:border-white/[0.1]"
                           />
@@ -457,75 +698,157 @@ export function SettingsPageContent() {
                       </div>
 
                       <div>
-                        <p className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.25em] text-cyan-800 dark:text-cyan-400/90">
+                        <p className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.25em] text-cyan-800 dark:text-cyan-400/90">
                           <Globe size={14} className="text-cyan-800 opacity-90 dark:text-cyan-400" aria-hidden />
                           Regional format
                         </p>
+                        <p className="mb-4 text-sm leading-relaxed text-slate-600 dark:text-slate-500">
+                          Saved in this browser only. More of the app will respect these as we expand scheduling and
+                          history views.
+                        </p>
                         <div className="space-y-4">
-                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                            <span className="text-sm text-slate-800 dark:text-slate-300">First day of week</span>
-                            <select
-                              value={prefs.firstDayOfWeek}
-                              onChange={(e) => {
-                                const firstDayOfWeek = e.target.value as Prefs["firstDayOfWeek"];
-                                persistPrefs({ firstDayOfWeek });
-                              }}
-                              className="rounded-xl border border-[var(--lp-glass-border)] bg-[var(--lp-input-bg)] px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-600/45 dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-slate-200 dark:focus:border-cyan-400/35"
-                            >
-                              <option value="sunday">Sunday</option>
-                              <option value="monday">Monday</option>
-                            </select>
-                          </div>
-
                           <div>
-                            <span className="mb-2 block text-sm text-slate-800 dark:text-slate-300">Weekend days</span>
-                            <div className="flex flex-wrap gap-2">
-                              {["S", "M", "T", "W", "T", "F", "S"].map((label, d) => (
-                                <button
-                                  key={d}
-                                  type="button"
-                                  onClick={() => toggleWeekend(d)}
-                                  className={cn(
-                                    "h-9 w-9 rounded-lg text-xs font-semibold transition",
-                                    prefs.weekendDays.includes(d)
-                                      ? "bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/20"
-                                      : "border border-slate-300/80 bg-white/80 text-slate-600 hover:border-slate-400 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-500 dark:hover:border-white/15",
-                                  )}
+                            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-cyan-800 dark:text-cyan-400/90">
+                              Date &amp; time display
+                            </p>
+                            <div className="flex flex-col gap-3 rounded-2xl border border-[var(--lp-glass-border)] bg-white/60 p-4 dark:border-white/[0.08] dark:bg-white/[0.03]">
+                              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <span className="text-sm font-medium text-slate-800 dark:text-slate-300">
+                                  First day of the week
+                                </span>
+                                <select
+                                  value={prefs.firstDayOfWeek}
+                                  onChange={(e) => {
+                                    const firstDayOfWeek = e.target.value as Prefs["firstDayOfWeek"];
+                                    persistPrefs({ firstDayOfWeek });
+                                  }}
+                                  className="w-full min-w-0 rounded-xl border border-[var(--lp-glass-border)] bg-[var(--lp-input-bg)] px-3 py-2 text-sm text-slate-900 outline-none focus:border-cyan-600/45 sm:w-48 dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-slate-200 dark:focus:border-cyan-400/35"
                                 >
-                                  {label}
-                                </button>
-                              ))}
+                                  <option value="sunday">Sunday (common in the Americas)</option>
+                                  <option value="monday">Monday (ISO, much of Europe &amp; Asia)</option>
+                                </select>
+                              </div>
+                              <div className="grid gap-4 sm:grid-cols-2">
+                                <label className="block">
+                                  <span className="text-xs font-medium text-slate-700 dark:text-slate-400">Date format</span>
+                                  <p className="mb-1 text-[11px] text-slate-500 dark:text-slate-500">How dates appear in the product.</p>
+                                  <select
+                                    value={prefs.dateFormat}
+                                    onChange={(e) => {
+                                      persistPrefs({ dateFormat: e.target.value });
+                                    }}
+                                    className="mt-0.5 w-full rounded-xl border border-[var(--lp-glass-border)] bg-[var(--lp-input-bg)] px-3 py-2.5 text-sm text-slate-900 dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-slate-200"
+                                  >
+                                    <option value="MMM d, yyyy">Feb 18, 2026 (MMM d, yyyy)</option>
+                                    <option value="dd/MM/yyyy">18/02/2026 (dd/MM/yyyy)</option>
+                                    <option value="yyyy-MM-dd">2026-02-18 (yyyy-MM-dd)</option>
+                                  </select>
+                                </label>
+                                <label className="block">
+                                  <span className="text-xs font-medium text-slate-700 dark:text-slate-400">Time format</span>
+                                  <p className="mb-1 text-[11px] text-slate-500 dark:text-slate-500">12h or 24h clock.</p>
+                                  <select
+                                    value={prefs.timeFormat}
+                                    onChange={(e) => {
+                                      persistPrefs({ timeFormat: e.target.value as Prefs["timeFormat"] });
+                                    }}
+                                    className="mt-0.5 w-full rounded-xl border border-[var(--lp-glass-border)] bg-[var(--lp-input-bg)] px-3 py-2.5 text-sm text-slate-900 dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-slate-200"
+                                  >
+                                    <option value="12">4:30 PM (12-hour)</option>
+                                    <option value="24">16:30 (24-hour)</option>
+                                  </select>
+                                </label>
+                              </div>
                             </div>
                           </div>
 
-                          <div className="grid gap-4 sm:grid-cols-2">
-                            <label className="block">
-                              <span className="text-xs text-slate-600 dark:text-slate-500">Date format</span>
-                              <select
-                                value={prefs.dateFormat}
-                                onChange={(e) => {
-                                  persistPrefs({ dateFormat: e.target.value });
-                                }}
-                                className="mt-1 w-full rounded-xl border border-[var(--lp-glass-border)] bg-[var(--lp-input-bg)] px-3 py-2.5 text-sm text-slate-900 dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-slate-200"
-                              >
-                                <option value="MMM d, yyyy">Feb 18, 2026</option>
-                                <option value="dd/MM/yyyy">18/02/2026</option>
-                                <option value="yyyy-MM-dd">2026-02-18</option>
-                              </select>
-                            </label>
-                            <label className="block">
-                              <span className="text-xs text-slate-600 dark:text-slate-500">Time format</span>
-                              <select
-                                value={prefs.timeFormat}
-                                onChange={(e) => {
-                                  persistPrefs({ timeFormat: e.target.value as Prefs["timeFormat"] });
-                                }}
-                                className="mt-1 w-full rounded-xl border border-[var(--lp-glass-border)] bg-[var(--lp-input-bg)] px-3 py-2.5 text-sm text-slate-900 dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-slate-200"
-                              >
-                                <option value="12">4:30 PM</option>
-                                <option value="24">16:30</option>
-                              </select>
-                            </label>
+                          <div
+                            className="rounded-2xl border border-[var(--lp-glass-border)] bg-white/60 p-4 dark:border-white/[0.08] dark:bg-white/[0.03]"
+                            role="group"
+                            aria-labelledby="weekend-heading"
+                            aria-describedby="weekend-desc"
+                          >
+                            <h4
+                              id="weekend-heading"
+                              className="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-100"
+                            >
+                              Which days are your “weekend”?
+                            </h4>
+                            <p
+                              id="weekend-desc"
+                              className="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-500"
+                            >
+                              Hirely uses this for calendar-style week views, local highlights, and anything that should
+                              feel like “time off” — only on <strong className="font-medium text-slate-800 dark:text-slate-300">this device</strong> (same as the rest of these preferences).
+                            </p>
+
+                            <p className="mb-1.5 mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-cyan-800 dark:text-cyan-400/90">
+                              Quick picks
+                            </p>
+                            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-stretch">
+                              {WEEKEND_PRESETS.map((p) => {
+                                const active =
+                                  p.days.length === prefs.weekendDays.length &&
+                                  [...p.days].sort((a, b) => a - b).join(",") ===
+                                    [...prefs.weekendDays].sort((a, b) => a - b).join(",");
+                                return (
+                                  <button
+                                    key={p.label}
+                                    type="button"
+                                    onClick={() => applyWeekendPreset(p.days)}
+                                    className={cn(
+                                      "flex flex-1 flex-col items-start gap-0.5 rounded-xl border px-3 py-2.5 text-left text-sm transition",
+                                      active
+                                        ? "border-cyan-500/50 bg-cyan-500/10 text-slate-900 dark:border-cyan-400/40 dark:bg-cyan-500/15 dark:text-slate-100"
+                                        : "border-slate-200/90 bg-white/80 text-slate-800 hover:border-cyan-500/30 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-slate-200 dark:hover:border-cyan-400/30",
+                                    )}
+                                  >
+                                    <span className="font-semibold">{p.label}</span>
+                                    <span className="text-xs font-normal text-slate-500 dark:text-slate-500">
+                                      {p.hint}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            <p className="mb-2 mt-5 text-[11px] font-semibold uppercase tracking-[0.12em] text-cyan-800 dark:text-cyan-400/90">
+                              Or tap days
+                            </p>
+                            <div
+                              className="flex flex-wrap gap-2"
+                              role="group"
+                              aria-label="Toggle weekend days, multiple selection allowed"
+                            >
+                              {WEEKDAYS.map(({ value, abbr, long }) => {
+                                const on = prefs.weekendDays.includes(value);
+                                return (
+                                  <button
+                                    key={value}
+                                    type="button"
+                                    aria-pressed={on}
+                                    aria-label={`${long} — ${on ? "weekend" : "not weekend"}. Press to toggle.`}
+                                    title={long}
+                                    onClick={() => toggleWeekend(value)}
+                                    className={cn(
+                                      "min-w-[2.75rem] rounded-lg px-2.5 py-2 text-center text-xs font-bold transition",
+                                      on
+                                        ? "bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-md shadow-cyan-500/20"
+                                        : "border border-slate-300/80 bg-white/90 text-slate-700 hover:border-slate-400 dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-slate-300 dark:hover:border-white/20",
+                                    )}
+                                  >
+                                    {abbr}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <p
+                              className="mt-3 text-sm text-slate-700 dark:text-slate-300"
+                              aria-live="polite"
+                            >
+                              <span className="font-medium text-cyan-800 dark:text-cyan-300/95">You chose: </span>
+                              {weekendSummary}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -626,9 +949,21 @@ export function SettingsPageContent() {
                           Security
                         </h2>
                         <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-500">
-                          Password and active sessions.
+                          Update the password you use with your email. We verify your current password, then apply the
+                          new one in Supabase so the next sign-in works with it.
                         </p>
                       </header>
+
+                      {user && !hasEmailPassword && (
+                        <p className="rounded-xl border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100/95">
+                          You are signed in with a social account only. To set an email+password, open the{" "}
+                          <Link href="/auth" className="font-semibold underline-offset-2 hover:underline">
+                            login page
+                          </Link>{" "}
+                          and use &quot;Forgot password&quot; with the same email, or add an email+password in your Supabase
+                          Auth settings.
+                        </p>
+                      )}
 
                       <div className="space-y-4">
                         <label className="block">
@@ -671,6 +1006,19 @@ export function SettingsPageContent() {
                         </label>
                       </div>
 
+                      {pwMsg && (
+                        <p
+                          className={cn(
+                            "text-sm",
+                            pwMsg.type === "ok"
+                              ? "text-emerald-700 dark:text-emerald-400/90"
+                              : "text-rose-600 dark:text-rose-400",
+                          )}
+                        >
+                          {pwMsg.text}
+                        </p>
+                      )}
+
                       <div className="rounded-2xl border border-emerald-600/25 bg-emerald-500/10 p-4 dark:border-emerald-500/20 dark:bg-emerald-500/5">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div>
@@ -686,8 +1034,13 @@ export function SettingsPageContent() {
                       </div>
 
                       <div className="flex justify-end border-t border-slate-200/90 pt-6 dark:border-white/[0.06]">
-                        <button type="button" className="btn-violet rounded-xl px-6 py-2.5 text-sm font-semibold" onClick={saveSecurity}>
-                          Update password
+                        <button
+                          type="button"
+                          className="btn-violet rounded-xl px-6 py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                          disabled={pwBusy || (user != null && !hasEmailPassword)}
+                          onClick={() => void saveSecurity()}
+                        >
+                          {pwBusy ? "Updating…" : "Update password"}
                         </button>
                       </div>
                     </motion.section>

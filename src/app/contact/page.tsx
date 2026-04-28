@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useId } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { toast } from "react-toastify";
 import { Building2, Clock, Mail, Phone } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { ContactFaqsPanel } from "@/components/contact/ContactFaqsPanel";
 import { ContactPromoVideo } from "@/components/contact/ContactPromoVideo";
+import { InternationalPhoneField } from "@/components/contact/InternationalPhoneField";
+import { DEFAULT_PHONE_COUNTRY_ISO } from "@/lib/countryDialCodes";
 
 /** Slow, readable entrance (reference: ~1.2s ease-out) */
 const LOAD_DURATION = 1.2;
@@ -41,7 +41,8 @@ export default function ContactPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phoneCountry, setPhoneCountry] = useState(DEFAULT_PHONE_COUNTRY_ISO);
+  const [phoneLocal, setPhoneLocal] = useState("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
 
@@ -72,7 +73,6 @@ export default function ContactPage() {
     setSending(true);
     setTimeout(() => {
       setSending(false);
-      toast.success("Message sent! We'll get back to you within 24 hours.");
     }, 1500);
   };
 
@@ -237,17 +237,27 @@ export default function ContactPage() {
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                          Phone <span className="font-normal text-slate-500 dark:text-slate-500">(optional)</span>
-                        </label>
-                        <input
-                          type="tel"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          placeholder="+1 · · · · · · · · · ·"
-                          className={inputCls}
-                          autoComplete="tel"
-                        />
+                        <p
+                          className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
+                          id="contact-phone-group-label"
+                        >
+                          Phone <span className="font-normal text-slate-500">(optional)</span>
+                        </p>
+                        <div className="mt-1.5" aria-labelledby="contact-phone-group-label">
+                          <label htmlFor="contact-phone-local" className="sr-only">
+                            Phone number (optional)
+                          </label>
+                          <InternationalPhoneField
+                            inputId="contact-phone-local"
+                            countryIso={phoneCountry}
+                            onCountryChange={setPhoneCountry}
+                            localDigits={phoneLocal}
+                            onLocalChange={setPhoneLocal}
+                          />
+                        </div>
+                        <p className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-500">
+                          Choose country on the left, type the rest of your number on the right.
+                        </p>
                       </div>
                     </div>
                     <div>
@@ -289,22 +299,28 @@ export default function ContactPage() {
             </motion.div>
           </div>
 
-          {/* Promo loop + FAQ — side by side on large screens */}
+          {/* Live product preview — full width */}
           <motion.div
-            id="faq"
+            id="live-preview"
             className="relative z-[2] mt-16 w-full scroll-mt-28 lg:mt-24"
             initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 36 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-60px", amount: 0.1 }}
             transition={reduceMotion ? { duration: 0.2 } : { duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="grid grid-cols-1 items-stretch gap-10 lg:grid-cols-2 lg:gap-12 xl:gap-14">
-              <div className="order-2 flex min-h-0 flex-col lg:order-1">
-                <ContactPromoVideo />
+            <div className="mx-auto w-full max-w-6xl">
+              <div className="mb-6 text-center sm:mb-8">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-fuchsia-600 dark:text-fuchsia-400/95">
+                  Inside Hirely
+                </p>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+                  Coaching that hears how you interview—not just what you say
+                </h2>
+                <p className="mx-auto mt-2 max-w-xl text-sm text-slate-600 dark:text-slate-400">
+                  Live preview of session intelligence: delivery signals, STAR-aware nudges, and scoring aligned with real hiring feedback—same stack as your mock interviews.
+                </p>
               </div>
-              <div className="order-1 min-h-0 lg:order-2">
-                <ContactFaqsPanel />
-              </div>
+              <ContactPromoVideo />
             </div>
           </motion.div>
         </div>

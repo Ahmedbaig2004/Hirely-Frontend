@@ -39,7 +39,7 @@ interface Props {
 export function InterviewTypeSidebar({ selected, onSelect }: Props) {
   return (
     <aside className="flex flex-col gap-3">
-      <span className="label-caps mb-2 block text-slate-600 dark:text-slate-400/90">
+      <span className="label-caps mb-2 block text-slate-600 dark:text-slate-300">
         Interview Type
       </span>
       {OPTIONS.map(({ type, label, description, Icon }) => {
@@ -59,18 +59,18 @@ export function InterviewTypeSidebar({ selected, onSelect }: Props) {
               <Icon
                 size={16}
                 className={
-                  isActive ? "text-cyan-700 dark:text-cyan-300" : "text-slate-600 dark:text-slate-500"
+                  isActive ? "text-cyan-600 dark:text-cyan-300" : "text-slate-600 dark:text-slate-300"
                 }
               />
               <span
                 className={`text-sm font-semibold ${
-                  isActive ? "text-slate-900 dark:lp-hi" : "text-slate-800 dark:lp-body"
+                  isActive ? "text-slate-900 dark:text-slate-50" : "text-slate-800 dark:text-slate-200"
                 }`}
               >
                 {label}
               </span>
             </div>
-            <p className="pl-7 text-xs leading-snug text-slate-600 dark:lp-dim">
+            <p className="pl-7 text-xs leading-snug text-slate-600 dark:text-slate-400">
               {description}
             </p>
           </button>

@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Gauge, LayoutGrid, Lightbulb, List, Sparkles, X } from "lucide-react";
+import { useAuthStore } from "@/stores/useAuthStore";
 import {
   buildKpis,
   buildScoreTrend,
@@ -19,6 +21,26 @@ import {
 } from "@/components/dashboard/PersonalDashboardCharts";
 
 export type DashboardMainSection = "overview" | "sessions";
+
+function getUserFirstName(user: User | null): string {
+  if (!user) return "there";
+  const meta = user.user_metadata as
+    | { full_name?: string; name?: string; given_name?: string }
+    | undefined;
+  if (meta?.given_name?.trim()) return meta.given_name.trim();
+  for (const key of [meta?.name, meta?.full_name] as const) {
+    if (key?.trim()) {
+      const first = key.trim().split(/\s+/)[0];
+      if (first) return first;
+    }
+  }
+  const em = user.email?.split("@")[0]?.trim();
+  if (em) {
+    const part = em.split(/[._-]/)[0] ?? em;
+    if (part) return part.charAt(0).toLocaleUpperCase() + part.slice(1).toLowerCase();
+  }
+  return "there";
+}
 
 const TABS: { id: DashboardMainSection; label: string; icon: typeof LayoutGrid }[] = [
   { id: "overview", label: "Overview", icon: LayoutGrid },
@@ -164,6 +186,8 @@ export function PersonalDashboardExperience({
   section?: DashboardMainSection;
   onSectionChange?: (s: DashboardMainSection) => void;
 }) {
+  const { user } = useAuthStore();
+  const firstName = useMemo(() => getUserFirstName(user), [user]);
   const router = useRouter();
   const reduceMotion = useReducedMotion();
   const [internalSection, setInternalSection] = useState<DashboardMainSection>("overview");
@@ -197,8 +221,8 @@ export function PersonalDashboardExperience({
         <div>
           <div className="flex items-center gap-2">
             <Sparkles size={18} className="text-blue-700/85 dark:text-cyan-400/85" />
-            <span className="text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400">
-              Personal dashboard
+            <span className="text-xs font-semibold tracking-wide text-slate-600 dark:text-slate-400">
+              Hi, {firstName}
             </span>
           </div>
           <h1 className="mt-1 text-3xl font-bold tracking-tight text-on-surface">

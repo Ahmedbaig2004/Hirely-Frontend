@@ -7,6 +7,24 @@
    MD3 TOKENS: LIGHT (default / :root)
 ────────────────────────────────────────────── */
 :root {
+  /* HIRELY three-bar E + icon (must match hirelyBrandLockup.ts hirelyBrandGradientCss) */
+  --hirely-brand-gradient: linear-gradient(
+    180deg,
+    #00e8ff 0%,
+    #2f5ce8 50%,
+    #7b2cff 100%
+  );
+  /* H I R L Y (letters only; three-bar E + H mark use --hirely-brand-gradient) */
+  --hirely-wordmark-ink: #0a0a0a;
+  /* Optional tagline under wordmark — high contrast on light surfaces */
+  --hirely-tagline-ink: rgba(15, 23, 42, 0.72);
+
+  /* Fixed <Navbar> in root layout — keep primary content from sitting under the bar
+     (outer wrapper uses top padding + inner nav padding; rows can wrap on mid widths). */
+  --app-navbar-offset: calc(9rem + env(safe-area-inset-top, 0px));
+  /* Report: clear the bar + visible gap before hero / “Back to …” */
+  --app-report-page-pt: calc(var(--app-navbar-offset) + 2rem);
+
   --radius: 1rem;
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --theme-primary-light: rgb(110 198 204);
@@ -93,6 +111,16 @@
    MD3 TOKENS: DARK
 ────────────────────────────────────────────── */
 .dark {
+  --hirely-brand-gradient: linear-gradient(
+    180deg,
+    #00e8ff 0%,
+    #2f5ce8 50%,
+    #7b2cff 100%
+  );
+  /* Near-white reads as “grey” on glass; use pure white for H I R L Y in dark UI */
+  --hirely-wordmark-ink: #ffffff;
+  --hirely-tagline-ink: rgba(248, 250, 252, 0.88);
+
   --radius: 0.625rem;
   --theme-primary-light: rgb(34 211 238);
   --chart-axis-color: rgba(255, 255, 255, 0.35);
@@ -629,8 +657,8 @@
   /* Dark mode: slightly brighter violet */
   :is(.dark *) .btn-violet {
     background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-    color: #ffffff;
-    text-shadow: none;
+    color: #fafafa;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
     box-shadow: 0 4px 20px rgba(139, 92, 246, 0.35);
     transition:
       box-shadow 0.3s ease,
@@ -656,6 +684,12 @@
   html:not(.dark) .label-caps {
     color: rgb(51 65 85 / 0.92);
     opacity: 1;
+  }
+
+  /* Dark UI: surface labels must not wash out on glass panels */
+  :is(.dark *) .label-caps {
+    color: rgb(203 213 225);
+    opacity: 0.95;
   }
 
   .orb-breathe {
@@ -864,13 +898,13 @@ main {
   --lp-glow-cyan: rgba(34, 211, 238, 0.1);
   --lp-grid-color: rgba(59, 130, 246, 0.04);
   --lp-cursor-glow: rgba(59, 130, 246, 0.15);
-  /* Adaptive text — matches white/X opacity pattern in dark mode */
-  --lp-text-hi: rgba(226, 232, 240, 0.9);
-  --lp-text-body: rgba(226, 232, 240, 0.7);
-  --lp-text-sub: rgba(226, 232, 240, 0.58);
-  --lp-text-muted: rgba(226, 232, 240, 0.45);
-  --lp-text-dim: rgba(226, 232, 240, 0.35);
-  --lp-text-faint: rgba(226, 232, 240, 0.25);
+  /* Adaptive text — readable on dark navy; hierarchy preserved */
+  --lp-text-hi: rgba(248, 250, 252, 0.96);
+  --lp-text-body: rgba(226, 232, 240, 0.86);
+  --lp-text-sub: rgba(203, 213, 225, 0.82);
+  --lp-text-muted: rgba(186, 198, 214, 0.78);
+  --lp-text-dim: rgba(163, 176, 196, 0.68);
+  --lp-text-faint: rgba(148, 163, 184, 0.58);
   /* Adaptive surfaces */
   --lp-surface-lo: rgba(255, 255, 255, 0.04);
   --lp-surface-md: rgba(255, 255, 255, 0.06);
