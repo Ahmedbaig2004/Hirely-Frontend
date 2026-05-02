@@ -23,6 +23,9 @@ import {
   AlertTriangle,
   ChevronDown,
   Video,
+  Smile,
+  Hand,
+  PersonStanding,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LpBackground from "@/components/landing/LpBackground";
@@ -33,6 +36,7 @@ import {
 import { TranscriptWithFillerHighlight } from "@/components/dashboard/TranscriptWithFillerHighlight";
 import { InterviewAnswerAudioPlayer } from "@/components/dashboard/InterviewAnswerAudioPlayer";
 import { InterviewReportTechnicalScoring } from "@/components/dashboard/InterviewReportTechnicalScoring";
+import EliteZoneBar from "@/components/dashboard/EliteZoneBar";
 
 interface ShapExplanation {
   feature: string;
@@ -76,8 +80,29 @@ interface VoiceAnalysis {
   rawFeatures?: VoiceRawFeatures;
 }
 
+interface VideoTip {
+  feature: string;
+  base: string;
+  friendly: string;
+  shap: number;
+  direction: "positive" | "negative";
+  tip: string;
+  status: "green" | "yellow" | "red";
+  val: number;
+  zone_min: number;
+  zone_max: number;
+  zone_direction: "INCREASING" | "DECREASING" | "INVERTED_U";
+}
+
+interface VideoGroupResult {
+  impact_points: number;
+  status: "green" | "yellow" | "red";
+  tips: VideoTip[];
+}
+
 interface VideoAnalysis {
   confidenceLevel?: number;
+  rawFeatures?: Record<string, VideoGroupResult>;
 }
 
 interface DeliveryFeedback {
@@ -972,8 +997,46 @@ export default function InterviewDetail() {
                   : "Needs Improvement";
           const circumference = 2 * Math.PI * 36;
           const offset = circumference * (1 - videoPct / 100);
+
+          const allGroupResults = videoTurns
+            .map((t: InterviewTurn) => t.videoAnalysis?.rawFeatures)
+            .filter(Boolean) as Record<string, VideoGroupResult>[];
+
+          const aggregatedGroups: Record<string, { impact: number; status: string; tips: VideoTip[]; count: number }> = {};
+          for (const gr of allGroupResults) {
+            for (const [groupName, groupData] of Object.entries(gr)) {
+              if (!aggregatedGroups[groupName]) {
+                aggregatedGroups[groupName] = { impact: 0, status: groupData.status, tips: groupData.tips || [], count: 0 };
+              }
+              aggregatedGroups[groupName].impact += groupData.impact_points;
+              aggregatedGroups[groupName].count += 1;
+              if (groupData.tips?.length > (aggregatedGroups[groupName].tips?.length || 0)) {
+                aggregatedGroups[groupName].tips = groupData.tips;
+                aggregatedGroups[groupName].status = groupData.status;
+              }
+            }
+          }
+          for (const g of Object.values(aggregatedGroups)) {
+            if (g.count > 1) g.impact = g.impact / g.count;
+          }
+
+          const hasGroupData = Object.keys(aggregatedGroups).length > 0;
+
+          const groupIcons: Record<string, React.ReactNode> = {
+            "Facial Engagement": <Smile size={16} />,
+            "Hand Gestures": <Hand size={16} />,
+            "Posture & Presence": <PersonStanding size={16} />,
+          };
+
+          const statusBadge = (s: string) => {
+            if (s === "green") return { label: "Helped Your Score", bg: "bg-emerald-500/15", text: "text-emerald-400", border: "border-emerald-500/20" };
+            if (s === "red") return { label: "Held Back Your Score", bg: "bg-rose-500/15", text: "text-rose-400", border: "border-rose-500/20" };
+            return { label: "Minimal Impact", bg: "bg-amber-500/15", text: "text-amber-400", border: "border-amber-500/20" };
+          };
+
           return (
             <div className="glass-card mb-8 rounded-xl border-l-4 border-cyan-500/60 p-6 dark:border-cyan-500">
+              {/* Header + Score Circle */}
               <div className="flex flex-wrap justify-between items-start mb-5 gap-4">
                 <div>
                   <h3 className="mb-1 flex items-center gap-2 font-bold text-cyan-800 dark:text-cyan-400">
@@ -1030,13 +1093,75 @@ export default function InterviewDetail() {
                     <div className="text-[10px] text-slate-500 dark:text-slate-500 mt-1">
                       Body Language Score
                     </div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-500">
+                      {videoTurns.length} video turn{videoTurns.length !== 1 ? "s" : ""} analyzed
+                    </div>
                   </div>
                 </div>
               </div>
-              <p className="text-[11px] text-slate-600 dark:text-slate-500 italic mt-2">
+
+              {/* Group Overview Cards */}
+              {hasGroupData && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                  {Object.entries(aggregatedGroups).map(([groupName, groupData]) => {
+                    const badge = statusBadge(groupData.status);
+                    return (
+                      <div
+                        key={groupName}
+                        className={`rounded-xl p-4 ${badge.bg} border ${badge.border}`}
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={badge.text}>{groupIcons[groupName] || <Activity size={16} />}</span>
+                          <span className="text-xs font-semibold text-white/80">{groupName}</span>
+                        </div>
+                        <div className="flex items-baseline gap-2 mb-1.5">
+                          <span className={`text-lg font-black ${badge.text}`}>
+                            {groupData.impact >= 0 ? "+" : ""}{groupData.impact.toFixed(1)}%
+                          </span>
+                          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${badge.bg} ${badge.text} border ${badge.border}`}>
+                            {badge.label}
+                          </span>
+                        </div>
+                        {groupData.tips?.[0]?.tip && (
+                          <p className="text-[11px] text-white/50 leading-tight line-clamp-2">
+                            {groupData.tips[0].tip}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Elite Zone Bars per Group */}
+              {hasGroupData && Object.entries(aggregatedGroups).map(([groupName, groupData]) => {
+                if (!groupData.tips?.length) return null;
+                return (
+                  <div key={groupName} className="mb-5">
+                    <h4 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3">
+                      {groupName}
+                    </h4>
+                    {groupData.tips.map((tip) => (
+                      <EliteZoneBar
+                        key={tip.feature}
+                        label={tip.friendly}
+                        tip={tip.tip}
+                        val={tip.val}
+                        zoneMin={tip.zone_min}
+                        zoneMax={tip.zone_max}
+                        direction={tip.zone_direction}
+                        status={tip.status as "green" | "yellow" | "red"}
+                      />
+                    ))}
+                  </div>
+                );
+              })}
+
+              {/* Honest framing note */}
+              <p className="text-[11px] text-slate-600 dark:text-slate-500 italic mt-4">
                 This score reflects how interviewers may perceive your posture,
-                gestures, and facial expressions. Detailed body language
-                insights will be available in a future update.
+                gestures, and facial expressions. Some factors are influenced by
+                natural tendencies and may not fully reflect conscious improvement.
               </p>
             </div>
           );
@@ -1383,6 +1508,53 @@ export default function InterviewDetail() {
                   </span>
                 )}
               </div>
+
+              {/* Per-question video body language summary */}
+              {turn.videoAnalysis?.rawFeatures && (() => {
+                const groups = turn.videoAnalysis.rawFeatures as Record<string, VideoGroupResult>;
+                const groupEntries = Object.entries(groups);
+                if (groupEntries.length === 0) return null;
+
+                const statusDot: Record<string, string> = { green: "bg-emerald-400", yellow: "bg-amber-400", red: "bg-rose-400" };
+                const groupShort: Record<string, string> = { "Facial Engagement": "Face", "Hand Gestures": "Hands", "Posture & Presence": "Posture" };
+
+                const allTips = groupEntries.flatMap(([, g]) => g.tips || []);
+                const bestPositive = allTips
+                  .filter((t) => t.direction === "positive")
+                  .sort((a, b) => Math.abs(b.shap) - Math.abs(a.shap))[0];
+                const worstNegative = allTips
+                  .filter((t) => t.direction === "negative")
+                  .sort((a, b) => Math.abs(b.shap) - Math.abs(a.shap))[0];
+
+                return (
+                  <div className="mb-3 flex flex-col gap-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] px-3 py-2">
+                    <div className="flex items-center gap-3">
+                      {groupEntries.map(([name, g]) => (
+                        <span key={name} className="flex items-center gap-1 text-[11px] text-white/60">
+                          {groupShort[name] || name}
+                          <span className={`inline-block h-2 w-2 rounded-full ${statusDot[g.status] || "bg-slate-400"}`} />
+                        </span>
+                      ))}
+                    </div>
+                    {(bestPositive || worstNegative) && (
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px]">
+                        {bestPositive && (
+                          <span className="text-emerald-400">
+                            <CheckCircle size={11} className="inline mr-0.5 -mt-0.5" />
+                            {bestPositive.friendly}
+                          </span>
+                        )}
+                        {worstNegative && (
+                          <span className="text-rose-400">
+                            <XCircle size={11} className="inline mr-0.5 -mt-0.5" />
+                            {worstNegative.friendly}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Question */}
               <p className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
