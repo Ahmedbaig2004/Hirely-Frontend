@@ -221,14 +221,14 @@ export function PersonalDashboardExperience({
         <div>
           <div className="flex items-center gap-2">
             <Sparkles size={18} className="text-blue-700/85 dark:text-cyan-400/85" />
-            <span className="text-xs font-semibold tracking-wide text-slate-600 dark:text-slate-400">
+            <span className="text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-400">
               Hi, {firstName}
             </span>
           </div>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight text-on-surface">
+          <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900 dark:text-on-surface">
             Your practice at a glance
           </h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+          <p className="mt-1 text-sm text-slate-700 dark:text-slate-400">
             Overview snapshot — detailed charts and filters live in Deep analytics.
           </p>
         </div>

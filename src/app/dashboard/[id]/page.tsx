@@ -27,6 +27,117 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import LpBackground from "@/components/landing/LpBackground";
 
+interface ShapExplanation {
+  feature: string;
+  impact_magnitude: number;
+  direction?: string;
+  label?: string;
+  category?: string;
+  explanation?: string;
+}
+
+interface VoiceFinalSummary {
+  opening?: string;
+  focus_note?: string;
+  best_trait?: string;
+  reminder?: string;
+}
+
+interface UiSyncCategoryRow {
+  label?: string;
+  status: string;
+  impact_pct?: number;
+  top_driver?: { tip?: string };
+}
+
+interface UiSyncPayload {
+  categories?: Record<string, UiSyncCategoryRow>;
+}
+
+interface VoiceRawFeatures {
+  shapExplanations?: ShapExplanation[];
+  ui_sync?: UiSyncPayload;
+  finalSummary?: VoiceFinalSummary;
+}
+
+interface VoiceAnalysis {
+  status?: string;
+  confidenceLevel?: number;
+  wordsPerMinute?: number;
+  speakingFluency?: number;
+  pauseRatio?: number;
+  rawFeatures?: VoiceRawFeatures;
+}
+
+interface VideoAnalysis {
+  confidenceLevel?: number;
+}
+
+interface DeliveryFeedback {
+  fillerWords?: Array<{ word: string; count: number }>;
+  hedgingPhrases?: string[];
+  structureFeedback?: string;
+  topImprovement?: string;
+  relevanceScore?: number;
+  topStrength?: string;
+  fillerCount?: number;
+  hedgingCount?: number;
+}
+
+interface InterviewTurn {
+  topic?: string;
+  difficulty?: string;
+  answerMode?: string;
+  question?: string;
+  answer?: string;
+  voiceAnalysis?: VoiceAnalysis;
+  videoAnalysis?: VideoAnalysis;
+  deliveryFeedback?: DeliveryFeedback;
+  feedback?: string;
+  score?: number;
+  audioUrl?: string;
+}
+
+interface InterviewFeedback {
+  decision?: string;
+  summary?: string;
+  originalGapAnalysis?: {
+    matchScore?: number;
+    feedback?: string;
+    missingSkills?: string[];
+  };
+  strengths?: string[];
+  weaknesses?: string[];
+  recommendations?: string;
+  scores?: {
+    technical?: number;
+    delivery?: number | null;
+    voice?: number | null;
+    video?: number | null;
+    contentQuality?: number;
+    combined?: number;
+  };
+  voiceSummary?: {
+    allInsights?: string[];
+  };
+  deliverySummary?: {
+    totalFillers?: number;
+    totalHedging?: number;
+    avgRelevance?: number;
+    avgSpecificity?: number;
+    totalRestarts?: number;
+  };
+}
+
+interface InterviewDetailData {
+  jobDescription?: string | null;
+  interviewType?: string;
+  createdAt: string;
+  finalScore: number;
+  finalFeedback?: InterviewFeedback | null;
+  turns: InterviewTurn[];
+}
+
 // Frontend label override — always shows latest human-friendly names
 // regardless of what's baked into stored DB JSON
 const VOICE_FEATURE_LABELS: Record<string, string> = {
@@ -55,14 +166,11 @@ const VOICE_FEATURE_LABELS: Record<string, string> = {
   F3amplitudeLogRelF0_sma3nz_amean: "Voice Richness",
 };
 
-const resolveLabel = (driver: any) =>
-  VOICE_FEATURE_LABELS[driver?.feature] || driver?.label || driver?.feature;
-
 export default function InterviewDetail() {
   const { id } = useParams();
   const router = useRouter();
   const { user } = useAuthStore();
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<InterviewDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [gapExpanded, setGapExpanded] = useState(false);
 
@@ -123,7 +231,7 @@ export default function InterviewDetail() {
     );
   }
 
-  const feedback = data.finalFeedback || {};
+  const feedback: InterviewFeedback = data.finalFeedback ?? {};
 
   return (
     <main
@@ -244,23 +352,22 @@ export default function InterviewDetail() {
                       <p className="mb-4 text-sm leading-relaxed text-amber-950/90 dark:text-amber-200/90">
                         {feedback.originalGapAnalysis.feedback}
                       </p>
-                      {feedback.originalGapAnalysis.missingSkills?.length >
-                        0 && (
+                      {(feedback.originalGapAnalysis.missingSkills?.length ??
+                        0) > 0 && (
                         <div>
                           <span className="mb-2 block text-xs font-bold uppercase tracking-wide text-amber-900 dark:text-amber-400/80">
                             Missing Skills Detected:
                           </span>
                           <div className="flex flex-wrap gap-2">
-                            {feedback.originalGapAnalysis.missingSkills.map(
-                              (skill: string, i: number) => (
+                            {(feedback.originalGapAnalysis.missingSkills ??
+                              []).map((skill: string, i: number) => (
                                 <span
                                   key={i}
                                   className="glass-card px-2 py-1 text-amber-300 text-xs font-semibold rounded border border-amber-500/20"
                                 >
                                   {skill}
                                 </span>
-                              ),
-                            )}
+                              ))}
                           </div>
                         </div>
                       )}
@@ -432,7 +539,7 @@ export default function InterviewDetail() {
         {feedback.voiceSummary &&
           (() => {
             const voiceTurnsForScore = data.turns.filter(
-              (t: any) =>
+              (t: InterviewTurn) =>
                 t.voiceAnalysis?.status === "completed" &&
                 typeof t.voiceAnalysis?.confidenceLevel === "number",
             );
@@ -440,8 +547,8 @@ export default function InterviewDetail() {
               voiceTurnsForScore.length > 0
                 ? Math.round(
                     (voiceTurnsForScore.reduce(
-                      (s: number, t: any) =>
-                        s + t.voiceAnalysis.confidenceLevel,
+                      (s: number, t: InterviewTurn) =>
+                        s + (t.voiceAnalysis?.confidenceLevel ?? 0),
                       0,
                     ) /
                       voiceTurnsForScore.length) *
@@ -533,16 +640,16 @@ export default function InterviewDetail() {
                 {/* SHAP-driven coaching — final summary + 3 improvements + 2 strengths */}
                 {(() => {
                   const voiceTurns = data.turns.filter(
-                    (t: any) => t.voiceAnalysis?.status === "completed",
+                    (t: InterviewTurn) => t.voiceAnalysis?.status === "completed",
                   );
                   if (voiceTurns.length === 0) return null;
 
                   // Collect all shapExplanations across turns, deduplicate by feature, keep highest impact
-                  const byFeature: Record<string, any> = {};
-                  voiceTurns.forEach((t: any) => {
-                    const explanations: any[] =
-                      t.voiceAnalysis?.rawFeatures?.shapExplanations || [];
-                    explanations.forEach((s: any) => {
+                  const byFeature: Record<string, ShapExplanation> = {};
+                  voiceTurns.forEach((t: InterviewTurn) => {
+                    const explanations: ShapExplanation[] =
+                      t.voiceAnalysis?.rawFeatures?.shapExplanations ?? [];
+                    explanations.forEach((s: ShapExplanation) => {
                       if (!s?.feature) return;
                       const existing = byFeature[s.feature];
                       if (
@@ -556,25 +663,26 @@ export default function InterviewDetail() {
                   });
 
                   const allItems = Object.values(byFeature).sort(
-                    (a: any, b: any) => b.impact_magnitude - a.impact_magnitude,
+                    (a: ShapExplanation, b: ShapExplanation) =>
+                      b.impact_magnitude - a.impact_magnitude,
                   );
                   // Backend already filters by significance (0.015 threshold) and uncaps strengths
                   const improvements = allItems.filter(
-                    (s: any) => s.direction === "decreased",
+                    (s: ShapExplanation) => s.direction === "decreased",
                   );
                   const strengths = allItems.filter(
-                    (s: any) => s.direction === "increased",
+                    (s: ShapExplanation) => s.direction === "increased",
                   );
 
                   // Extract ui_sync category sentiments (already sent by backend)
                   const uiSync = voiceTurns
-                    .map((t: any) => t.voiceAnalysis?.rawFeatures?.ui_sync)
-                    .find((u: any) => u?.categories);
+                    .map((t: InterviewTurn) => t.voiceAnalysis?.rawFeatures?.ui_sync)
+                    .find((u: UiSyncPayload | undefined) => u?.categories);
 
                   // Final summary: use the first turn that has it
                   const finalSummary = voiceTurns
-                    .map((t: any) => t.voiceAnalysis?.rawFeatures?.finalSummary)
-                    .find((s: any) => s?.opening);
+                    .map((t: InterviewTurn) => t.voiceAnalysis?.rawFeatures?.finalSummary)
+                    .find((s: VoiceFinalSummary | undefined) => s?.opening);
 
                   if (
                     improvements.length === 0 &&
@@ -655,12 +763,12 @@ export default function InterviewDetail() {
                             Category Overview
                           </span>
                           <div className="grid grid-cols-2 gap-3">
-                            {Object.entries(
-                              uiSync.categories as Record<string, any>,
-                            ).map(([key, cat]: [string, any]) => {
+                            {Object.entries(uiSync.categories).map(
+                              ([key, cat]: [string, UiSyncCategoryRow]) => {
                               const styles =
                                 statusStyles[cat.status] ??
                                 statusStyles["Minimal Impact"];
+                              const impactPct = cat.impact_pct ?? 0;
                               return (
                                 <motion.div
                                   key={key}
@@ -679,10 +787,10 @@ export default function InterviewDetail() {
                                       {cat.label}
                                     </span>
                                     <div className="flex items-center gap-1 ml-auto">
-                                      {cat.impact_pct > 0 &&
+                                      {impactPct > 0 &&
                                         cat.status !== "Minimal Impact" && (
                                           <span className="text-[9px] lp-faint">
-                                            ~{cat.impact_pct}%
+                                            ~{impactPct}%
                                           </span>
                                         )}
                                       <span
@@ -709,7 +817,7 @@ export default function InterviewDetail() {
                             Priority Improvements
                           </span>
                           <div className="space-y-2">
-                            {improvements.map((item: any, i: number) => (
+                            {improvements.map((item: ShapExplanation, i: number) => (
                               <motion.div
                                 key={item.feature}
                                 initial={{ opacity: 0, x: -8 }}
@@ -745,7 +853,7 @@ export default function InterviewDetail() {
                             Your Strengths
                           </span>
                           <div className="space-y-2">
-                            {strengths.map((item: any, i: number) => (
+                            {strengths.map((item: ShapExplanation, i: number) => (
                               <motion.div
                                 key={item.feature}
                                 initial={{ opacity: 0, x: -8 }}
@@ -795,13 +903,13 @@ export default function InterviewDetail() {
                 </div>
 
                 {/* Keep Gemini insights but filter out jargon-heavy ones */}
-                {feedback.voiceSummary.allInsights?.length > 0 && (
+                {(feedback.voiceSummary.allInsights?.length ?? 0) > 0 && (
                   <details className="group">
                     <summary className="cursor-pointer select-none text-xs font-bold uppercase tracking-wider text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200">
                       Detailed AI Observations
                     </summary>
                     <ul className="mt-3 space-y-2">
-                      {feedback.voiceSummary.allInsights.map(
+                      {(feedback.voiceSummary.allInsights ?? []).map(
                         (insight: string, i: number) => (
                           <li
                             key={i}
@@ -825,12 +933,13 @@ export default function InterviewDetail() {
         {/* 5b. BODY LANGUAGE (Video Analysis) */}
         {(() => {
           const videoTurns = data.turns.filter(
-            (t: any) => t.videoAnalysis?.confidenceLevel != null,
+            (t: InterviewTurn) => t.videoAnalysis?.confidenceLevel != null,
           );
           if (videoTurns.length === 0) return null;
           const videoPct = Math.round(
             (videoTurns.reduce(
-              (s: number, t: any) => s + t.videoAnalysis.confidenceLevel,
+              (s: number, t: InterviewTurn) =>
+                s + (t.videoAnalysis?.confidenceLevel ?? 0),
               0,
             ) /
               videoTurns.length) *
@@ -921,7 +1030,7 @@ export default function InterviewDetail() {
         {/* 6. DELIVERY ANALYSIS SUMMARY */}
         {(() => {
           const turnsWithDelivery = data.turns.filter(
-            (t: any) => t.deliveryFeedback,
+            (t: InterviewTurn) => t.deliveryFeedback,
           );
           if (turnsWithDelivery.length === 0 && !feedback.deliverySummary)
             return null;
@@ -932,10 +1041,11 @@ export default function InterviewDetail() {
           const structureFeedbacks: string[] = [];
           const improvements: string[] = [];
 
-          turnsWithDelivery.forEach((t: any) => {
+          turnsWithDelivery.forEach((t: InterviewTurn) => {
             const d = t.deliveryFeedback;
+            if (!d) return;
             if (d.fillerWords) {
-              d.fillerWords.forEach((f: any) => {
+              d.fillerWords.forEach((f: { word: string; count: number }) => {
                 allFillers[f.word] = (allFillers[f.word] || 0) + f.count;
               });
             }
@@ -1161,7 +1271,7 @@ export default function InterviewDetail() {
         </div>
 
         <div className="space-y-6">
-          {data.turns.map((turn: any, i: number) => (
+          {data.turns.map((turn: InterviewTurn, i: number) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 12 }}
@@ -1272,11 +1382,11 @@ export default function InterviewDetail() {
                 </div>
                 <div
                   className={`shrink-0 font-bold px-3 py-1 rounded-lg text-sm ${getScoreColor(
-                    turn.score,
+                    turn.score ?? 0,
                     true,
                   )}`}
                 >
-                  Score: {turn.score}/100
+                  Score: {turn.score ?? 0}/100
                 </div>
               </div>
 
@@ -1310,23 +1420,23 @@ export default function InterviewDetail() {
                       <span>{turn.deliveryFeedback.topImprovement}</span>
                     </div>
                   )}
-                  {(turn.deliveryFeedback.fillerCount > 0 ||
-                    turn.deliveryFeedback.hedgingCount > 0) && (
+                  {((turn.deliveryFeedback.fillerCount ?? 0) > 0 ||
+                    (turn.deliveryFeedback.hedgingCount ?? 0) > 0) && (
                     <div className="flex flex-wrap gap-2 mt-1">
-                      {turn.deliveryFeedback.fillerCount > 0 && (
+                      {(turn.deliveryFeedback.fillerCount ?? 0) > 0 && (
                         <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${turn.deliveryFeedback.fillerCount <= 2 ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400" : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"}`}
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${(turn.deliveryFeedback.fillerCount ?? 0) <= 2 ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400" : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"}`}
                         >
-                          {turn.deliveryFeedback.fillerCount} filler
-                          {turn.deliveryFeedback.fillerCount > 1 ? "s" : ""}
+                          {turn.deliveryFeedback.fillerCount ?? 0} filler
+                          {(turn.deliveryFeedback.fillerCount ?? 0) > 1 ? "s" : ""}
                         </span>
                       )}
-                      {turn.deliveryFeedback.hedgingCount > 0 && (
+                      {(turn.deliveryFeedback.hedgingCount ?? 0) > 0 && (
                         <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${turn.deliveryFeedback.hedgingCount <= 2 ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400" : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"}`}
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${(turn.deliveryFeedback.hedgingCount ?? 0) <= 2 ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400" : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"}`}
                         >
-                          {turn.deliveryFeedback.hedgingCount} hedge
-                          {turn.deliveryFeedback.hedgingCount > 1 ? "s" : ""}
+                          {turn.deliveryFeedback.hedgingCount ?? 0} hedge
+                          {(turn.deliveryFeedback.hedgingCount ?? 0) > 1 ? "s" : ""}
                         </span>
                       )}
                     </div>
@@ -1459,15 +1569,4 @@ function getDifficultyColor(
   if (d === "medium")
     return "border-cyan-500/30 bg-cyan-500/10 text-cyan-900 dark:text-cyan-400";
   return "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400";
-}
-
-function getConfidenceBadgeStyle(label: string | null | undefined): string {
-  const l = (label || "").toLowerCase();
-  if (l.includes("high"))
-    return "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400";
-  if (l.includes("moderate") || l.includes("medium"))
-    return "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-400";
-  if (l.includes("low") || l.includes("need"))
-    return "border-rose-500/30 bg-rose-500/10 text-rose-800 dark:text-rose-400";
-  return "border-slate-300/80 bg-slate-100/80 text-slate-700 dark:border-outline-variant dark:bg-surface-container dark:text-slate-400";
 }

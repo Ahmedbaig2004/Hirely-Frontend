@@ -27,6 +27,15 @@ import { toast } from "react-toastify";
 import { VoiceVisualizer } from "./ui/voice-visualizer";
 import { useCoordinatedQuestionText } from "../hooks/useCoordinatedQuestionText";
 
+function submitAnswerErrorMessage(err: unknown): string {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data as { error?: string } | undefined;
+    return data?.error ?? err.message ?? "Failed to submit answer";
+  }
+  if (err instanceof Error) return err.message;
+  return "Failed to submit answer";
+}
+
 const SESSION_TIPS = [
   "Structure answers: one sentence to frame, then a few crisp supporting points.",
   "If a question is broad, name your role, goal, and outcome before the details.",
@@ -195,8 +204,11 @@ export default function InterviewPanel() {
 
         try {
           await audioRef.current.play();
-        } catch (err: any) {
-          if (err.name === "AbortError" || err.message?.includes("interrupted")) {
+        } catch (err: unknown) {
+          const isAbort =
+            (err instanceof DOMException && err.name === "AbortError") ||
+            (err instanceof Error && err.message.includes("interrupted"));
+          if (isAbort) {
             console.log("Audio playback interrupted (harmless)");
           } else {
             console.error("Playback failed:", err);
@@ -288,7 +300,7 @@ export default function InterviewPanel() {
             if (pollingAbortRef.current) return;
             setProcessingStage("done");
             setTimeout(() => router.replace(`/dashboard/${sessionId}`), 1200);
-          } catch (finalizeErr: any) {
+          } catch (finalizeErr: unknown) {
             if (pollingAbortRef.current) return;
             console.error("Finalize error:", finalizeErr);
             toast.error("Failed to generate report. Please try again.");
@@ -375,9 +387,8 @@ export default function InterviewPanel() {
         setIsAIThinking(false);
         setIsPlaying(false);
       }
-    } catch (err: any) {
-      const errorMsg =
-        err.response?.data?.error || err.message || "Failed to submit answer";
+    } catch (err: unknown) {
+      const errorMsg = submitAnswerErrorMessage(err);
       toast.error(`Error: ${errorMsg}`);
       console.error(err);
       setIsAIThinking(false);
@@ -439,7 +450,7 @@ export default function InterviewPanel() {
             });
             setProcessingStage("done");
             setTimeout(() => router.replace(`/dashboard/${sessionId}`), 1200);
-          } catch (finalizeErr: any) {
+          } catch (finalizeErr: unknown) {
             console.error("Finalize error:", finalizeErr);
             toast.error("Failed to generate report. Please try again.");
             setTimeout(() => router.replace(`/dashboard/${sessionId}`), 2000);
@@ -455,9 +466,8 @@ export default function InterviewPanel() {
         { role: "ai", content: nextQuestion?.question },
       ]);
       setIsAIThinking(false);
-    } catch (err: any) {
-      const errorMsg =
-        err.response?.data?.error || err.message || "Failed to submit answer";
+    } catch (err: unknown) {
+      const errorMsg = submitAnswerErrorMessage(err);
       toast.error(`Error: ${errorMsg}`);
       setIsAIThinking(false);
     }
