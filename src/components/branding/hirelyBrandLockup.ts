@@ -1,7 +1,7 @@
 /**
  * HIRELY brand lockup (reference: wordmark + three-bar E + H mark + gradient).
- * Gradient: `--hirely-brand-gradient` in `globals.css` (keep stops in sync with brand art).
- * Wordmark: nav/footer use `text-[#0a0a0a] dark:text-white`; optional tagline: `--hirely-tagline-ink` in `globals.css`.
+ * Gradient: `--hirely-brand-gradient` in `globals.css` (cyan → blue → purple).
+ * Wordmark: `--hirely-wordmark-ink`; nav/footer may use `text-[color:var(--hirely-wordmark-ink)]`.
  */
 
 /**

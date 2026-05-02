@@ -5,7 +5,7 @@ import { hirelyWordmarkMetrics } from "@/components/branding/hirelyWordmarkMetri
 import { iconToWordmarkGapEm, navHMarkHeightEm } from "@/components/branding/hirelyBrandLockup";
 
 type HirelyNavLockupProps = {
-  /** Kept for call-site context; H I R L Y use `text-[#0a0a0a] dark:text-white` unless `textClassName` overrides. */
+  /** Default wordmark color uses `--hirely-wordmark-ink`; override with `textClassName` if needed. */
   isLight: boolean;
   textClassName?: string;
   className?: string;
@@ -18,9 +18,9 @@ type HirelyNavLockupProps = {
 
 const H_MARK = "/branding/hirely-h-mark.png";
 
-/** Light: near-black; dark: white (`dark` matches `html.dark` from next-themes). */
+/** Wordmark uses `--hirely-wordmark-ink` in both themes. */
 const DEFAULT_TEXT =
-  "text-[0.85rem] sm:text-[0.9rem] leading-none text-[#0a0a0a] dark:text-white";
+  "text-[0.85rem] sm:text-[0.9rem] leading-none text-[color:var(--hirely-wordmark-ink)]";
 
 export function HirelyNavLockup({
   isLight,

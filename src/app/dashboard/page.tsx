@@ -35,7 +35,11 @@ function ScoreBar({ score }: { score: number }) {
       : { gradient: "linear-gradient(90deg, #EF4444, #F87171)", glow: "rgba(239,68,68,0.5)" };
 
   const textColor =
-    score >= 70 ? "text-emerald-400" : score >= 50 ? "text-amber-400" : "text-rose-400";
+    score >= 70
+      ? "text-emerald-700 dark:text-emerald-400"
+      : score >= 50
+        ? "text-amber-700 dark:text-amber-400"
+        : "text-rose-700 dark:text-rose-400";
 
   return (
     <div className="flex items-center gap-2 min-w-[120px]">
@@ -58,8 +62,8 @@ function DecisionBadge({ decision }: { decision?: string }) {
     <span
       className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
         isHire
-          ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/20"
-          : "bg-rose-500/15 text-rose-400 border-rose-500/20"
+          ? "bg-emerald-500/15 text-emerald-800 border-emerald-600/35 dark:text-emerald-400 dark:border-emerald-500/20"
+          : "bg-rose-500/15 text-rose-800 border-rose-600/35 dark:text-rose-400 dark:border-rose-500/20"
       }`}
     >
       {decision}
@@ -110,7 +114,7 @@ function InterviewCard({
         >
           <div className="flex-1 min-w-0 mr-4">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <h2 className="font-bold text-lg text-on-surface truncate opacity-90">
+              <h2 className="font-bold text-lg text-slate-900 truncate dark:text-on-surface dark:opacity-90">
                 {item.jobDescription
                   ? item.jobDescription.substring(0, 50) + (item.jobDescription.length > 50 ? "…" : "")
                   : item.interviewType === "TECHNICAL"
@@ -122,7 +126,7 @@ function InterviewCard({
               <DecisionBadge decision={fb?.decision} />
             </div>
             <div className="flex flex-wrap items-center gap-4">
-              <span className="flex items-center gap-1 text-sm text-slate-600 dark:text-slate-400">
+              <span className="flex items-center gap-1 text-sm text-slate-700 dark:text-slate-400">
                 <Calendar size={14} />
                 {new Date(item.createdAt).toLocaleDateString()}
               </span>
@@ -131,7 +135,7 @@ function InterviewCard({
           </div>
           <ChevronDown
             size={18}
-            className={`shrink-0 text-slate-600 transition-transform duration-300 dark:text-slate-400 ${expanded ? "rotate-180" : ""}`}
+            className={`shrink-0 text-slate-700 transition-transform duration-300 dark:text-slate-400 ${expanded ? "rotate-180" : ""}`}
           />
         </button>
 
@@ -178,7 +182,7 @@ function InterviewCard({
             <div className="px-6 pb-6 border-t border-outline-variant pt-4 space-y-4">
               {/* Summary */}
               {fb?.summary && (
-                <p className="text-sm text-on-surface-variant leading-relaxed line-clamp-3 opacity-65">
+                <p className="text-sm leading-relaxed line-clamp-3 text-slate-800 dark:text-on-surface-variant dark:opacity-90">
                   {fb.summary}
                 </p>
               )}
@@ -188,26 +192,30 @@ function InterviewCard({
                 <div className="grid sm:grid-cols-2 gap-3">
                   {strengths.length > 0 && (
                     <div className="space-y-1.5">
-                      <span className="text-[10px] font-bold text-emerald-400/60 uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider dark:text-emerald-400/90">
                         Strengths
                       </span>
                       {strengths.map((s, i) => (
                         <div key={i} className="flex items-start gap-2">
-                          <CheckCircle size={12} className="mt-0.5 shrink-0 text-emerald-500" />
-                          <span className="text-xs text-on-surface-variant leading-relaxed opacity-65">{s}</span>
+                          <CheckCircle size={12} className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-500" />
+                          <span className="text-sm leading-relaxed text-slate-800 dark:text-on-surface-variant dark:opacity-90">
+                            {s}
+                          </span>
                         </div>
                       ))}
                     </div>
                   )}
                   {weaknesses.length > 0 && (
                     <div className="space-y-1.5">
-                      <span className="text-[10px] font-bold text-rose-400/60 uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-rose-800 uppercase tracking-wider dark:text-rose-400/90">
                         Areas to Improve
                       </span>
                       {weaknesses.map((s, i) => (
                         <div key={i} className="flex items-start gap-2">
-                          <XCircle size={12} className="mt-0.5 shrink-0 text-rose-500" />
-                          <span className="text-xs text-on-surface-variant leading-relaxed opacity-65">{s}</span>
+                          <XCircle size={12} className="mt-0.5 shrink-0 text-rose-600 dark:text-rose-500" />
+                          <span className="text-sm leading-relaxed text-slate-800 dark:text-on-surface-variant dark:opacity-90">
+                            {s}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -217,10 +225,11 @@ function InterviewCard({
 
               {/* CTA */}
               <button
+                type="button"
                 onClick={onNavigate}
-                className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:opacity-80 transition-opacity mt-1"
+                className="btn-violet mt-2 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold"
               >
-                View full report <ArrowRight size={13} />
+                View full report <ArrowRight size={16} />
               </button>
             </div>
           </motion.div>
@@ -259,8 +268,15 @@ export default function Dashboard() {
       await axios.delete(`${backendUrl}/api/interviews/${id}?userId=${user?.id ?? ""}`);
       setInterviews((prev) => prev.filter((iv) => iv.id !== id));
       if (expandedId === id) setExpandedId(null);
-    } catch (err: any) {
-      toast.error("Failed to delete: " + (err.response?.data?.error || err.message));
+    } catch (err: unknown) {
+      let message = "Unknown error";
+      if (axios.isAxiosError(err)) {
+        const data = err.response?.data as { error?: string } | undefined;
+        message = data?.error ?? err.message;
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
+      toast.error("Failed to delete: " + message);
     }
   };
 

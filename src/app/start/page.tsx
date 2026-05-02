@@ -29,6 +29,14 @@ interface AnalysisData {
   gapAnalysis: { matchScore: number; missingSkills: string[]; feedback: string } | null;
 }
 
+interface InitInterviewResponse {
+  analysis: AnalysisData;
+  sessionId: string;
+  firstQuestion: { question: string };
+  audio?: string | null;
+  audioMime?: string | null;
+}
+
 const STACKS = [
   "React", "Node.js", "Python", "Java", "Go",
   "TypeScript", "SQL", "C++", "AWS / Cloud", "Android", "iOS",
@@ -191,7 +199,7 @@ export default function StartPage() {
 
   const loadingStepRef = useRef(0);
   const apiDoneRef = useRef(false);
-  const apiResultRef = useRef<any>(null);
+  const apiResultRef = useRef<InitInterviewResponse | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -370,6 +378,7 @@ export default function StartPage() {
     if (apiDoneRef.current && currentStep >= loadingSteps.length - 1) {
       if (intervalRef.current) clearInterval(intervalRef.current);
       const result = apiResultRef.current;
+      if (!result) return;
       setAnalysisData(result.analysis);
       setSessionId(result.sessionId);
       setQuestion(result.firstQuestion.question);
@@ -438,13 +447,21 @@ export default function StartPage() {
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
       const res = await axios.post(`${backendUrl}/api/init-interview`, formData);
-      apiResultRef.current = res.data;
+      apiResultRef.current = res.data as InitInterviewResponse;
       apiDoneRef.current = true;
       tryAdvanceToAnalysis(loadingStepRef.current);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (intervalRef.current) clearInterval(intervalRef.current);
       setStage("form");
-      toast.error("Error: " + (err.response?.data?.error || err.message));
+      const message = axios.isAxiosError(err)
+        ? String(
+            (err.response?.data as { error?: string } | undefined)?.error ??
+              err.message,
+          )
+        : err instanceof Error
+          ? err.message
+          : "Request failed";
+      toast.error("Error: " + message);
     }
   };
 
@@ -1367,7 +1384,7 @@ export default function StartPage() {
                         </li>
                         <li className="flex gap-2">
                           <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-                          Sit an arm's length from the camera for a natural crop.
+                          Sit an arm&apos;s length from the camera for a natural crop.
                         </li>
                       </ul>
                     </div>

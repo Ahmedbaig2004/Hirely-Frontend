@@ -23,43 +23,46 @@ const SCROLL_RANGE = 140;
 
 const NAV_THEME = {
   dark: {
-    linkActive: "#f1f5f9",
-    linkMuted: "#94a3b8",
-    linkHover: "#f8fafc",
-    loginHover: "#e2e8f0",
-    borderTop: "rgba(255,255,255,0.08)",
-    mobileActiveBg: "rgba(59,130,246,0.12)",
-    helpActiveBg: "rgba(59,130,246,0.12)",
-    settingsActiveBg: "rgba(139,92,246,0.15)",
-    settingsBorder: "1px solid rgba(139,92,246,0.25)",
-    menuBtnBorder: "1px solid rgba(255,255,255,0.1)",
-    menuBtnBg: "rgba(255,255,255,0.04)",
-    menuBtnColor: "#e2e8f0",
-    ctaBg: "linear-gradient(135deg, #2563eb, #3b82f6)",
-    ctaShadow: "0 2px 14px rgba(59,130,246,0.3)",
-    ctaShadowHover: "0 6px 24px rgba(59,130,246,0.45)",
-    navShadowHi: "0 18px 48px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)",
-    navShadowLo: "0 8px 32px rgba(0,0,0,0.12)",
+    linkActive: "#e6eeee",
+    linkMuted: "rgba(161,168,179,0.88)",
+    linkHover: "#f2f5f5",
+    loginHover: "#9dd4ff",
+    borderTop: "rgba(46,52,66,0.55)",
+    mobileActiveBg: "rgba(93,70,255,0.12)",
+    helpActiveBg: "rgba(46,123,255,0.1)",
+    settingsActiveBg: "rgba(139,92,246,0.12)",
+    settingsBorder: "1px solid rgba(93,70,255,0.28)",
+    menuBtnBorder: "1px solid rgba(46,52,66,0.5)",
+    menuBtnBg: "rgba(17,21,29,0.6)",
+    menuBtnColor: "#e6eeee",
+    ctaBg: "linear-gradient(135deg, #5d46ff, #4c44ff)",
+    ctaShadow: "0 2px 14px rgba(0,0,0,0.35), 0 0 22px -8px rgba(93,70,255,0.28)",
+    ctaShadowHover:
+      "0 6px 24px rgba(0,0,0,0.45), 0 0 32px -6px rgba(0,212,255,0.12)",
+    navShadowHi:
+      "0 18px 48px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04)",
+    navShadowLo: "0 8px 32px rgba(0,0,0,0.3)",
   },
   light: {
-    linkActive: "#1b262c",
-    linkMuted: "rgba(57,72,103,0.72)",
-    linkHover: "#0f172a",
-    loginHover: "#2563eb",
-    borderTop: "rgba(209,233,255,0.95)",
-    mobileActiveBg: "rgba(162,210,255,0.28)",
-    helpActiveBg: "rgba(162,210,255,0.28)",
-    settingsActiveBg: "rgba(255,209,220,0.35)",
-    settingsBorder: "1px solid rgba(162,210,255,0.85)",
-    menuBtnBorder: "1px solid rgba(209,233,255,0.95)",
-    menuBtnBg: "rgba(255,255,255,0.72)",
-    menuBtnColor: "#1b262c",
-    ctaBg: "linear-gradient(135deg, #7eb8ff, #62c4d0)",
-    ctaShadow: "0 2px 14px rgba(98,196,208,0.4)",
-    ctaShadowHover: "0 8px 28px rgba(255,209,220,0.55), 0 6px 24px rgba(98,196,208,0.45)",
+    linkActive: "#0b0f1a",
+    linkMuted: "rgba(50,55,67,0.82)",
+    linkHover: "#1a1f2e",
+    loginHover: "#2e7bff",
+    borderTop: "rgba(230,233,242,0.98)",
+    mobileActiveBg: "rgba(107,70,255,0.12)",
+    helpActiveBg: "rgba(59,130,246,0.1)",
+    settingsActiveBg: "rgba(155,92,246,0.12)",
+    settingsBorder: "1px solid rgba(107,70,255,0.28)",
+    menuBtnBorder: "1px solid rgba(230,233,242,0.95)",
+    menuBtnBg: "rgba(255,255,255,0.85)",
+    menuBtnColor: "#0b0f1a",
+    ctaBg: "linear-gradient(135deg, #6b46ff, #4c44ff)",
+    ctaShadow: "0 2px 14px rgba(107,70,255,0.35)",
+    ctaShadowHover:
+      "0 8px 28px rgba(107,70,255,0.35), 0 6px 24px rgba(46,123,255,0.2)",
     navShadowHi:
-      "0 18px 48px rgba(90,140,180,0.16), inset 0 1px 0 rgba(255,255,255,0.9)",
-    navShadowLo: "0 8px 32px rgba(90,140,180,0.12)",
+      "0 18px 48px rgba(11,15,26,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
+    navShadowLo: "0 8px 32px rgba(11,15,26,0.06)",
   },
 } as const;
 
@@ -262,7 +265,7 @@ export function Navbar() {
                   <HirelyNavLockup
                     isLight={lightNav}
                     withHMark
-                    textClassName="text-[25px] sm:text-[26px] leading-none text-[#0a0a0a] dark:text-white"
+                    textClassName="text-[25px] sm:text-[26px] leading-none text-[color:var(--hirely-wordmark-ink)]"
                   />
                 </span>
               </Link>
@@ -413,24 +416,26 @@ export function Navbar() {
                 <span className="hidden lg:inline">Help</span>
               </Link>
 
-              <Link
-                href="/settings"
-                data-nav-cursor-target
-                className={cn(
-                  "hidden items-center gap-1.5 rounded-[10px] border px-2.5 py-1.5 text-[12.5px] font-semibold transition-colors sm:inline-flex",
-                  lightNav
-                    ? pathname === "/settings"
-                      ? "border-[rgba(162,210,255,0.9)] bg-[rgba(255,209,220,0.25)] text-[#1b262c] shadow-[0_0_20px_-4px_rgba(162,210,255,0.45)]"
-                      : "border-[var(--lp-glass-border)] bg-[var(--lp-inner-well)] text-[#1b262c] backdrop-blur-md hover:border-[rgba(255,209,220,0.75)] hover:bg-[rgba(162,210,255,0.2)]"
-                    : pathname === "/settings"
-                      ? "border-violet-400/35 bg-violet-500/15 text-[#e2e8f0] shadow-[0_0_20px_-4px_rgba(139,92,246,0.35)]"
-                      : "border-white/[0.12] bg-white/[0.05] text-[#e2e8f0] hover:border-violet-400/25 hover:bg-violet-500/10",
-                )}
-                title="Settings"
-              >
-                <Settings size={15} strokeWidth={2} aria-hidden />
-                <span className="hidden md:inline">Settings</span>
-              </Link>
+              {user && (
+                <Link
+                  href="/settings"
+                  data-nav-cursor-target
+                  className={cn(
+                    "hidden items-center gap-1.5 rounded-[10px] border px-2.5 py-1.5 text-[12.5px] font-semibold transition-colors sm:inline-flex",
+                    lightNav
+                      ? pathname === "/settings"
+                        ? "border-[rgba(107,70,255,0.35)] bg-[rgba(107,70,255,0.08)] text-[#0b0f1a] shadow-[0_0_20px_-4px_rgba(107,70,255,0.25)]"
+                        : "border-[var(--lp-glass-border)] bg-[var(--lp-inner-well)] text-[#0b0f1a] backdrop-blur-md hover:border-[rgba(46,123,255,0.35)] hover:bg-[rgba(107,70,255,0.06)]"
+                      : pathname === "/settings"
+                        ? "border-white/12 bg-violet-500/12 text-[#e6eeee] shadow-[0_0_20px_-4px_rgba(93,70,255,0.25)]"
+                        : "border-[color:color-mix(in_srgb,var(--hirely-dark-3)_45%,transparent)] bg-[color:color-mix(in_srgb,var(--hirely-dark-1)_55%,transparent)] text-[#e6eeee] hover:border-violet-400/25 hover:bg-violet-500/10",
+                  )}
+                  title="Settings"
+                >
+                  <Settings size={15} strokeWidth={2} aria-hidden />
+                  <span className="hidden md:inline">Settings</span>
+                </Link>
+              )}
 
               {!user && (
                 <Link
@@ -466,7 +471,7 @@ export function Navbar() {
                   padding: `7px ${18 - t * 5}px`,
                   borderRadius: 999,
                   background: tc.ctaBg,
-                  color: "#fff",
+                  color: "#f4f6f7",
                   fontSize: 12.5,
                   fontWeight: 600,
                   textDecoration: "none",
@@ -547,24 +552,26 @@ export function Navbar() {
               >
                 Help Center
               </Link>
-              <Link
-                href="/settings"
-                onClick={() => setMobileOpen(false)}
-                style={{
-                  padding: "12px 10px",
-                  borderRadius: 10,
-                  fontSize: linkSize,
-                  fontWeight: pathname === "/settings" ? 600 : 400,
-                  color: pathname === "/settings" ? tc.linkActive : tc.linkMuted,
-                  textDecoration: "none",
-                  background:
-                    pathname === "/settings" ? tc.settingsActiveBg : "transparent",
-                  border:
-                    pathname === "/settings" ? tc.settingsBorder : "1px solid transparent",
-                }}
-              >
-                Settings
-              </Link>
+              {user && (
+                <Link
+                  href="/settings"
+                  onClick={() => setMobileOpen(false)}
+                  style={{
+                    padding: "12px 10px",
+                    borderRadius: 10,
+                    fontSize: linkSize,
+                    fontWeight: pathname === "/settings" ? 600 : 400,
+                    color: pathname === "/settings" ? tc.linkActive : tc.linkMuted,
+                    textDecoration: "none",
+                    background:
+                      pathname === "/settings" ? tc.settingsActiveBg : "transparent",
+                    border:
+                      pathname === "/settings" ? tc.settingsBorder : "1px solid transparent",
+                  }}
+                >
+                  Settings
+                </Link>
+              )}
               {!user && (
                 <Link
                   href="/auth"
@@ -600,21 +607,21 @@ export function Navbar() {
             borderRadius,
             border: cursor.onTarget
               ? lightNav
-                ? "1px solid rgba(98,196,208,0.9)"
+                ? "1px solid rgba(107,70,255,0.85)"
                 : "1px solid rgba(96,165,250,0.85)"
               : lightNav
-                ? "1px solid rgba(162,210,255,0.55)"
+                ? "1px solid rgba(107,70,255,0.45)"
                 : "1px solid rgba(148,163,184,0.45)",
             background: cursor.onTarget
               ? lightNav
-                ? "rgba(162,210,255,0.22)"
+                ? "rgba(107,70,255,0.14)"
                 : "rgba(59,130,246,0.18)"
               : lightNav
-                ? "rgba(255,209,220,0.12)"
+                ? "rgba(59,130,246,0.08)"
                 : "rgba(255,255,255,0.04)",
             boxShadow: cursor.onTarget
               ? lightNav
-                ? "0 0 28px rgba(255,209,220,0.45), inset 0 0 12px rgba(162,210,255,0.35)"
+                ? "0 0 28px rgba(107,70,255,0.28), inset 0 0 12px rgba(0,180,255,0.12)"
                 : "0 0 28px rgba(59,130,246,0.55), inset 0 0 12px rgba(34,211,238,0.12)"
               : "none",
             pointerEvents: "none",

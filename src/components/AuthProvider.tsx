@@ -50,9 +50,9 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   // 3. THE SHIELD: If we are still checking, show spinner, NOT the dashboard
   if (isMounting) {
     return (
-        <div className="flex h-screen w-full items-center justify-center bg-background">
-            <LoaderFour/>
-        </div>
+      <div className="flex min-h-dvh w-full items-center justify-center bg-[var(--lp-background)] text-[var(--lp-foreground)]">
+        <LoaderFour />
+      </div>
     );
   }
 
