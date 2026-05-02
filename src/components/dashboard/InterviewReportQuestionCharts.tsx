@@ -52,7 +52,7 @@ export type InterviewTurn = {
 };
 
 /** Normalize scores from DB / JSON (number, string, Prisma-like Decimal). */
-function parseNumericScore(value: unknown): number | undefined {
+export function parseNumericScore(value: unknown): number | undefined {
   if (value == null) return undefined;
   if (typeof value === "number" && Number.isFinite(value)) {
     return Math.round(Math.min(100, Math.max(0, value)));

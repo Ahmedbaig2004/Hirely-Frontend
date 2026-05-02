@@ -30,6 +30,9 @@ import {
   InterviewReportTranscriptQuestionCharts,
   InterviewReportVocalQuestionCharts,
 } from "@/components/dashboard/InterviewReportQuestionCharts";
+import { TranscriptWithFillerHighlight } from "@/components/dashboard/TranscriptWithFillerHighlight";
+import { InterviewAnswerAudioPlayer } from "@/components/dashboard/InterviewAnswerAudioPlayer";
+import { InterviewReportTechnicalScoring } from "@/components/dashboard/InterviewReportTechnicalScoring";
 
 interface ShapExplanation {
   feature: string;
@@ -431,12 +434,18 @@ export default function InterviewDetail() {
           )}
         </div>
 
+        <InterviewReportTechnicalScoring scores={feedback.scores} turns={data.turns} />
+
         {/* 4. SCORE BREAKDOWN */}
         {feedback.scores && (
           <div className="glass-card-raised p-8 rounded-2xl mb-8">
             <h3 className="mb-6 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-cyan-800 dark:text-cyan-400/90">
-              <Gauge size={16} /> Score Breakdown
+              <Gauge size={16} /> Full modality breakdown
             </h3>
+            <p className="-mt-4 mb-6 text-xs leading-relaxed text-slate-600 dark:text-slate-500">
+              How each evaluation lane contributed alongside the technical profile above — weights reflect which
+              signals were captured for this session (voice, video, typing).
+            </p>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {(
                 (() => {
@@ -1380,9 +1389,14 @@ export default function InterviewDetail() {
                 {turn.question}
               </p>
 
-              {/* Answer */}
+              {/* Answer — fillers from deliveryFeedback.fillerWords (backend Gemini breakdown) */}
               <div className="mb-4 rounded-lg border-l-4 border-slate-300/90 bg-surface-container-low p-4 italic text-slate-700 dark:border-outline-variant dark:text-slate-300">
-                &quot;{turn.answer}&quot;
+                &quot;
+                <TranscriptWithFillerHighlight
+                  transcript={turn.answer ?? ""}
+                  fillerWords={turn.deliveryFeedback?.fillerWords}
+                />
+                &quot;
               </div>
 
               {/* Feedback Footer */}
@@ -1409,11 +1423,10 @@ export default function InterviewDetail() {
                   <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                     Your Recording
                   </span>
-                  <audio
-                    controls
-                    src={turn.audioUrl}
-                    className="w-full [&::-webkit-media-controls-panel]:bg-transparent"
-                    preload="none"
+                  <InterviewAnswerAudioPlayer
+                    audioUrl={turn.audioUrl}
+                    transcript={turn.answer ?? ""}
+                    fillerWords={turn.deliveryFeedback?.fillerWords}
                   />
                 </div>
               )}

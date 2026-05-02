@@ -416,24 +416,26 @@ export function Navbar() {
                 <span className="hidden lg:inline">Help</span>
               </Link>
 
-              <Link
-                href="/settings"
-                data-nav-cursor-target
-                className={cn(
-                  "hidden items-center gap-1.5 rounded-[10px] border px-2.5 py-1.5 text-[12.5px] font-semibold transition-colors sm:inline-flex",
-                  lightNav
-                    ? pathname === "/settings"
-                      ? "border-[rgba(107,70,255,0.35)] bg-[rgba(107,70,255,0.08)] text-[#0b0f1a] shadow-[0_0_20px_-4px_rgba(107,70,255,0.25)]"
-                      : "border-[var(--lp-glass-border)] bg-[var(--lp-inner-well)] text-[#0b0f1a] backdrop-blur-md hover:border-[rgba(46,123,255,0.35)] hover:bg-[rgba(107,70,255,0.06)]"
-                    : pathname === "/settings"
-                      ? "border-white/12 bg-violet-500/12 text-[#e6eeee] shadow-[0_0_20px_-4px_rgba(93,70,255,0.25)]"
-                      : "border-[color:color-mix(in_srgb,var(--hirely-dark-3)_45%,transparent)] bg-[color:color-mix(in_srgb,var(--hirely-dark-1)_55%,transparent)] text-[#e6eeee] hover:border-violet-400/25 hover:bg-violet-500/10",
-                )}
-                title="Settings"
-              >
-                <Settings size={15} strokeWidth={2} aria-hidden />
-                <span className="hidden md:inline">Settings</span>
-              </Link>
+              {user && (
+                <Link
+                  href="/settings"
+                  data-nav-cursor-target
+                  className={cn(
+                    "hidden items-center gap-1.5 rounded-[10px] border px-2.5 py-1.5 text-[12.5px] font-semibold transition-colors sm:inline-flex",
+                    lightNav
+                      ? pathname === "/settings"
+                        ? "border-[rgba(107,70,255,0.35)] bg-[rgba(107,70,255,0.08)] text-[#0b0f1a] shadow-[0_0_20px_-4px_rgba(107,70,255,0.25)]"
+                        : "border-[var(--lp-glass-border)] bg-[var(--lp-inner-well)] text-[#0b0f1a] backdrop-blur-md hover:border-[rgba(46,123,255,0.35)] hover:bg-[rgba(107,70,255,0.06)]"
+                      : pathname === "/settings"
+                        ? "border-white/12 bg-violet-500/12 text-[#e6eeee] shadow-[0_0_20px_-4px_rgba(93,70,255,0.25)]"
+                        : "border-[color:color-mix(in_srgb,var(--hirely-dark-3)_45%,transparent)] bg-[color:color-mix(in_srgb,var(--hirely-dark-1)_55%,transparent)] text-[#e6eeee] hover:border-violet-400/25 hover:bg-violet-500/10",
+                  )}
+                  title="Settings"
+                >
+                  <Settings size={15} strokeWidth={2} aria-hidden />
+                  <span className="hidden md:inline">Settings</span>
+                </Link>
+              )}
 
               {!user && (
                 <Link
@@ -550,24 +552,26 @@ export function Navbar() {
               >
                 Help Center
               </Link>
-              <Link
-                href="/settings"
-                onClick={() => setMobileOpen(false)}
-                style={{
-                  padding: "12px 10px",
-                  borderRadius: 10,
-                  fontSize: linkSize,
-                  fontWeight: pathname === "/settings" ? 600 : 400,
-                  color: pathname === "/settings" ? tc.linkActive : tc.linkMuted,
-                  textDecoration: "none",
-                  background:
-                    pathname === "/settings" ? tc.settingsActiveBg : "transparent",
-                  border:
-                    pathname === "/settings" ? tc.settingsBorder : "1px solid transparent",
-                }}
-              >
-                Settings
-              </Link>
+              {user && (
+                <Link
+                  href="/settings"
+                  onClick={() => setMobileOpen(false)}
+                  style={{
+                    padding: "12px 10px",
+                    borderRadius: 10,
+                    fontSize: linkSize,
+                    fontWeight: pathname === "/settings" ? 600 : 400,
+                    color: pathname === "/settings" ? tc.linkActive : tc.linkMuted,
+                    textDecoration: "none",
+                    background:
+                      pathname === "/settings" ? tc.settingsActiveBg : "transparent",
+                    border:
+                      pathname === "/settings" ? tc.settingsBorder : "1px solid transparent",
+                  }}
+                >
+                  Settings
+                </Link>
+              )}
               {!user && (
                 <Link
                   href="/auth"
