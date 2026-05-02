@@ -26,6 +26,10 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LpBackground from "@/components/landing/LpBackground";
+import {
+  InterviewReportTranscriptQuestionCharts,
+  InterviewReportVocalQuestionCharts,
+} from "@/components/dashboard/InterviewReportQuestionCharts";
 
 // Frontend label override — always shows latest human-friendly names
 // regardless of what's baked into stored DB JSON
@@ -822,6 +826,8 @@ export default function InterviewDetail() {
             );
           })()}
 
+        <InterviewReportVocalQuestionCharts turns={data.turns} />
+
         {/* 5b. BODY LANGUAGE (Video Analysis) */}
         {(() => {
           const videoTurns = data.turns.filter(
@@ -1150,15 +1156,22 @@ export default function InterviewDetail() {
           );
         })()}
 
-        {/* 7. TRANSCRIPT */}
-        <div className="mb-6 flex items-center gap-2">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            Transcript
-          </h2>
-          <span className="glass-card rounded-full px-2 py-1 text-xs font-bold text-slate-700 dark:text-slate-400">
-            {data.turns.length} Questions
-          </span>
-        </div>
+        {/* 7. TRANSCRIPT + score charts */}
+        <section
+          className="mt-2 scroll-mt-8"
+          aria-labelledby="report-transcript-heading"
+        >
+          <div
+            id="report-transcript-heading"
+            className="mb-6 flex items-center gap-2"
+          >
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+              Transcript
+            </h2>
+            <span className="glass-card rounded-full px-2 py-1 text-xs font-bold text-slate-700 dark:text-slate-400">
+              {data.turns.length} Questions
+            </span>
+          </div>
 
         <div className="space-y-6">
           {data.turns.map((turn: any, i: number) => (
@@ -1336,6 +1349,11 @@ export default function InterviewDetail() {
             </motion.div>
           ))}
         </div>
+
+        <div className="mt-10">
+          <InterviewReportTranscriptQuestionCharts turns={data.turns} />
+        </div>
+        </section>
       </motion.div>
     </main>
   );
