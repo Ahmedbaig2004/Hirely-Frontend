@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { StartFlowBackdrop } from "@/components/start/StartFlowBackdrop";
 import { useVoiceActivity } from "../hooks/useVoiceActivity";
+import { useNavigationGuard } from "../hooks/useNavigationGuard";
 import { useInterviewStore } from "../stores/useInterviewStore";
 import { useRouter } from "next/navigation";
 import axios from "axios";
@@ -94,6 +95,12 @@ export default function InterviewPanel() {
 
   // Exit modal state
   const [showExitModal, setShowExitModal] = useState(false);
+
+  // Navigation guard — intercepts <Link> clicks, browser back, tab close
+  const { pendingUrl, clearPending } = useNavigationGuard(!!sessionId);
+  useEffect(() => {
+    if (pendingUrl) setShowExitModal(true);
+  }, [pendingUrl]);
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
@@ -473,13 +480,27 @@ export default function InterviewPanel() {
     }
   };
 
-  const handleExitConfirm = () => {
+  const handleExitConfirm = async () => {
     if (audioRef.current) {
+      audioRef.current.onerror = null;
+      audioRef.current.onended = null;
       audioRef.current.pause();
       audioRef.current.src = "";
     }
+    try {
+      if (sessionId) {
+        await axios.delete(
+          `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/interview/${sessionId}`,
+        );
+      }
+    } catch {
+      // non-blocking — proceed with local cleanup regardless
+    }
+    const dest =
+      pendingUrl && pendingUrl !== "__BACK__" ? pendingUrl : "/start";
     resetSession();
-    router.replace("/start");
+    clearPending();
+    router.replace(dest);
   };
 
   const handleManualStop = async () => {
@@ -1508,7 +1529,7 @@ export default function InterviewPanel() {
                 background: "rgba(0,0,0,0.6)",
                 backdropFilter: "blur(4px)",
               }}
-              onClick={() => setShowExitModal(false)}
+              onClick={() => { setShowExitModal(false); clearPending(); }}
             />
 
             {/* Modal */}
@@ -1543,7 +1564,7 @@ export default function InterviewPanel() {
 
                 <div className="flex gap-3">
                   <button
-                    onClick={() => setShowExitModal(false)}
+                    onClick={() => { setShowExitModal(false); clearPending(); }}
                     className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
                     style={{
                       background: "var(--md-sys-color-surface-container)",
