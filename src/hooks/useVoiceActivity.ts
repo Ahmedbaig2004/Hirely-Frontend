@@ -196,8 +196,11 @@ export const useVoiceActivity = (
     const videoTracks = videoStreamRef.current.getVideoTracks();
     const combinedStream = new MediaStream([...videoTracks, ...audioTracks]);
 
+    const supportedMime = MediaRecorder.isTypeSupported("video/webm;codecs=vp8")
+      ? "video/webm;codecs=vp8"
+      : "video/webm";
     const recorder = new MediaRecorder(combinedStream, {
-      mimeType: "video/webm",
+      mimeType: supportedMime,
     });
     videoRecorderRef.current = recorder;
     videoChunksRef.current = [];
