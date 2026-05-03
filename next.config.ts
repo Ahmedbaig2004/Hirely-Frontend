@@ -1,12 +1,10 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig & { eslint?: { ignoreDuringBuilds?: boolean } } = {
-  /* This allows the build to succeed even if there are linting or type errors */
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+const nextConfig: NextConfig = {
+  // We already fixed your ESLint in the .mjs file,
+  // so you can safely remove the 'eslint' object from here.
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: true, // You can keep this if you want to skip type checks
   },
 };
 

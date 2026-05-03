@@ -103,10 +103,12 @@ export default function InterviewPanel() {
   const [isProcessingReport, setIsProcessingReport] = useState(false);
   const [voiceProgress, setVoiceProgress] = useState({
     completed: 0,
-    total: 9,
+    total: 0,
   });
   const [processingStage, setProcessingStage] =
     useState<ProcessingStage>("evaluating");
+  const [voiceRetryCount, setVoiceRetryCount] = useState(0);
+  const [finalizeRetryCount, setFinalizeRetryCount] = useState(0);
 
   // Track whether any audio turns have been submitted (for smart finalization)
   const [hasAudioTurns, setHasAudioTurns] = useState(false);
@@ -116,6 +118,9 @@ export default function InterviewPanel() {
   // Abort ref for voice polling — set to true on unmount to stop recursive setTimeout
   const pollingAbortRef = useRef(false);
   const pollingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const voiceRetryRef = useRef(0);
+  const finalizeRetryRef = useRef(0);
+  const MAX_POLL_RETRIES = 60;
   useEffect(() => {
     return () => {
       pollingAbortRef.current = true;
@@ -281,6 +286,40 @@ export default function InterviewPanel() {
       process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
 
     pollingAbortRef.current = false;
+    voiceRetryRef.current = 0;
+    finalizeRetryRef.current = 0;
+    setVoiceRetryCount(0);
+    setFinalizeRetryCount(0);
+
+    const handlePollTimeout = () => {
+      if (pollingAbortRef.current) return;
+      pollingAbortRef.current = true;
+      if (pollingTimerRef.current) clearTimeout(pollingTimerRef.current);
+      toast.error(
+        "Report generation is taking longer than expected. We’ll notify you when it’s ready.",
+      );
+      window.location.replace("/dashboard");
+    };
+
+    const bumpVoiceRetry = () => {
+      voiceRetryRef.current += 1;
+      setVoiceRetryCount(voiceRetryRef.current);
+      if (voiceRetryRef.current >= MAX_POLL_RETRIES) {
+        handlePollTimeout();
+        return true;
+      }
+      return false;
+    };
+
+    const bumpFinalizeRetry = () => {
+      finalizeRetryRef.current += 1;
+      setFinalizeRetryCount(finalizeRetryRef.current);
+      if (finalizeRetryRef.current >= MAX_POLL_RETRIES) {
+        handlePollTimeout();
+        return true;
+      }
+      return false;
+    };
 
     const poll = async () => {
       if (pollingAbortRef.current) return;
@@ -298,20 +337,58 @@ export default function InterviewPanel() {
               sessionId,
             });
             if (pollingAbortRef.current) return;
-            setProcessingStage("done");
-            setTimeout(() => router.replace(`/dashboard/${sessionId}`), 1200);
+            // Poll finalize status until completed/failed
+            const pollStatus = async () => {
+              if (pollingAbortRef.current) return;
+              try {
+                const { data: statusData } = await axios.get(
+                  `${backendUrl}/api/finalize-status/${sessionId}`,
+                );
+                if (pollingAbortRef.current) return;
+                if (statusData.status === "completed") {
+                  setProcessingStage("done");
+                  setTimeout(
+                    () => window.location.replace(`/dashboard/${sessionId}`),
+                    1200,
+                  );
+                } else if (statusData.status === "failed") {
+                  toast.error(
+                    statusData.error ||
+                      "Failed to generate report. Please try again.",
+                  );
+                  setTimeout(
+                    () => window.location.replace(`/dashboard/${sessionId}`),
+                    2000,
+                  );
+                } else {
+                  if (bumpFinalizeRetry()) return;
+                  pollingTimerRef.current = setTimeout(pollStatus, 2000);
+                }
+              } catch {
+                if (pollingAbortRef.current) return;
+                if (bumpFinalizeRetry()) return;
+                pollingTimerRef.current = setTimeout(pollStatus, 3000);
+              }
+            };
+            pollStatus();
+            return;
           } catch (finalizeErr: unknown) {
             if (pollingAbortRef.current) return;
             console.error("Finalize error:", finalizeErr);
             toast.error("Failed to generate report. Please try again.");
-            setTimeout(() => router.replace(`/dashboard/${sessionId}`), 2000);
+            setTimeout(
+              () => window.location.replace(`/dashboard/${sessionId}`),
+              2000,
+            );
           }
         } else {
+          if (bumpVoiceRetry()) return;
           pollingTimerRef.current = setTimeout(poll, 2000);
         }
       } catch (err) {
         if (pollingAbortRef.current) return;
         console.error("Polling error:", err);
+        if (bumpVoiceRetry()) return;
         pollingTimerRef.current = setTimeout(poll, 3000);
       }
     };
@@ -442,18 +519,80 @@ export default function InterviewPanel() {
           pollVoiceProgress();
         } else {
           setProcessingStage("generating_report");
+          setVoiceProgress({ completed: 0, total: 0 });
           const backendUrl2 =
             process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
           try {
+            pollingAbortRef.current = false;
+            if (pollingTimerRef.current) clearTimeout(pollingTimerRef.current);
             await axios.post(`${backendUrl2}/api/finalize-interview`, {
               sessionId,
             });
-            setProcessingStage("done");
-            setTimeout(() => router.replace(`/dashboard/${sessionId}`), 1200);
+            finalizeRetryRef.current = 0;
+            setFinalizeRetryCount(0);
+            const handleFinalizeTimeout = () => {
+              if (pollingAbortRef.current) return;
+              pollingAbortRef.current = true;
+              if (pollingTimerRef.current)
+                clearTimeout(pollingTimerRef.current);
+              toast.error(
+                "Report generation is taking longer than expected. We’ll notify you when it’s ready.",
+              );
+              window.location.replace("/dashboard");
+            };
+            const bumpFinalizeRetry = () => {
+              finalizeRetryRef.current += 1;
+              setFinalizeRetryCount(finalizeRetryRef.current);
+              if (finalizeRetryRef.current >= MAX_POLL_RETRIES) {
+                handleFinalizeTimeout();
+                return true;
+              }
+              return false;
+            };
+            // Poll finalize status until completed/failed
+            const pollFinalizeStatus = async () => {
+              if (pollingAbortRef.current) return;
+              try {
+                const { data: statusData } = await axios.get(
+                  `${backendUrl2}/api/finalize-status/${sessionId}`,
+                );
+                if (pollingAbortRef.current) return;
+                if (statusData.status === "completed") {
+                  setProcessingStage("done");
+                  setTimeout(
+                    () => window.location.replace(`/dashboard/${sessionId}`),
+                    1200,
+                  );
+                } else if (statusData.status === "failed") {
+                  toast.error(
+                    statusData.error ||
+                      "Failed to generate report. Please try again.",
+                  );
+                  setTimeout(
+                    () => window.location.replace(`/dashboard/${sessionId}`),
+                    2000,
+                  );
+                } else {
+                  if (bumpFinalizeRetry()) return;
+                  pollingTimerRef.current = setTimeout(
+                    pollFinalizeStatus,
+                    2000,
+                  );
+                }
+              } catch {
+                if (pollingAbortRef.current) return;
+                if (bumpFinalizeRetry()) return;
+                pollingTimerRef.current = setTimeout(pollFinalizeStatus, 3000);
+              }
+            };
+            pollFinalizeStatus();
           } catch (finalizeErr: unknown) {
             console.error("Finalize error:", finalizeErr);
             toast.error("Failed to generate report. Please try again.");
-            setTimeout(() => router.replace(`/dashboard/${sessionId}`), 2000);
+            setTimeout(
+              () => window.location.replace(`/dashboard/${sessionId}`),
+              2000,
+            );
           }
         }
         return;
@@ -488,6 +627,8 @@ export default function InterviewPanel() {
       voiceProgress.total > 0
         ? Math.round((voiceProgress.completed / voiceProgress.total) * 100)
         : 0;
+    const retryTelemetry = voiceRetryCount + finalizeRetryCount;
+    const hasVoiceStage = hasAudioTurns;
 
     const stages: {
       key: ProcessingStage;
@@ -499,11 +640,15 @@ export default function InterviewPanel() {
         label: "Answer Evaluated",
         subtitle: "Your response has been graded",
       },
-      {
-        key: "analyzing_voice",
-        label: "Analyzing Voice Patterns",
-        subtitle: `${voiceProgress.completed} of ${voiceProgress.total} audio samples processed`,
-      },
+      ...(hasVoiceStage
+        ? [
+            {
+              key: "analyzing_voice" as const,
+              label: "Analyzing Voice Patterns",
+              subtitle: `${voiceProgress.completed} of ${voiceProgress.total} audio samples processed`,
+            },
+          ]
+        : []),
       {
         key: "generating_report",
         label: "Generating Combined Report",
@@ -516,12 +661,9 @@ export default function InterviewPanel() {
       },
     ];
 
-    const stageOrder: ProcessingStage[] = [
-      "evaluating",
-      "analyzing_voice",
-      "generating_report",
-      "done",
-    ];
+    const stageOrder: ProcessingStage[] = hasVoiceStage
+      ? ["evaluating", "analyzing_voice", "generating_report", "done"]
+      : ["evaluating", "generating_report", "done"];
     const currentIdx = stageOrder.indexOf(processingStage);
     const overallPct = Math.min(
       100,
@@ -529,7 +671,10 @@ export default function InterviewPanel() {
     );
 
     return (
-      <div className="relative z-10 flex min-h-[calc(100dvh-var(--app-report-page-pt))] flex-col items-center justify-center px-4 py-6 sm:px-6 sm:py-8">
+      <div
+        className="relative z-10 flex min-h-[calc(100dvh-var(--app-report-page-pt))] flex-col items-center justify-center px-4 py-6 sm:px-6 sm:py-8"
+        data-retry-count={retryTelemetry}
+      >
         <StartFlowBackdrop className="z-0" />
         {/* Ambient orb — soft wash under the modal */}
         <div
@@ -820,7 +965,9 @@ export default function InterviewPanel() {
             {totalPlanned != null && totalPlanned > 0 && (
               <div
                 className="h-1 w-full min-w-[88px] max-w-[120px] overflow-hidden rounded-full sm:mt-0"
-                style={{ background: "var(--md-sys-color-surface-container-high)" }}
+                style={{
+                  background: "var(--md-sys-color-surface-container-high)",
+                }}
                 title="Progress through this session"
               >
                 <div
@@ -883,7 +1030,10 @@ export default function InterviewPanel() {
           <div className="min-h-0 min-w-0 flex-1">
             <div
               className="glass-card-raised h-full overflow-hidden rounded-3xl p-5 sm:p-7"
-              style={{ border: "1px solid color-mix(in srgb, var(--md-sys-color-outline) 20%, transparent)" }}
+              style={{
+                border:
+                  "1px solid color-mix(in srgb, var(--md-sys-color-outline) 20%, transparent)",
+              }}
             >
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
@@ -941,7 +1091,9 @@ export default function InterviewPanel() {
           <aside className="flex w-full flex-col gap-3 lg:max-w-[300px] lg:shrink-0">
             <div
               className="glass-card flex flex-1 flex-col justify-between gap-2 rounded-2xl border border-white/10 p-4"
-              style={{ background: "var(--md-sys-color-surface-container-low)" }}
+              style={{
+                background: "var(--md-sys-color-surface-container-low)",
+              }}
             >
               <div>
                 <p className="mb-1.5 text-[0.65rem] font-bold uppercase tracking-[0.16em] text-slate-500">
@@ -964,9 +1116,7 @@ export default function InterviewPanel() {
                 ))}
               </div>
             </div>
-            <div
-              className="rounded-2xl border border-dashed border-slate-300/60 bg-slate-50/50 p-3 text-xs leading-relaxed text-slate-600 dark:border-slate-600/50 dark:bg-slate-900/30 dark:text-slate-400"
-            >
+            <div className="rounded-2xl border border-dashed border-slate-300/60 bg-slate-50/50 p-3 text-xs leading-relaxed text-slate-600 dark:border-slate-600/50 dark:bg-slate-900/30 dark:text-slate-400">
               <span className="font-semibold text-slate-700 dark:text-slate-200">
                 How this works:{" "}
               </span>
