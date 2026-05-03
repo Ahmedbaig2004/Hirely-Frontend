@@ -310,39 +310,6 @@ export default function InterviewDetail() {
           Back to Dashboard
         </button>
 
-        {fusedMultimodalPct != null && (
-          <div className="glass-card-raised mb-6 flex flex-col gap-4 rounded-2xl border border-violet-500/15 bg-gradient-to-br from-violet-500/[0.06] via-transparent to-cyan-500/[0.06] p-5 sm:flex-row sm:items-center sm:justify-between dark:border-violet-400/20 dark:from-violet-500/10 dark:to-cyan-500/10">
-            <div className="flex min-w-0 flex-1 items-start gap-4">
-              <div
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-violet-500/25 bg-violet-500/10 text-violet-700 dark:border-violet-400/30 dark:bg-violet-500/15 dark:text-violet-300"
-                aria-hidden
-              >
-                <Layers size={22} strokeWidth={2} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-violet-900 dark:text-violet-300/90">
-                  Multimodal confidence
-                </p>
-                <p className="mt-1 text-sm leading-snug text-slate-600 dark:text-slate-400">
-                  Fused voice and video signals across your session — how aligned
-                  your vocal and visual presence read together.
-                </p>
-              </div>
-            </div>
-            <div className="flex shrink-0 flex-col items-start border-t border-violet-500/10 pt-4 sm:border-t-0 sm:border-l sm:pl-6 sm:pt-0 dark:border-violet-400/15">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Fusion score
-              </span>
-              <span
-                className={`text-3xl font-black tabular-nums leading-none sm:text-4xl ${getScoreTextColor(fusedMultimodalPct)}`}
-                style={{ textShadow: getScoreGlow(fusedMultimodalPct) }}
-              >
-                {fusedMultimodalPct}%
-              </span>
-            </div>
-          </div>
-        )}
-
         {/* 1. HERO REPORT CARD */}
         <div className="glass-card-raised p-8 rounded-2xl mb-8">
           <div className="flex flex-col md:flex-row justify-between md:items-start mb-6 gap-4">
@@ -361,16 +328,22 @@ export default function InterviewDetail() {
                 • {new Date(data.createdAt).toLocaleDateString()}
               </p>
             </div>
-            <div className="flex items-center gap-4 glass-card p-3 rounded-xl">
+            <div
+              className="flex items-center gap-4 glass-card p-3 rounded-xl"
+              title="Average of your per-question answer scores. Reflects technical answer quality and content only — voice and video do not change this number."
+            >
               <div className="text-right">
                 <span className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                  Score
+                  Technical score
                 </span>
                 <span
                   className={`text-3xl font-black ${getScoreTextColor(data.finalScore)}`}
                   style={{ textShadow: getScoreGlow(data.finalScore) }}
                 >
                   {data.finalScore}%
+                </span>
+                <span className="mt-1 block max-w-[200px] text-[10px] font-medium leading-snug text-slate-500 dark:text-slate-500 sm:max-w-[220px]">
+                  Based on answer quality and content only
                 </span>
               </div>
               <div
@@ -621,6 +594,42 @@ export default function InterviewDetail() {
               Content Quality = Technical accuracy + Delivery quality | Combined
               = 60% Content + 40% Vocal
             </p>
+          </div>
+        )}
+
+        {fusedMultimodalPct != null && (
+          <div
+            className="glass-card-raised mb-6 flex flex-col gap-4 rounded-2xl border border-violet-500/15 bg-gradient-to-br from-violet-500/[0.06] via-transparent to-cyan-500/[0.06] p-5 sm:flex-row sm:items-center sm:justify-between dark:border-violet-400/20 dark:from-violet-500/10 dark:to-cyan-500/10"
+            title="Fused from vocal and visual confidence only. Not derived from your technical answers — a separate view of how confidently you came across."
+          >
+            <div className="flex min-w-0 flex-1 items-start gap-4">
+              <div
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-violet-500/25 bg-violet-500/10 text-violet-700 dark:border-violet-400/30 dark:bg-violet-500/15 dark:text-violet-300"
+                aria-hidden
+              >
+                <Layers size={22} strokeWidth={2} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-violet-900 dark:text-violet-300/90">
+                  Audio-visual confidence score
+                </p>
+                <p className="mt-1 text-sm leading-snug text-slate-600 dark:text-slate-400">
+                  Combined vocal delivery and visual presence score, measured
+                  independently from answer quality.
+                </p>
+              </div>
+            </div>
+            <div className="flex shrink-0 flex-col items-start border-t border-violet-500/10 pt-4 sm:border-t-0 sm:border-l sm:pl-6 sm:pt-0 dark:border-violet-400/15">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Presence score
+              </span>
+              <span
+                className={`text-3xl font-black tabular-nums leading-none sm:text-4xl ${getScoreTextColor(fusedMultimodalPct)}`}
+                style={{ textShadow: getScoreGlow(fusedMultimodalPct) }}
+              >
+                {fusedMultimodalPct}%
+              </span>
+            </div>
           </div>
         )}
 
