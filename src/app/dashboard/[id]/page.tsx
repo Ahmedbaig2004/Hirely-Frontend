@@ -26,6 +26,7 @@ import {
   Smile,
   Hand,
   PersonStanding,
+  Layers,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LpBackground from "@/components/landing/LpBackground";
@@ -146,6 +147,8 @@ interface InterviewFeedback {
     delivery?: number | null;
     voice?: number | null;
     video?: number | null;
+    /** Fused voice + video confidence (multimodal fusion) */
+    fusedScore?: number | null;
     contentQuality?: number;
     combined?: number;
   };
@@ -168,6 +171,13 @@ interface InterviewDetailData {
   finalScore: number;
   finalFeedback?: InterviewFeedback | null;
   turns: InterviewTurn[];
+  /** Some API builds expose modality scores here; falls back to finalFeedback.scores */
+  jsscores?: {
+    voice?: number | null;
+    video?: number | null;
+    fusedScore?: number | null;
+    combined?: number | null;
+  };
 }
 
 // Frontend label override — always shows latest human-friendly names
@@ -264,6 +274,14 @@ export default function InterviewDetail() {
   }
 
   const feedback: InterviewFeedback = data.finalFeedback ?? {};
+  const fusedMultimodalRaw =
+    data.jsscores?.fusedScore ?? feedback.scores?.fusedScore ?? null;
+  const fusedMultimodalPct =
+    fusedMultimodalRaw != null &&
+    typeof fusedMultimodalRaw === "number" &&
+    !Number.isNaN(fusedMultimodalRaw)
+      ? Math.round(Math.min(100, Math.max(0, fusedMultimodalRaw)))
+      : null;
 
   return (
     <main
@@ -291,6 +309,39 @@ export default function InterviewDetail() {
           />
           Back to Dashboard
         </button>
+
+        {fusedMultimodalPct != null && (
+          <div className="glass-card-raised mb-6 flex flex-col gap-4 rounded-2xl border border-violet-500/15 bg-gradient-to-br from-violet-500/[0.06] via-transparent to-cyan-500/[0.06] p-5 sm:flex-row sm:items-center sm:justify-between dark:border-violet-400/20 dark:from-violet-500/10 dark:to-cyan-500/10">
+            <div className="flex min-w-0 flex-1 items-start gap-4">
+              <div
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-violet-500/25 bg-violet-500/10 text-violet-700 dark:border-violet-400/30 dark:bg-violet-500/15 dark:text-violet-300"
+                aria-hidden
+              >
+                <Layers size={22} strokeWidth={2} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-violet-900 dark:text-violet-300/90">
+                  Multimodal confidence
+                </p>
+                <p className="mt-1 text-sm leading-snug text-slate-600 dark:text-slate-400">
+                  Fused voice and video signals across your session — how aligned
+                  your vocal and visual presence read together.
+                </p>
+              </div>
+            </div>
+            <div className="flex shrink-0 flex-col items-start border-t border-violet-500/10 pt-4 sm:border-t-0 sm:border-l sm:pl-6 sm:pt-0 dark:border-violet-400/15">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Fusion score
+              </span>
+              <span
+                className={`text-3xl font-black tabular-nums leading-none sm:text-4xl ${getScoreTextColor(fusedMultimodalPct)}`}
+                style={{ textShadow: getScoreGlow(fusedMultimodalPct) }}
+              >
+                {fusedMultimodalPct}%
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* 1. HERO REPORT CARD */}
         <div className="glass-card-raised p-8 rounded-2xl mb-8">
