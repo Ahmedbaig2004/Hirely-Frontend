@@ -117,29 +117,6 @@ export default function InterviewPanel() {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Exit modal state
-  const [showExitModal, setShowExitModal] = useState(false);
-
-  // Navigation guard — intercepts <Link> clicks, browser back, tab close
-  const { pendingUrl, clearPending } = useNavigationGuard(
-    !!sessionId && !suppressNavGuard,
-  );
-
-  const redirectReplace = useCallback(
-    (href: string) => {
-      flushSync(() => setSuppressNavGuard(true));
-      router.replace(href);
-    },
-    [router],
-  );
-  useEffect(() => {
-    if (pendingUrl) setShowExitModal(true);
-  }, [pendingUrl]);
-
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [chatInput, setChatInput] = useState("");
-  const chatContainerRef = useRef<HTMLDivElement>(null);
-
   // Report Processing State
   const [isProcessingReport, setIsProcessingReport] = useState(false);
   const [voiceProgress, setVoiceProgress] = useState({
@@ -150,6 +127,21 @@ export default function InterviewPanel() {
     useState<ProcessingStage>("evaluating");
   const [voiceRetryCount, setVoiceRetryCount] = useState(0);
   const [finalizeRetryCount, setFinalizeRetryCount] = useState(0);
+
+  // Exit modal state
+  const [showExitModal, setShowExitModal] = useState(false);
+
+  // Navigation guard — intercepts <Link> clicks, browser back, tab close
+  const { pendingUrl, clearPending } = useNavigationGuard(
+    !!sessionId && !isProcessingReport,
+  );
+  useEffect(() => {
+    if (pendingUrl) setShowExitModal(true);
+  }, [pendingUrl]);
+
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // Track whether any audio turns have been submitted (for smart finalization)
   const [hasAudioTurns, setHasAudioTurns] = useState(false);
@@ -341,7 +333,7 @@ export default function InterviewPanel() {
       toast.error(
         "Report generation is taking longer than expected. We’ll notify you when it’s ready.",
       );
-      redirectReplace("/dashboard");
+      router.replace("/dashboard");
     };
 
     const bumpVoiceRetry = () => {
@@ -391,7 +383,7 @@ export default function InterviewPanel() {
                 if (statusData.status === "completed") {
                   setProcessingStage("done");
                   setTimeout(
-                    () => redirectReplace(`/dashboard/${sessionId}`),
+                    () => router.replace(`/dashboard/${sessionId}`),
                     1200,
                   );
                 } else if (statusData.status === "failed") {
@@ -400,7 +392,7 @@ export default function InterviewPanel() {
                       "Failed to generate report. Please try again.",
                   );
                   setTimeout(
-                    () => redirectReplace(`/dashboard/${sessionId}`),
+                    () => router.replace(`/dashboard/${sessionId}`),
                     2000,
                   );
                 } else {
@@ -420,7 +412,7 @@ export default function InterviewPanel() {
             console.error("Finalize error:", finalizeErr);
             toast.error("Failed to generate report. Please try again.");
             setTimeout(
-              () => redirectReplace(`/dashboard/${sessionId}`),
+              () => router.replace(`/dashboard/${sessionId}`),
               2000,
             );
           }
@@ -599,7 +591,7 @@ export default function InterviewPanel() {
               toast.error(
                 "Report generation is taking longer than expected. We’ll notify you when it’s ready.",
               );
-              redirectReplace("/dashboard");
+              router.replace("/dashboard");
             };
             const bumpFinalizeRetry = () => {
               finalizeRetryRef.current += 1;
@@ -621,7 +613,7 @@ export default function InterviewPanel() {
                 if (statusData.status === "completed") {
                   setProcessingStage("done");
                   setTimeout(
-                    () => redirectReplace(`/dashboard/${sessionId}`),
+                    () => router.replace(`/dashboard/${sessionId}`),
                     1200,
                   );
                 } else if (statusData.status === "failed") {
@@ -630,7 +622,7 @@ export default function InterviewPanel() {
                       "Failed to generate report. Please try again.",
                   );
                   setTimeout(
-                    () => redirectReplace(`/dashboard/${sessionId}`),
+                    () => router.replace(`/dashboard/${sessionId}`),
                     2000,
                   );
                 } else {
@@ -651,7 +643,7 @@ export default function InterviewPanel() {
             console.error("Finalize error:", finalizeErr);
             toast.error("Failed to generate report. Please try again.");
             setTimeout(
-              () => redirectReplace(`/dashboard/${sessionId}`),
+              () => router.replace(`/dashboard/${sessionId}`),
               2000,
             );
           }
