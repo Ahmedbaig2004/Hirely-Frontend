@@ -32,6 +32,7 @@ import LpBackground from "@/components/landing/LpBackground";
 import {
   InterviewReportTranscriptQuestionCharts,
   InterviewReportVocalQuestionCharts,
+  InterviewReportBodyLanguageQuestionCharts,
 } from "@/components/dashboard/InterviewReportQuestionCharts";
 import { TranscriptWithFillerHighlight } from "@/components/dashboard/TranscriptWithFillerHighlight";
 import { InterviewAnswerAudioPlayer } from "@/components/dashboard/InterviewAnswerAudioPlayer";
@@ -205,6 +206,11 @@ export default function InterviewDetail() {
   const [data, setData] = useState<InterviewDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [gapExpanded, setGapExpanded] = useState(false);
+  const [showAllVoiceImprovements, setShowAllVoiceImprovements] = useState(false);
+  const [showAllVoiceStrengths, setShowAllVoiceStrengths] = useState(false);
+  const [showAllVoiceObservations, setShowAllVoiceObservations] = useState(false);
+  const [expandedVideoGroups, setExpandedVideoGroups] = useState<Record<string, boolean>>({});
+  const [showAllBodyLanguageGroups, setShowAllBodyLanguageGroups] = useState(false);
 
   useEffect(() => {
     if (id && user) {
@@ -855,7 +861,7 @@ export default function InterviewDetail() {
                             Priority Improvements
                           </span>
                           <div className="space-y-2">
-                            {improvements.map((item: ShapExplanation, i: number) => (
+                            {(showAllVoiceImprovements ? improvements : improvements.slice(0, 3)).map((item: ShapExplanation, i: number) => (
                               <motion.div
                                 key={item.feature}
                                 initial={{ opacity: 0, x: -8 }}
@@ -881,6 +887,17 @@ export default function InterviewDetail() {
                               </motion.div>
                             ))}
                           </div>
+                          {improvements.length > 3 && (
+                            <button
+                              type="button"
+                              onClick={() => setShowAllVoiceImprovements((prev) => !prev)}
+                              className="mt-3 inline-flex items-center rounded-lg border border-rose-300/60 bg-rose-50/70 px-3 py-1.5 text-xs font-semibold text-rose-800 transition hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20"
+                            >
+                              {showAllVoiceImprovements
+                                ? "View less"
+                                : `View more (${improvements.length - 3} more)`}
+                            </button>
+                          )}
                         </div>
                       )}
 
@@ -891,7 +908,7 @@ export default function InterviewDetail() {
                             Your Strengths
                           </span>
                           <div className="space-y-2">
-                            {strengths.map((item: ShapExplanation, i: number) => (
+                            {(showAllVoiceStrengths ? strengths : strengths.slice(0, 3)).map((item: ShapExplanation, i: number) => (
                               <motion.div
                                 key={item.feature}
                                 initial={{ opacity: 0, x: -8 }}
@@ -920,6 +937,17 @@ export default function InterviewDetail() {
                               </motion.div>
                             ))}
                           </div>
+                          {strengths.length > 3 && (
+                            <button
+                              type="button"
+                              onClick={() => setShowAllVoiceStrengths((prev) => !prev)}
+                              className="mt-3 inline-flex items-center rounded-lg border border-emerald-300/60 bg-emerald-50/70 px-3 py-1.5 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
+                            >
+                              {showAllVoiceStrengths
+                                ? "View less"
+                                : `View more (${strengths.length - 3} more)`}
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -947,7 +975,9 @@ export default function InterviewDetail() {
                       Detailed AI Observations
                     </summary>
                     <ul className="mt-3 space-y-2">
-                      {(feedback.voiceSummary.allInsights ?? []).map(
+                      {(showAllVoiceObservations
+                        ? (feedback.voiceSummary.allInsights ?? [])
+                        : (feedback.voiceSummary.allInsights ?? []).slice(0, 3)).map(
                         (insight: string, i: number) => (
                           <li
                             key={i}
@@ -962,6 +992,20 @@ export default function InterviewDetail() {
                         ),
                       )}
                     </ul>
+                    {(feedback.voiceSummary.allInsights?.length ?? 0) > 3 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setShowAllVoiceObservations((prev) => !prev);
+                        }}
+                        className="mt-3 inline-flex items-center rounded-lg border border-cyan-300/60 bg-cyan-50/70 px-3 py-1.5 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-300 dark:hover:bg-cyan-500/20"
+                      >
+                        {showAllVoiceObservations
+                          ? "View less"
+                          : `View more (${(feedback.voiceSummary.allInsights?.length ?? 0) - 3} more)`}
+                      </button>
+                    )}
                   </details>
                 )}
               </div>
@@ -1029,12 +1073,30 @@ export default function InterviewDetail() {
           };
 
           const statusBadge = (s: string) => {
-            if (s === "green") return { label: "Helped Your Score", bg: "bg-emerald-500/15", text: "text-emerald-400", border: "border-emerald-500/20" };
-            if (s === "red") return { label: "Held Back Your Score", bg: "bg-rose-500/15", text: "text-rose-400", border: "border-rose-500/20" };
-            return { label: "Minimal Impact", bg: "bg-amber-500/15", text: "text-amber-400", border: "border-amber-500/20" };
+            if (s === "green")
+              return {
+                label: "Helped Your Score",
+                bg: "bg-emerald-500/10 dark:bg-emerald-500/15",
+                text: "text-emerald-800 dark:text-emerald-400",
+                border: "border-emerald-500/25 dark:border-emerald-500/25",
+              };
+            if (s === "red")
+              return {
+                label: "Held Back Your Score",
+                bg: "bg-rose-500/10 dark:bg-rose-500/15",
+                text: "text-rose-800 dark:text-rose-400",
+                border: "border-rose-500/25 dark:border-rose-500/25",
+              };
+            return {
+              label: "Minimal Impact",
+              bg: "bg-amber-500/10 dark:bg-amber-500/15",
+              text: "text-amber-900 dark:text-amber-400",
+              border: "border-amber-500/25 dark:border-amber-500/25",
+            };
           };
 
           return (
+            <>
             <div className="glass-card mb-8 rounded-xl border-l-4 border-cyan-500/60 p-6 dark:border-cyan-500">
               {/* Header + Score Circle */}
               <div className="flex flex-wrap justify-between items-start mb-5 gap-4">
@@ -1110,11 +1172,13 @@ export default function InterviewDetail() {
                         key={groupName}
                         className={`rounded-xl p-4 ${badge.bg} border ${badge.border}`}
                       >
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="mb-2 flex items-center gap-2">
                           <span className={badge.text}>{groupIcons[groupName] || <Activity size={16} />}</span>
-                          <span className="text-xs font-semibold text-white/80">{groupName}</span>
+                          <span className="text-xs font-semibold text-slate-800 dark:text-slate-100">
+                            {groupName}
+                          </span>
                         </div>
-                        <div className="flex items-baseline gap-2 mb-1.5">
+                        <div className="mb-1.5 flex flex-wrap items-baseline gap-2">
                           <span className={`text-lg font-black ${badge.text}`}>
                             {groupData.impact >= 0 ? "+" : ""}{groupData.impact.toFixed(1)}%
                           </span>
@@ -1123,7 +1187,7 @@ export default function InterviewDetail() {
                           </span>
                         </div>
                         {groupData.tips?.[0]?.tip && (
-                          <p className="text-[11px] text-white/50 leading-tight line-clamp-2">
+                          <p className="text-[11px] leading-snug text-slate-700 dark:text-slate-300">
                             {groupData.tips[0].tip}
                           </p>
                         )}
@@ -1133,37 +1197,105 @@ export default function InterviewDetail() {
                 </div>
               )}
 
-              {/* Elite Zone Bars per Group */}
-              {hasGroupData && Object.entries(aggregatedGroups).map(([groupName, groupData]) => {
-                if (!groupData.tips?.length) return null;
-                return (
-                  <div key={groupName} className="mb-5">
-                    <h4 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3">
-                      {groupName}
-                    </h4>
-                    {groupData.tips.map((tip) => (
-                      <EliteZoneBar
-                        key={tip.feature}
-                        label={tip.friendly}
-                        tip={tip.tip}
-                        val={tip.val}
-                        zoneMin={tip.zone_min}
-                        zoneMax={tip.zone_max}
-                        direction={tip.zone_direction}
-                        status={tip.status as "green" | "yellow" | "red"}
-                      />
-                    ))}
-                  </div>
-                );
-              })}
+              {/* Elite Zone Bars per Group — compact grid on wide screens */}
+              {hasGroupData && (
+                <div className="space-y-4">
+                  {(() => {
+                    const entries = Object.entries(aggregatedGroups).filter(
+                      ([, groupData]) => groupData.tips?.length,
+                    );
+                    const handEntry = entries.find(([name]) => name === "Hand Gestures");
+                    const otherEntries = entries.filter(([name]) => name !== "Hand Gestures");
+
+                    const renderGroup = (
+                      groupName: string,
+                      groupData: { impact: number; status: string; tips: VideoTip[]; count: number },
+                    ) => (
+                      <div key={groupName}>
+                        <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                          {groupName}
+                        </h4>
+                        <div className="md:grid md:grid-cols-2 md:gap-x-5 md:gap-y-0">
+                          {(groupName === "Hand Gestures"
+                            ? groupData.tips
+                            : expandedVideoGroups[groupName]
+                            ? groupData.tips
+                            : groupData.tips.slice(0, 3)).map((tip) => (
+                            <EliteZoneBar
+                              key={tip.feature}
+                              label={tip.friendly}
+                              tip={tip.tip}
+                              val={tip.val}
+                              zoneMin={tip.zone_min}
+                              zoneMax={tip.zone_max}
+                              direction={tip.zone_direction}
+                              status={tip.status as "green" | "yellow" | "red"}
+                            />
+                          ))}
+                        </div>
+                        {groupName !== "Hand Gestures" && groupData.tips.length > 3 && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedVideoGroups((prev) => ({
+                                ...prev,
+                                [groupName]: !prev[groupName],
+                              }))
+                            }
+                            className="mt-2 inline-flex items-center rounded-lg border border-cyan-300/60 bg-cyan-50/70 px-3 py-1.5 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-300 dark:hover:bg-cyan-500/20"
+                          >
+                            {expandedVideoGroups[groupName]
+                              ? "View less"
+                              : `View more (${groupData.tips.length - 3} more)`}
+                          </button>
+                        )}
+                      </div>
+                    );
+
+                    return (
+                      <>
+                        {handEntry && renderGroup(handEntry[0], handEntry[1])}
+                        {otherEntries.length > 0 && (
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => setShowAllBodyLanguageGroups((prev) => !prev)}
+                              className="inline-flex items-center rounded-lg border border-cyan-300/60 bg-cyan-50/70 px-3 py-1.5 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-300 dark:hover:bg-cyan-500/20"
+                            >
+                              {showAllBodyLanguageGroups ? "Hide details" : "View details"}
+                            </button>
+                            <AnimatePresence initial={false}>
+                              {showAllBodyLanguageGroups && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.28, ease: "easeInOut" }}
+                                  className="overflow-hidden space-y-4 pt-3"
+                                >
+                                  {otherEntries.map(([groupName, groupData]) =>
+                                    renderGroup(groupName, groupData),
+                                  )}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
 
               {/* Honest framing note */}
-              <p className="text-[11px] text-slate-600 dark:text-slate-500 italic mt-4">
+              <p className="mt-4 text-[11px] italic leading-relaxed text-slate-600 dark:text-slate-500">
                 This score reflects how interviewers may perceive your posture,
                 gestures, and facial expressions. Some factors are influenced by
                 natural tendencies and may not fully reflect conscious improvement.
               </p>
             </div>
+            <InterviewReportBodyLanguageQuestionCharts turns={data.turns} />
+            </>
           );
         })()}
 
@@ -1509,47 +1641,117 @@ export default function InterviewDetail() {
                 )}
               </div>
 
-              {/* Per-question video body language summary */}
+              {/* Per-question body language — readable in light/dark; watch-for vs strengths */}
               {turn.videoAnalysis?.rawFeatures && (() => {
                 const groups = turn.videoAnalysis.rawFeatures as Record<string, VideoGroupResult>;
                 const groupEntries = Object.entries(groups);
                 if (groupEntries.length === 0) return null;
 
-                const statusDot: Record<string, string> = { green: "bg-emerald-400", yellow: "bg-amber-400", red: "bg-rose-400" };
-                const groupShort: Record<string, string> = { "Facial Engagement": "Face", "Hand Gestures": "Hands", "Posture & Presence": "Posture" };
+                const statusDot: Record<string, string> = {
+                  green: "bg-emerald-500 dark:bg-emerald-400",
+                  yellow: "bg-amber-500 dark:bg-amber-400",
+                  red: "bg-rose-500 dark:bg-rose-400",
+                };
+                const groupShort: Record<string, string> = {
+                  "Facial Engagement": "Face",
+                  "Hand Gestures": "Hands",
+                  "Posture & Presence": "Posture",
+                };
 
                 const allTips = groupEntries.flatMap(([, g]) => g.tips || []);
-                const bestPositive = allTips
-                  .filter((t) => t.direction === "positive")
-                  .sort((a, b) => Math.abs(b.shap) - Math.abs(a.shap))[0];
-                const worstNegative = allTips
-                  .filter((t) => t.direction === "negative")
-                  .sort((a, b) => Math.abs(b.shap) - Math.abs(a.shap))[0];
+                const watchFor = allTips.filter((t) => t.status === "red" || t.status === "yellow");
+                const strengths = allTips.filter((t) => t.status === "green");
+                const presencePct =
+                  turn.videoAnalysis.confidenceLevel != null
+                    ? Math.round(
+                        Math.min(1, Math.max(0, turn.videoAnalysis.confidenceLevel)) * 100,
+                      )
+                    : null;
 
                 return (
-                  <div className="mb-3 flex flex-col gap-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] px-3 py-2">
-                    <div className="flex items-center gap-3">
+                  <div className="mb-4 rounded-xl border border-slate-200/90 bg-surface-container-low p-4 dark:border-outline-variant">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                        Body language (this answer)
+                      </span>
+                      {presencePct != null && (
+                        <span
+                          className={`rounded-full border px-2 py-0.5 text-[10px] font-bold tabular-nums ${
+                            presencePct >= 70
+                              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400"
+                              : presencePct >= 45
+                                ? "border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-400"
+                                : "border-rose-500/30 bg-rose-500/10 text-rose-800 dark:text-rose-400"
+                          }`}
+                        >
+                          Presence {presencePct}/100
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="mb-3 flex flex-wrap gap-2">
                       {groupEntries.map(([name, g]) => (
-                        <span key={name} className="flex items-center gap-1 text-[11px] text-white/60">
+                        <span
+                          key={name}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/70 px-2.5 py-1 text-[11px] font-medium text-slate-800 dark:border-outline-variant dark:bg-surface-container-high dark:text-slate-200"
+                        >
+                          <span
+                            className={`inline-block h-2 w-2 rounded-full ${statusDot[g.status] || "bg-slate-400"}`}
+                          />
                           {groupShort[name] || name}
-                          <span className={`inline-block h-2 w-2 rounded-full ${statusDot[g.status] || "bg-slate-400"}`} />
                         </span>
                       ))}
                     </div>
-                    {(bestPositive || worstNegative) && (
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px]">
-                        {bestPositive && (
-                          <span className="text-emerald-400">
-                            <CheckCircle size={11} className="inline mr-0.5 -mt-0.5" />
-                            {bestPositive.friendly}
-                          </span>
-                        )}
-                        {worstNegative && (
-                          <span className="text-rose-400">
-                            <XCircle size={11} className="inline mr-0.5 -mt-0.5" />
-                            {worstNegative.friendly}
-                          </span>
-                        )}
+
+                    {watchFor.length > 0 && (
+                      <div className="mb-2 rounded-lg border border-amber-500/20 bg-amber-500/[0.07] p-3 dark:bg-amber-500/10">
+                        <span className="mb-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-900 dark:text-amber-400/90">
+                          <AlertTriangle size={12} aria-hidden />
+                          Watch for
+                        </span>
+                        <ul className="space-y-2">
+                          {watchFor.map((t) => (
+                            <li
+                              key={t.feature}
+                              className="text-[11px] leading-snug text-slate-800 dark:text-slate-200"
+                            >
+                              <span className="font-semibold text-slate-900 dark:text-slate-100">
+                                {t.friendly}
+                              </span>
+                              {t.tip ? (
+                                <span className="text-slate-700 dark:text-slate-300">
+                                  {" "}
+                                  — {t.tip}
+                                </span>
+                              ) : null}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {strengths.length > 0 && (
+                      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] p-3 dark:bg-emerald-500/10">
+                        <span className="mb-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-900 dark:text-emerald-400/90">
+                          <CheckCircle size={12} aria-hidden />
+                          What went well
+                        </span>
+                        <ul className="space-y-1.5">
+                          {strengths.map((t) => (
+                            <li
+                              key={t.feature}
+                              className="text-[11px] leading-snug text-slate-800 dark:text-emerald-100/90"
+                            >
+                              <span className="font-semibold">{t.friendly}</span>
+                              {t.tip ? (
+                                <span className="text-slate-700 dark:text-emerald-100/80">
+                                  {" "}
+                                  — {t.tip}
+                                </span>
+                              ) : null}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
                   </div>

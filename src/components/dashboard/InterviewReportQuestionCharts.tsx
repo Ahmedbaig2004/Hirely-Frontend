@@ -15,7 +15,7 @@ import {
   Line,
   Cell,
 } from "recharts";
-import { Mic, MessageSquare } from "lucide-react";
+import { Mic, MessageSquare, Video } from "lucide-react";
 import {
   GRID_COLOR,
   TOOLTIP_STYLE,
@@ -47,6 +47,9 @@ export type InterviewTurn = {
   score?: number | string | null;
   voiceAnalysis?: {
     status?: string;
+    confidenceLevel?: number;
+  };
+  videoAnalysis?: {
     confidenceLevel?: number;
   };
 };
@@ -100,6 +103,22 @@ function buildVocalScoreRows(turns: InterviewTurn[]): QuestionScoreRow[] {
     if (completed) {
       row.score = Math.round(
         Math.min(1, Math.max(0, t.voiceAnalysis!.confidenceLevel!)) * 100,
+      );
+    }
+    return row;
+  });
+}
+
+function buildBodyLanguageScoreRows(turns: InterviewTurn[]): QuestionScoreRow[] {
+  return turns.map((t, i) => {
+    const row: QuestionScoreRow = {
+      name: `Q${i + 1}`,
+      fullLabel: `Question ${i + 1}`,
+      questionPreview: truncateQuestion(t.question),
+    };
+    if (typeof t.videoAnalysis?.confidenceLevel === "number") {
+      row.score = Math.round(
+        Math.min(1, Math.max(0, t.videoAnalysis.confidenceLevel)) * 100,
       );
     }
     return row;
@@ -313,6 +332,40 @@ export function InterviewReportVocalQuestionCharts({
         tooltipScoreLabel="Vocal score"
         lineStroke={C.cyan}
         emptyMessage="No per-question vocal scores for this session yet."
+      />
+    </div>
+  );
+}
+
+/** Bar + line — body language / presence per question (video turns). */
+export function InterviewReportBodyLanguageQuestionCharts({
+  turns,
+}: {
+  turns: InterviewTurn[];
+}) {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme !== "dark";
+  const rows = useMemo(() => buildBodyLanguageScoreRows(turns), [turns]);
+  const hasVideo = rows.some((r) => r.score !== undefined);
+  if (!hasVideo) return null;
+
+  return (
+    <div className={CARDSHELL}>
+      <div className="mb-4">
+        <h3 className="mb-1 flex items-center gap-2 font-bold text-cyan-800 dark:text-cyan-400">
+          <Video size={20} aria-hidden />
+          Question-by-Question Body Language
+        </h3>
+        <p className="text-xs text-slate-600 dark:text-slate-500">
+          Presence score from your camera for each recorded answer (0–100),
+          matching the overview above.
+        </p>
+      </div>
+      <QuestionScoreBarLinePair
+        data={rows}
+        tooltipScoreLabel="Body language score"
+        lineStroke={isLight ? "#6d28d9" : "#a78bfa"}
+        emptyMessage="No per-question body language scores for this session yet."
       />
     </div>
   );

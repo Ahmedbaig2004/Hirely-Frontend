@@ -116,6 +116,32 @@ export default function InterviewPanel() {
     useState<ProcessingStage>("evaluating");
   const [voiceRetryCount, setVoiceRetryCount] = useState(0);
   const [finalizeRetryCount, setFinalizeRetryCount] = useState(0);
+  /** During /api/finalize-status polling — questions scored vs total */
+  const [finalizeReportProgress, setFinalizeReportProgress] = useState({
+    evaluated: 0,
+    total: 0,
+  });
+
+  const seedFinalizeReportProgress = () => {
+    const { config: cfg, questionCount: qn } = useInterviewStore.getState();
+    setFinalizeReportProgress({
+      evaluated: 0,
+      total: Math.max(1, cfg?.questionCount ?? qn ?? 1),
+    });
+  };
+
+  const mergeFinalizeProgressFromResponse = (
+    statusData: Record<string, unknown>,
+  ) => {
+    const te = statusData.questionsTotal;
+    const ev = statusData.questionsEvaluated;
+    if (typeof te === "number" && typeof ev === "number" && te > 0) {
+      setFinalizeReportProgress({
+        evaluated: Math.min(ev, te),
+        total: te,
+      });
+    }
+  };
 
   // Track whether any audio turns have been submitted (for smart finalization)
   const [hasAudioTurns, setHasAudioTurns] = useState(false);
@@ -335,10 +361,19 @@ export default function InterviewPanel() {
           `${backendUrl}/api/voice-progress/${sessionId}`,
         );
         if (pollingAbortRef.current) return;
-        setVoiceProgress({ completed: data.completed, total: data.total });
+        const sampleDone =
+          typeof data.samplesCompleted === "number"
+            ? data.samplesCompleted
+            : data.completed + (data.video?.completed ?? 0);
+        const sampleTotal =
+          typeof data.samplesTotal === "number"
+            ? data.samplesTotal
+            : data.total + (data.video?.total ?? 0);
+        setVoiceProgress({ completed: sampleDone, total: sampleTotal });
 
         if (data.allDone) {
           setProcessingStage("generating_report");
+          seedFinalizeReportProgress();
           try {
             await axios.post(`${backendUrl}/api/finalize-interview`, {
               sessionId,
@@ -368,6 +403,9 @@ export default function InterviewPanel() {
                     2000,
                   );
                 } else {
+                  mergeFinalizeProgressFromResponse(
+                    statusData as Record<string, unknown>,
+                  );
                   if (bumpFinalizeRetry()) return;
                   pollingTimerRef.current = setTimeout(pollStatus, 2000);
                 }
@@ -509,6 +547,32 @@ export default function InterviewPanel() {
     await handleSubmission(blob);
   };
 
+  useEffect(() => {
+    if (interviewMode !== "audio" && interviewMode !== "video") return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.code !== "Space") return;
+      if (!hasSpoken || isAIThinking) return;
+
+      const active = document.activeElement as HTMLElement | null;
+      if (active) {
+        const tag = active.tagName.toLowerCase();
+        const isTypingTarget =
+          tag === "input" ||
+          tag === "textarea" ||
+          tag === "select" ||
+          active.isContentEditable;
+        if (isTypingTarget) return;
+      }
+
+      event.preventDefault();
+      void handleManualStop();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [interviewMode, hasSpoken, isAIThinking]);
+
   // ─────────────────────────────────────────────────────────────
   // CHAT MODE SUBMISSION
   // ─────────────────────────────────────────────────────────────
@@ -540,6 +604,7 @@ export default function InterviewPanel() {
           pollVoiceProgress();
         } else {
           setProcessingStage("generating_report");
+          seedFinalizeReportProgress();
           setVoiceProgress({ completed: 0, total: 0 });
           const backendUrl2 =
             process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
@@ -594,6 +659,9 @@ export default function InterviewPanel() {
                     2000,
                   );
                 } else {
+                  mergeFinalizeProgressFromResponse(
+                    statusData as Record<string, unknown>,
+                  );
                   if (bumpFinalizeRetry()) return;
                   pollingTimerRef.current = setTimeout(
                     pollFinalizeStatus,
@@ -648,6 +716,17 @@ export default function InterviewPanel() {
       voiceProgress.total > 0
         ? Math.round((voiceProgress.completed / voiceProgress.total) * 100)
         : 0;
+    const reportPct =
+      finalizeReportProgress.total > 0
+        ? Math.min(
+            100,
+            Math.round(
+              (finalizeReportProgress.evaluated /
+                finalizeReportProgress.total) *
+                100,
+            ),
+          )
+        : 0;
     const retryTelemetry = voiceRetryCount + finalizeRetryCount;
     const hasVoiceStage = hasAudioTurns;
 
@@ -666,7 +745,7 @@ export default function InterviewPanel() {
             {
               key: "analyzing_voice" as const,
               label: "Analyzing Voice Patterns",
-              subtitle: `${voiceProgress.completed} of ${voiceProgress.total} audio samples processed`,
+              subtitle: `${voiceProgress.completed} of ${voiceProgress.total} recordings analyzed`,
             },
           ]
         : []),
@@ -780,6 +859,8 @@ export default function InterviewPanel() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.08, duration: 0.4 }}
                   className={`flex items-start gap-3.5 rounded-2xl transition-colors ${
+                    stage.key === "done" ? "mt-8 sm:mt-9" : ""
+                  } ${
                     isActive
                       ? "bg-slate-50/80 p-2.5 -m-2.5 sm:p-3 sm:-m-3 dark:bg-slate-900/50"
                       : ""
@@ -848,6 +929,13 @@ export default function InterviewPanel() {
                     <p className="mt-0.5 text-xs text-slate-600 transition-colors duration-500 dark:text-slate-400">
                       {stage.subtitle}
                     </p>
+                    {stage.key === "generating_report" &&
+                      finalizeReportProgress.total > 0 && (
+                        <p className="mt-1 text-xs font-medium text-slate-800 dark:text-slate-200">
+                          {finalizeReportProgress.evaluated} of{" "}
+                          {finalizeReportProgress.total} questions evaluated
+                        </p>
+                      )}
 
                     {/* Voice analysis progress bar */}
                     {stage.key === "analyzing_voice" &&
@@ -879,6 +967,41 @@ export default function InterviewPanel() {
                             className={`text-xs font-mono shrink-0 tabular-nums ${isCompleted ? "text-emerald-600" : "text-teal-700 dark:text-teal-400"}`}
                           >
                             {isCompleted ? "100" : pct}%
+                          </span>
+                        </div>
+                      )}
+                    {stage.key === "generating_report" &&
+                      (isActive || isCompleted) &&
+                      finalizeReportProgress.total > 0 && (
+                        <div className="mt-2.5 flex items-center gap-2.5">
+                          <div
+                            className="flex-1 h-1 rounded-full overflow-hidden"
+                            style={{
+                              background:
+                                "var(--md-sys-color-surface-container-high)",
+                            }}
+                          >
+                            <motion.div
+                              className="h-full rounded-full"
+                              style={{
+                                background: isCompleted
+                                  ? "#10B981"
+                                  : "linear-gradient(90deg, var(--md-sys-color-primary), var(--md-sys-color-tertiary))",
+                                boxShadow: isCompleted
+                                  ? "none"
+                                  : "0 0 8px color-mix(in srgb, var(--md-sys-color-primary) 50%, transparent)",
+                              }}
+                              initial={{ width: "0%" }}
+                              animate={{
+                                width: `${isCompleted ? 100 : reportPct}%`,
+                              }}
+                              transition={{ duration: 0.5, ease: "easeOut" }}
+                            />
+                          </div>
+                          <span
+                            className={`text-xs font-mono shrink-0 tabular-nums ${isCompleted ? "text-emerald-600" : "text-violet-700 dark:text-violet-400"}`}
+                          >
+                            {isCompleted ? "100" : reportPct}%
                           </span>
                         </div>
                       )}
@@ -1507,6 +1630,30 @@ export default function InterviewPanel() {
               <CheckCircle size={16} />
               Done Speaking
             </motion.button>
+            <div
+              className="rounded-xl px-3 py-2"
+              style={{
+                background:
+                  "linear-gradient(135deg, color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent), color-mix(in srgb, var(--md-sys-color-tertiary) 8%, transparent))",
+                border: "1px solid color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent)",
+              }}
+            >
+              <p className="text-[11px] lp-sub text-center opacity-95">
+                Press{" "}
+                <kbd
+                  className="mx-1 rounded-md px-2 py-1 text-[10px] font-bold"
+                  style={{
+                    background: "var(--md-sys-color-surface-container-high)",
+                    border: "1px solid var(--md-sys-color-outline-variant)",
+                    color: "var(--md-sys-color-on-surface)",
+                    boxShadow: "inset 0 -1px 0 rgba(0,0,0,0.08)",
+                  }}
+                >
+                  Space
+                </kbd>{" "}
+                to submit and continue
+              </p>
+            </div>
           </motion.div>
         </div>
       )}
@@ -1541,45 +1688,54 @@ export default function InterviewPanel() {
               className="fixed inset-0 z-50 flex items-center justify-center px-4 pointer-events-none"
             >
               <div
-                className="glass-card-raised rounded-2xl p-8 w-full max-w-sm pointer-events-auto"
-                style={{ border: "1px solid rgba(239,68,68,0.2)" }}
+                className="glass-card-raised rounded-3xl p-8 w-full max-w-md pointer-events-auto"
+                style={{
+                  border: "1px solid color-mix(in srgb, #ef4444 25%, var(--md-sys-color-outline-variant))",
+                  boxShadow:
+                    "0 24px 60px rgba(2,6,23,0.42), 0 0 0 1px color-mix(in srgb, #ef4444 18%, transparent), inset 0 1px 0 rgba(255,255,255,0.16)",
+                }}
               >
                 {/* Icon */}
                 <div
-                  className="w-12 h-12 rounded-xl mx-auto mb-5 flex items-center justify-center"
+                  className="w-14 h-14 rounded-2xl mx-auto mb-5 flex items-center justify-center"
                   style={{
-                    background: "rgba(239,68,68,0.12)",
-                    border: "1px solid rgba(239,68,68,0.25)",
+                    background:
+                      "radial-gradient(circle at 30% 30%, rgba(248,113,113,0.3), rgba(239,68,68,0.12))",
+                    border: "1px solid rgba(239,68,68,0.35)",
+                    boxShadow: "0 8px 24px rgba(239,68,68,0.18)",
                   }}
                 >
-                  <AlertTriangle size={22} className="text-rose-400" />
+                  <AlertTriangle size={24} className="text-rose-400" />
                 </div>
 
-                <h3 className="text-lg font-semibold lp-hi text-center mb-2">
+                <h3 className="text-2xl font-semibold lp-hi text-center mb-2">
                   Exit Interview?
                 </h3>
-                <p className="text-sm lp-muted text-center mb-7 leading-relaxed">
+                <p className="text-sm lp-muted text-center mb-2 leading-relaxed">
                   Your progress will be lost and this session cannot be resumed.
+                </p>
+                <p className="text-xs text-center mb-7 text-slate-500 dark:text-slate-400">
+                  You can stay and finish this question, or leave now.
                 </p>
 
                 <div className="flex gap-3">
                   <button
                     onClick={() => { setShowExitModal(false); clearPending(); }}
-                    className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
+                    className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all duration-200"
                     style={{
-                      background: "var(--md-sys-color-surface-container)",
-                      border: "1px solid var(--md-sys-color-outline-variant)",
-                      color: "var(--md-sys-color-on-surface-variant)",
+                      background: "var(--md-sys-color-surface-container-high)",
+                      border: "1px solid color-mix(in srgb, var(--md-sys-color-outline) 65%, transparent)",
+                      color: "var(--md-sys-color-on-surface)",
                     }}
                   >
                     Keep Going
                   </button>
                   <button
                     onClick={handleExitConfirm}
-                    className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200"
+                    className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all duration-200"
                     style={{
-                      background: "linear-gradient(135deg, #EF4444, #DC2626)",
-                      boxShadow: "0 4px 16px rgba(239,68,68,0.3)",
+                      background: "linear-gradient(135deg, #ef4444, #dc2626 55%, #b91c1c)",
+                      boxShadow: "0 10px 20px rgba(239,68,68,0.35)",
                       color: "#ffffff",
                     }}
                   >
