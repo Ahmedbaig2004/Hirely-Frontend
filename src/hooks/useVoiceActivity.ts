@@ -182,7 +182,17 @@ export const useVoiceActivity = (
         videoPreviewRef.current.srcObject = stream;
         videoPreviewRef.current
           .play()
-          .catch((err) => console.error("Video play error:", err));
+          .catch((err: unknown) => {
+            const name =
+              err instanceof DOMException ? err.name : (err as Error)?.name;
+            const msg = err instanceof Error ? err.message : "";
+            if (
+              name === "AbortError" ||
+              msg.toLowerCase().includes("interrupted")
+            )
+              return;
+            console.warn("Video play error:", err);
+          });
       }
       setIsCameraReady(true);
     } catch (err) {
@@ -235,7 +245,17 @@ export const useVoiceActivity = (
     if (el && videoStreamRef.current) {
       if (el.srcObject !== videoStreamRef.current) {
         el.srcObject = videoStreamRef.current;
-        el.play().catch((err) => console.error("Video play error:", err));
+        el.play().catch((err: unknown) => {
+          const name =
+            err instanceof DOMException ? err.name : (err as Error)?.name;
+          const msg = err instanceof Error ? err.message : "";
+          if (
+            name === "AbortError" ||
+            msg.toLowerCase().includes("interrupted")
+          )
+            return;
+          console.warn("Video play error:", err);
+        });
       }
       setIsCameraReady(true);
     }

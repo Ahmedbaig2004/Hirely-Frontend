@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import { flushSync } from "react-dom";
 import type React from "react";
 import {
   Mic,
@@ -37,6 +38,27 @@ function submitAnswerErrorMessage(err: unknown): string {
   return "Failed to submit answer";
 }
 
+function isPlayInterruptedError(err: unknown): boolean {
+  const name =
+    err instanceof DOMException ? err.name : (err as Error)?.name;
+  const msg = (err instanceof Error ? err.message : String(err ?? ""))
+    .toLowerCase();
+  return name === "AbortError" || msg.includes("interrupted");
+}
+
+/** Stop TTS before report UI unmounts the hidden <audio> (avoids play/load races). */
+function stopInterviewTtsAudio(audioEl: HTMLAudioElement | null) {
+  if (!audioEl) return;
+  audioEl.onended = null;
+  audioEl.onerror = null;
+  audioEl.pause();
+  try {
+    audioEl.currentTime = 0;
+  } catch {
+    /* ignore */
+  }
+}
+
 const SESSION_TIPS = [
   "Structure answers: one sentence to frame, then a few crisp supporting points.",
   "If a question is broad, name your role, goal, and outcome before the details.",
@@ -62,6 +84,8 @@ const REPORT_BUILDER_TIPS = [
 
 export default function InterviewPanel() {
   const router = useRouter();
+  /** Disables beforeunload/link guard immediately before client redirect (avoids "Leave site?" on completion). */
+  const [suppressNavGuard, setSuppressNavGuard] = useState(false);
 
   // 1. Get State
   const {
@@ -97,7 +121,17 @@ export default function InterviewPanel() {
   const [showExitModal, setShowExitModal] = useState(false);
 
   // Navigation guard — intercepts <Link> clicks, browser back, tab close
-  const { pendingUrl, clearPending } = useNavigationGuard(!!sessionId);
+  const { pendingUrl, clearPending } = useNavigationGuard(
+    !!sessionId && !suppressNavGuard,
+  );
+
+  const redirectReplace = useCallback(
+    (href: string) => {
+      flushSync(() => setSuppressNavGuard(true));
+      router.replace(href);
+    },
+    [router],
+  );
   useEffect(() => {
     if (pendingUrl) setShowExitModal(true);
   }, [pendingUrl]);
@@ -143,6 +177,16 @@ export default function InterviewPanel() {
     }, 4500);
     return () => clearInterval(t);
   }, [isProcessingReport]);
+
+  /** Hard fallback if primary redirect never runs (e.g. rare promise/timer issues). */
+  useEffect(() => {
+    if (!isProcessingReport || processingStage !== "done" || !sessionId)
+      return;
+    const id = window.setTimeout(() => {
+      redirectReplace(`/dashboard/${sessionId}`);
+    }, 8000);
+    return () => window.clearTimeout(id);
+  }, [isProcessingReport, processingStage, sessionId, redirectReplace]);
 
   useEffect(() => {
     if (interviewMode !== "audio" && interviewMode !== "video") return;
@@ -214,19 +258,11 @@ export default function InterviewPanel() {
 
         setIsPlaying(true);
 
-        try {
-          await audioRef.current.play();
-        } catch (err: unknown) {
-          const isAbort =
-            (err instanceof DOMException && err.name === "AbortError") ||
-            (err instanceof Error && err.message.includes("interrupted"));
-          if (isAbort) {
-            console.log("Audio playback interrupted (harmless)");
-          } else {
-            console.error("Playback failed:", err);
-            setIsPlaying(false);
-          }
-        }
+        await audioRef.current.play().catch((err: unknown) => {
+          if (isPlayInterruptedError(err)) return;
+          console.warn("Playback error:", err);
+          setIsPlaying(false);
+        });
       } catch (e) {
         console.error("Audio setup error", e);
         setIsAIThinking(false);
@@ -305,7 +341,7 @@ export default function InterviewPanel() {
       toast.error(
         "Report generation is taking longer than expected. We’ll notify you when it’s ready.",
       );
-      window.location.replace("/dashboard");
+      redirectReplace("/dashboard");
     };
 
     const bumpVoiceRetry = () => {
@@ -355,7 +391,7 @@ export default function InterviewPanel() {
                 if (statusData.status === "completed") {
                   setProcessingStage("done");
                   setTimeout(
-                    () => window.location.replace(`/dashboard/${sessionId}`),
+                    () => redirectReplace(`/dashboard/${sessionId}`),
                     1200,
                   );
                 } else if (statusData.status === "failed") {
@@ -364,7 +400,7 @@ export default function InterviewPanel() {
                       "Failed to generate report. Please try again.",
                   );
                   setTimeout(
-                    () => window.location.replace(`/dashboard/${sessionId}`),
+                    () => redirectReplace(`/dashboard/${sessionId}`),
                     2000,
                   );
                 } else {
@@ -384,7 +420,7 @@ export default function InterviewPanel() {
             console.error("Finalize error:", finalizeErr);
             toast.error("Failed to generate report. Please try again.");
             setTimeout(
-              () => window.location.replace(`/dashboard/${sessionId}`),
+              () => redirectReplace(`/dashboard/${sessionId}`),
               2000,
             );
           }
@@ -401,7 +437,7 @@ export default function InterviewPanel() {
     };
 
     poll();
-  }, [sessionId, router]);
+  }, [sessionId, redirectReplace]);
 
   const handleSubmission = async (manualBlob?: Blob) => {
     const audioBlob = manualBlob || getAudioBlob();
@@ -444,6 +480,8 @@ export default function InterviewPanel() {
       }
 
       if (isFinished) {
+        stopInterviewTtsAudio(audioRef.current);
+        setIsPlaying(false);
         setIsProcessingReport(true);
         setProcessingStage("analyzing_voice");
         pollVoiceProgress();
@@ -534,6 +572,8 @@ export default function InterviewPanel() {
       const { nextQuestion, isFinished } = res.data;
 
       if (isFinished) {
+        stopInterviewTtsAudio(audioRef.current);
+        setIsPlaying(false);
         setIsProcessingReport(true);
         if (hasAudioTurns) {
           setProcessingStage("analyzing_voice");
@@ -559,7 +599,7 @@ export default function InterviewPanel() {
               toast.error(
                 "Report generation is taking longer than expected. We’ll notify you when it’s ready.",
               );
-              window.location.replace("/dashboard");
+              redirectReplace("/dashboard");
             };
             const bumpFinalizeRetry = () => {
               finalizeRetryRef.current += 1;
@@ -581,7 +621,7 @@ export default function InterviewPanel() {
                 if (statusData.status === "completed") {
                   setProcessingStage("done");
                   setTimeout(
-                    () => window.location.replace(`/dashboard/${sessionId}`),
+                    () => redirectReplace(`/dashboard/${sessionId}`),
                     1200,
                   );
                 } else if (statusData.status === "failed") {
@@ -590,7 +630,7 @@ export default function InterviewPanel() {
                       "Failed to generate report. Please try again.",
                   );
                   setTimeout(
-                    () => window.location.replace(`/dashboard/${sessionId}`),
+                    () => redirectReplace(`/dashboard/${sessionId}`),
                     2000,
                   );
                 } else {
@@ -611,7 +651,7 @@ export default function InterviewPanel() {
             console.error("Finalize error:", finalizeErr);
             toast.error("Failed to generate report. Please try again.");
             setTimeout(
-              () => window.location.replace(`/dashboard/${sessionId}`),
+              () => redirectReplace(`/dashboard/${sessionId}`),
               2000,
             );
           }
