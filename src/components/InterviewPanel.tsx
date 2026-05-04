@@ -175,10 +175,10 @@ export default function InterviewPanel() {
     if (!isProcessingReport || processingStage !== "done" || !sessionId)
       return;
     const id = window.setTimeout(() => {
-      redirectReplace(`/dashboard/${sessionId}`);
+      router.replace(`/dashboard/${sessionId}`);
     }, 8000);
     return () => window.clearTimeout(id);
-  }, [isProcessingReport, processingStage, sessionId, redirectReplace]);
+  }, [isProcessingReport, processingStage, sessionId, router]);
 
   useEffect(() => {
     if (interviewMode !== "audio" && interviewMode !== "video") return;
@@ -429,7 +429,7 @@ export default function InterviewPanel() {
     };
 
     poll();
-  }, [sessionId, redirectReplace]);
+  }, [sessionId, router]);
 
   const handleSubmission = async (manualBlob?: Blob) => {
     const audioBlob = manualBlob || getAudioBlob();
