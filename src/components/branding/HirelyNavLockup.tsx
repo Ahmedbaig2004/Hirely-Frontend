@@ -5,20 +5,15 @@ import { hirelyWordmarkMetrics } from "@/components/branding/hirelyWordmarkMetri
 import { iconToWordmarkGapEm, navHMarkHeightEm } from "@/components/branding/hirelyBrandLockup";
 
 type HirelyNavLockupProps = {
-  /** Default wordmark color uses `--hirely-wordmark-ink`; override with `textClassName` if needed. */
   isLight: boolean;
   textClassName?: string;
   className?: string;
-  /** Stylized H mark to the left of the full H I R E̲ L Y wordmark. */
   withHMark?: boolean;
-  /** Optional extra classes on the H mark (e.g. animation). */
   markClassName?: string;
   imagePriority?: boolean;
 };
 
 const H_MARK = "/branding/hirely-h-mark.png";
-
-/** Wordmark uses `--hirely-wordmark-ink` in both themes. */
 const DEFAULT_TEXT =
   "text-[0.85rem] sm:text-[0.9rem] leading-none text-[color:var(--hirely-wordmark-ink)]";
 

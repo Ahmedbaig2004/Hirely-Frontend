@@ -27,6 +27,7 @@ interface TypeData {
   avgScore: number | null;
   avgDelivery: number | null;
   avgVoice: number | null;
+  avgVideo: number | null;
 }
 
 interface Props {
@@ -81,6 +82,10 @@ export function TypeBreakdownChart({ byType }: Props) {
               <stop offset="0%" stopColor={C.emerald} />
               <stop offset="100%" stopColor={C.emeraldLight} />
             </linearGradient>
+            <linearGradient id={`barVideo-${uid}`} x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%" stopColor={C.amber} />
+              <stop offset="100%" stopColor={C.amberLight} />
+            </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="4 8" stroke={GRID_FAINT} vertical={false} />
           <XAxis
@@ -131,6 +136,16 @@ export function TypeBreakdownChart({ byType }: Props) {
             dataKey="avgVoice"
             name="Avg Voice"
             fill={`url(#barVoice-${uid})`}
+            radius={[6, 6, 0, 0]}
+            maxBarSize={48}
+            isAnimationActive={animMs > 0}
+            animationDuration={animMs}
+            animationEasing="ease-out"
+          />
+          <Bar
+            dataKey="avgVideo"
+            name="Avg Video"
+            fill={`url(#barVideo-${uid})`}
             radius={[6, 6, 0, 0]}
             maxBarSize={48}
             isAnimationActive={animMs > 0}

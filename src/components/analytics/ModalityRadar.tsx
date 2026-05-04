@@ -25,6 +25,7 @@ type ModalityPayload = {
   technical: number | null;
   delivery: number | null;
   voice: number | null;
+  video: number | null;
   contentQuality: number | null;
   combined: number | null;
 };
@@ -47,6 +48,7 @@ export function ModalityRadar({ modality }: Props) {
       { subject: "Content", score: Math.round(modality.contentQuality ?? 0) },
       { subject: "Delivery", score: Math.round(modality.delivery ?? 0) },
       { subject: "Voice", score: Math.round(modality.voice ?? 0) },
+      { subject: "Video", score: Math.round(modality.video ?? 0) },
       { subject: "Combined", score: Math.round(modality.combined ?? 0) },
     ],
     [modality],

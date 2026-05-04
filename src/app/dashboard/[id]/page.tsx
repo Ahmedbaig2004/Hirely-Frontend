@@ -34,6 +34,7 @@ import {
   InterviewReportTranscriptQuestionCharts,
   InterviewReportVocalQuestionCharts,
   InterviewReportBodyLanguageQuestionCharts,
+  InterviewReportBodyLanguageQuestionCharts,
 } from "@/components/dashboard/InterviewReportQuestionCharts";
 import { TranscriptWithFillerHighlight } from "@/components/dashboard/TranscriptWithFillerHighlight";
 import { InterviewAnswerAudioPlayer } from "@/components/dashboard/InterviewAnswerAudioPlayer";
@@ -1139,6 +1140,34 @@ export default function InterviewDetail() {
                         </div>
                       )}
 
+<<<<<<< HEAD
+                      {/* Priority Improvements */}
+                      {improvements.length > 0 && (
+                        <div>
+                          <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.3em] text-rose-800 dark:text-rose-400/80">
+                            Priority Improvements
+                          </span>
+                          <div className="space-y-2">
+                            {(showAllVoiceImprovements ? improvements : improvements.slice(0, 3)).map((item: ShapExplanation, i: number) => (
+                              <motion.div
+                                key={item.feature}
+                                initial={{ opacity: 0, x: -8 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: i * 0.07, duration: 0.3 }}
+                                className="glass-card p-3 rounded-xl border-l-4 border-rose-500/50"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-800 dark:text-rose-400/70">
+                                    {VOICE_FEATURE_LABELS[item.feature] ||
+                                      item.label}
+                                  </span>
+                                  {item.category &&
+                                    item.category !== "Other" && (
+                                      <span className="text-[9px] px-1.5 py-0.5 rounded-full lp-surface-lo lp-dim font-medium">
+                                        {item.category}
+                                      </span>
+                                    )}
+=======
                       {hasVoiceGroupData ? (
                         <>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
@@ -1181,10 +1210,75 @@ export default function InterviewDetail() {
                                       {groupData.tips[0].tip}
                                     </p>
                                   )}
+>>>>>>> 5ac65fe1f8153a49cbba09236367ad91f6a42eeb
                                 </div>
                               );
                             })}
                           </div>
+<<<<<<< HEAD
+                          {improvements.length > 3 && (
+                            <button
+                              type="button"
+                              onClick={() => setShowAllVoiceImprovements((prev) => !prev)}
+                              className="mt-3 inline-flex items-center rounded-lg border border-rose-300/60 bg-rose-50/70 px-3 py-1.5 text-xs font-semibold text-rose-800 transition hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20"
+                            >
+                              {showAllVoiceImprovements
+                                ? "View less"
+                                : `View more (${improvements.length - 3} more)`}
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Strengths */}
+                      {strengths.length > 0 && (
+                        <div>
+                          <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.3em] text-emerald-800 dark:text-emerald-400/80">
+                            Your Strengths
+                          </span>
+                          <div className="space-y-2">
+                            {(showAllVoiceStrengths ? strengths : strengths.slice(0, 3)).map((item: ShapExplanation, i: number) => (
+                              <motion.div
+                                key={item.feature}
+                                initial={{ opacity: 0, x: -8 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{
+                                  delay: i * 0.07 + 0.21,
+                                  duration: 0.3,
+                                }}
+                                className="glass-card p-3 rounded-xl border-l-4 border-emerald-500/50"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400/70">
+                                    {VOICE_FEATURE_LABELS[item.feature] ||
+                                      item.label}
+                                  </span>
+                                  {item.category &&
+                                    item.category !== "Other" && (
+                                      <span className="text-[9px] px-1.5 py-0.5 rounded-full lp-surface-lo lp-dim font-medium">
+                                        {item.category}
+                                      </span>
+                                    )}
+                                </div>
+                                <p className="text-xs lp-body mt-1 leading-relaxed">
+                                  {item.explanation}
+                                </p>
+                              </motion.div>
+                            ))}
+                          </div>
+                          {strengths.length > 3 && (
+                            <button
+                              type="button"
+                              onClick={() => setShowAllVoiceStrengths((prev) => !prev)}
+                              className="mt-3 inline-flex items-center rounded-lg border border-emerald-300/60 bg-emerald-50/70 px-3 py-1.5 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
+                            >
+                              {showAllVoiceStrengths
+                                ? "View less"
+                                : `View more (${strengths.length - 3} more)`}
+                            </button>
+                          )}
+                        </div>
+=======
                           {sortVoiceGroupEntries(
                             Object.entries(aggregatedVoiceGroups),
                           ).map(([groupName, groupData]) => {
@@ -1326,6 +1420,7 @@ export default function InterviewDetail() {
                             </div>
                           )}
                         </>
+>>>>>>> 5ac65fe1f8153a49cbba09236367ad91f6a42eeb
                       )}
                     </div>
                   );
@@ -1482,6 +1577,26 @@ export default function InterviewDetail() {
           };
 
           const statusBadge = (s: string) => {
+            if (s === "green")
+              return {
+                label: "Helped Your Score",
+                bg: "bg-emerald-500/10 dark:bg-emerald-500/15",
+                text: "text-emerald-800 dark:text-emerald-400",
+                border: "border-emerald-500/25 dark:border-emerald-500/25",
+              };
+            if (s === "red")
+              return {
+                label: "Held Back Your Score",
+                bg: "bg-rose-500/10 dark:bg-rose-500/15",
+                text: "text-rose-800 dark:text-rose-400",
+                border: "border-rose-500/25 dark:border-rose-500/25",
+              };
+            return {
+              label: "Minimal Impact",
+              bg: "bg-amber-500/10 dark:bg-amber-500/15",
+              text: "text-amber-900 dark:text-amber-400",
+              border: "border-amber-500/25 dark:border-amber-500/25",
+            };
             if (s === "green")
               return {
                 label: "Helped Your Score",

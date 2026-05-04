@@ -18,6 +18,7 @@ import { ModalityRadar } from "@/components/analytics/ModalityRadar";
 import { TopicHeatmap } from "@/components/analytics/TopicHeatmap";
 import { DeliveryChart } from "@/components/analytics/DeliveryChart";
 import { DecisionBreakdown } from "@/components/analytics/DecisionBreakdown";
+import { VideoInsightsChart } from "@/components/analytics/VideoInsightsChart";
 
 // --------------------------------------------------------------------------
 // Types
@@ -38,11 +39,13 @@ interface AnalyticsResponse {
     avgScore: number | null;
     avgDelivery: number | null;
     avgVoice: number | null;
+    avgVideo: number | null;
   }[];
   modality: {
     technical: number | null;
     delivery: number | null;
     voice: number | null;
+    video: number | null;
     contentQuality: number | null;
     combined: number | null;
   };
@@ -59,6 +62,13 @@ interface AnalyticsResponse {
     avgRestarts: number | null;
     avgRelevance: number | null;
     avgSpecificity: number | null;
+  };
+  video: {
+    avgConfidence: number | null;
+    avgRawScore: number | null;
+    analyzedTurns: number;
+    labelBreakdown: { label: string; count: number }[];
+    topSignals: { name: string; impact: number }[];
   };
   decisionBreakdown: { decision: string; count: number }[];
 }
@@ -232,6 +242,26 @@ function AnalyticsGrid({ data }: { data: AnalyticsResponse }) {
         <p className="label-caps lp-sub mb-4">Delivery Analysis</p>
         <DeliveryChart delivery={data.delivery} />
       </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.42, duration: 0.35 }}
+        className="glass-card rounded-2xl p-6 border border-l-4 border-amber-500/40"
+      >
+        <p className="label-caps lp-sub mb-4">Video Presence Analysis</p>
+        <VideoInsightsChart
+          video={
+            data.video ?? {
+              avgConfidence: null,
+              avgRawScore: null,
+              analyzedTurns: 0,
+              labelBreakdown: [],
+              topSignals: [],
+            }
+          }
+        />
+      </motion.div>
     </div>
   );
 }
@@ -240,7 +270,7 @@ function AnalyticsGrid({ data }: { data: AnalyticsResponse }) {
 // Page
 // --------------------------------------------------------------------------
 
-const DEFAULT_FILTERS: AnalyticsFilters = { type: "all", range: "90d" };
+const DEFAULT_FILTERS: AnalyticsFilters = { type: "all", range: "all" };
 
 export default function AnalyticsPage() {
   const { user } = useAuthStore();

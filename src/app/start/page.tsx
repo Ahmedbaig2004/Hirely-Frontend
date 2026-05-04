@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useId, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useId, useCallback, useMemo, type RefObject } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useInterviewStore, InterviewType, InterviewMode } from "@/stores/useInterviewStore";
@@ -23,6 +23,9 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 type StartStage = "form" | "loading" | "analysis" | "camera-check" | "launching";
+
+type StartFormField = "jd" | "resume" | "stack" | "difficulty" | "questionCount" | "micTest";
+const START_FIELD_REQUIRED = "This field is required";
 
 interface AnalysisData {
   candidateSummary: string | null;
@@ -197,6 +200,24 @@ export default function StartPage() {
   const cameraCheckVideoRef = useRef<HTMLVideoElement | null>(null);
   const cameraCheckStreamRef = useRef<MediaStream | null>(null);
 
+  const jdFieldRef = useRef<HTMLDivElement>(null);
+  const resumeFieldRef = useRef<HTMLDivElement>(null);
+  const stackFieldRef = useRef<HTMLDivElement>(null);
+  const difficultyFieldRef = useRef<HTMLDivElement>(null);
+  const questionCountFieldRef = useRef<HTMLDivElement>(null);
+  const micTestFieldRef = useRef<HTMLDivElement>(null);
+
+  const [inlineFieldErrors, setInlineFieldErrors] = useState<Partial<Record<StartFormField, string>>>({});
+
+  const dismissFieldError = useCallback((field: StartFormField) => {
+    setInlineFieldErrors((prev) => {
+      if (!(field in prev)) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  }, []);
+
   const loadingStepRef = useRef(0);
   const apiDoneRef = useRef(false);
   const apiResultRef = useRef<InitInterviewResponse | null>(null);
@@ -290,6 +311,10 @@ export default function StartPage() {
   useEffect(() => {
     setMicTestCompleted(false);
   }, [interviewMode, selectedMicId]);
+
+  useEffect(() => {
+    if (micTestCompleted) dismissFieldError("micTest");
+  }, [micTestCompleted, dismissFieldError]);
 
   const startCameraTest = async () => {
     try {
@@ -393,23 +418,39 @@ export default function StartPage() {
       return;
     }
 
-    // Validate per type
+    const errs: Partial<Record<StartFormField, string>> = {};
+    let scrollTo: RefObject<HTMLDivElement | null> | null = null;
+
+    const flag = (field: StartFormField, ref: RefObject<HTMLDivElement | null>) => {
+      errs[field] = START_FIELD_REQUIRED;
+      if (!scrollTo) scrollTo = ref;
+    };
+
     if (interviewType === "job-specific") {
-      if (!file) return toast.error("Please upload a resume first.");
-      if (!jd.trim()) return toast.error("Please enter a job description.");
+      if (!jd.trim()) flag("jd", jdFieldRef);
+      if (!file) flag("resume", resumeFieldRef);
     } else if (interviewType === "technical") {
-      if (!config.stack) return toast.error("Please select a stack.");
-      if (!config.difficulty) return toast.error("Please select a difficulty.");
-      if (!config.questionCount) return toast.error("Please select number of questions.");
+      if (!config.stack?.trim()) flag("stack", stackFieldRef);
+      if (!config.difficulty) flag("difficulty", difficultyFieldRef);
+      if (config.questionCount == null || config.questionCount < 1) flag("questionCount", questionCountFieldRef);
     } else if (interviewType === "behavioral") {
-      if (!config.difficulty) return toast.error("Please select a difficulty.");
-      if (!config.questionCount) return toast.error("Please select number of questions.");
+      if (!config.difficulty) flag("difficulty", difficultyFieldRef);
+      if (config.questionCount == null || config.questionCount < 1) flag("questionCount", questionCountFieldRef);
     }
 
     if ((interviewMode === "audio" || interviewMode === "video") && !micTestCompleted) {
-      toast.error("Run the microphone test and let it finish before starting.");
+      flag("micTest", micTestFieldRef);
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setInlineFieldErrors(errs);
+      requestAnimationFrame(() => {
+        scrollTo?.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
       return;
     }
+
+    setInlineFieldErrors({});
 
     apiDoneRef.current = false;
     apiResultRef.current = null;
@@ -473,25 +514,6 @@ export default function StartPage() {
     setStage("launching");
     setTimeout(() => router.push("/interview"), 1200);
   };
-
-  const isSubmitDisabled = (() => {
-    let typeDisabled = false;
-    if (interviewType === "job-specific") typeDisabled = !file || !jd.trim();
-    else if (interviewType === "technical") typeDisabled = !config.stack || !config.difficulty || !config.questionCount;
-    else if (interviewType === "behavioral") typeDisabled = !config.difficulty || !config.questionCount;
-    else typeDisabled = true;
-
-    if (typeDisabled) return true;
-
-    if (
-      (interviewMode === "audio" || interviewMode === "video") &&
-      (!devicePermissionGranted || !micTestCompleted)
-    ) {
-      return true;
-    }
-
-    return false;
-  })();
 
   const reduceMotion = useReducedMotion();
   const heroStrokeId = `start-hero-stroke-${useId().replace(/:/g, "")}`;
@@ -735,7 +757,7 @@ export default function StartPage() {
                         {/* ── JOB-SPECIFIC FIELDS ── */}
                         {interviewType === "job-specific" && (
                           <>
-                            <div className="mb-5">
+                            <div className="mb-5" ref={jdFieldRef}>
                               <label className="label-caps block mb-2">Job Description</label>
                               <textarea
                                 className="w-full rounded-xl px-4 py-3 text-sm outline-none resize-none text-on-surface"
@@ -755,15 +777,28 @@ export default function StartPage() {
                                 }}
                                 rows={3}
                                 value={jd}
-                                onChange={(e) => setJd(e.target.value)}
+                                onChange={(e) => {
+                                  dismissFieldError("jd");
+                                  setJd(e.target.value);
+                                }}
                                 placeholder="We're looking for a Senior React Developer..."
                               />
+                              {inlineFieldErrors.jd && (
+                                <p className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">
+                                  {START_FIELD_REQUIRED}
+                                </p>
+                              )}
                             </div>
-                            <div className="mb-6">
+                            <div className="mb-6" ref={resumeFieldRef}>
                               <label className="label-caps block mb-2">Resume (PDF)</label>
                               <div className="overflow-hidden rounded-xl">
                                 <FileUpload onChange={handleFileUpload} />
                               </div>
+                              {inlineFieldErrors.resume && (
+                                <p className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">
+                                  {START_FIELD_REQUIRED}
+                                </p>
+                              )}
                             </div>
                           </>
                         )}
@@ -771,11 +806,14 @@ export default function StartPage() {
                         {/* ── TECHNICAL FIELDS ── */}
                         {interviewType === "technical" && (
                           <>
-                            <div className="mb-5">
+                            <div className="mb-5" ref={stackFieldRef}>
                               <label className="label-caps block mb-2">Stack / Technology</label>
                               <select
                                 value={config.stack ?? ""}
-                                onChange={(e) => setConfig({ ...config, stack: e.target.value })}
+                                onChange={(e) => {
+                                  dismissFieldError("stack");
+                                  setConfig({ ...config, stack: e.target.value });
+                                }}
                                 className="w-full rounded-xl px-4 py-3 text-sm outline-none text-on-surface"
                                 style={{
                                   background: "var(--md-sys-color-surface-container-low)",
@@ -797,32 +835,48 @@ export default function StartPage() {
                                   <option key={s} value={s}>{s}</option>
                                 ))}
                               </select>
+                              {inlineFieldErrors.stack && (
+                                <p className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">
+                                  {START_FIELD_REQUIRED}
+                                </p>
+                              )}
                             </div>
 
-                            <div className="mb-5">
+                            <div className="mb-5" ref={difficultyFieldRef}>
                               <label className="label-caps block mb-2">Difficulty</label>
                               <div className="flex gap-2">
                                 {DIFFICULTIES.map((d) => (
                                   <button
                                     key={d}
                                     type="button"
-                                    onClick={() => setConfig({ ...config, difficulty: d })}
+                                    onClick={() => {
+                                      dismissFieldError("difficulty");
+                                      setConfig({ ...config, difficulty: d });
+                                    }}
                                     className={config.difficulty === d ? START_PILL_SELECTED : START_PILL_IDLE}
                                   >
                                     {d}
                                   </button>
                                 ))}
                               </div>
+                              {inlineFieldErrors.difficulty && (
+                                <p className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">
+                                  {START_FIELD_REQUIRED}
+                                </p>
+                              )}
                             </div>
 
-                            <div className="mb-6">
+                            <div className="mb-6" ref={questionCountFieldRef}>
                               <label className="label-caps block mb-2">Number of Questions</label>
                               <div className="flex gap-2 mb-2">
                                 {QUESTION_COUNTS.map((n) => (
                                   <button
                                     key={n}
                                     type="button"
-                                    onClick={() => setConfig({ ...config, questionCount: n })}
+                                    onClick={() => {
+                                      dismissFieldError("questionCount");
+                                      setConfig({ ...config, questionCount: n });
+                                    }}
                                     className={config.questionCount === n ? START_PILL_SELECTED : START_PILL_IDLE}
                                   >
                                     {n}
@@ -831,8 +885,16 @@ export default function StartPage() {
                               </div>
                               <CustomQuestionCountField
                                 value={config.questionCount}
-                                onChange={(n) => setConfig({ ...config, questionCount: n })}
+                                onChange={(n) => {
+                                  dismissFieldError("questionCount");
+                                  setConfig({ ...config, questionCount: n });
+                                }}
                               />
+                              {inlineFieldErrors.questionCount && (
+                                <p className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">
+                                  {START_FIELD_REQUIRED}
+                                </p>
+                              )}
                             </div>
                           </>
                         )}
@@ -840,30 +902,41 @@ export default function StartPage() {
                         {/* ── BEHAVIORAL FIELDS ── */}
                         {interviewType === "behavioral" && (
                           <>
-                            <div className="mb-5">
+                            <div className="mb-5" ref={difficultyFieldRef}>
                               <label className="label-caps block mb-2">Difficulty</label>
                               <div className="flex gap-2">
                                 {DIFFICULTIES.map((d) => (
                                   <button
                                     key={d}
                                     type="button"
-                                    onClick={() => setConfig({ ...config, difficulty: d })}
+                                    onClick={() => {
+                                      dismissFieldError("difficulty");
+                                      setConfig({ ...config, difficulty: d });
+                                    }}
                                     className={config.difficulty === d ? START_PILL_SELECTED : START_PILL_IDLE}
                                   >
                                     {d}
                                   </button>
                                 ))}
                               </div>
+                              {inlineFieldErrors.difficulty && (
+                                <p className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">
+                                  {START_FIELD_REQUIRED}
+                                </p>
+                              )}
                             </div>
 
-                            <div className="mb-6">
+                            <div className="mb-6" ref={questionCountFieldRef}>
                               <label className="label-caps block mb-2">Number of Questions</label>
                               <div className="flex gap-2 mb-2">
                                 {QUESTION_COUNTS.map((n) => (
                                   <button
                                     key={n}
                                     type="button"
-                                    onClick={() => setConfig({ ...config, questionCount: n })}
+                                    onClick={() => {
+                                      dismissFieldError("questionCount");
+                                      setConfig({ ...config, questionCount: n });
+                                    }}
                                     className={config.questionCount === n ? START_PILL_SELECTED : START_PILL_IDLE}
                                   >
                                     {n}
@@ -872,8 +945,16 @@ export default function StartPage() {
                               </div>
                               <CustomQuestionCountField
                                 value={config.questionCount}
-                                onChange={(n) => setConfig({ ...config, questionCount: n })}
+                                onChange={(n) => {
+                                  dismissFieldError("questionCount");
+                                  setConfig({ ...config, questionCount: n });
+                                }}
                               />
+                              {inlineFieldErrors.questionCount && (
+                                <p className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">
+                                  {START_FIELD_REQUIRED}
+                                </p>
+                              )}
                             </div>
                           </>
                         )}
@@ -909,7 +990,10 @@ export default function StartPage() {
                               <button
                                 key={mode}
                                 type="button"
-                                onClick={() => setInterviewMode(mode)}
+                                onClick={() => {
+                                  setInterviewMode(mode);
+                                  if (mode === "chat") dismissFieldError("micTest");
+                                }}
                                 className={interviewMode === mode ? START_MODE_SELECTED : START_MODE_IDLE}
                               >
                                 <Icon
@@ -937,7 +1021,7 @@ export default function StartPage() {
 
                         {/* ── DEVICE SETUP (Audio & Video modes) ── */}
                         {(interviewMode === "audio" || interviewMode === "video") && (
-                          <div className="mb-5 space-y-4">
+                          <div className="mb-5 space-y-4" ref={micTestFieldRef}>
                             <p className="text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200 leading-snug rounded-xl border border-violet-500/35 bg-violet-500/[0.08] px-3.5 py-2.5 dark:border-violet-400/25 dark:bg-violet-500/10">
                               <span className="text-violet-700 dark:text-violet-200 font-semibold">Required:</span>{" "}
                               Run the mic test and let the check finish so we know audio works before the interview
@@ -989,13 +1073,14 @@ export default function StartPage() {
                                 </select>
                                 <button
                                   type="button"
+                                  disabled={micTestCompleted && !micTestActive}
                                   onClick={micTestActive ? () => stopMicTest(true) : startMicTest}
-                                  className={`shrink-0 cursor-pointer sm:self-auto rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 ${
+                                  className={`shrink-0 sm:self-auto rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 disabled:opacity-55 disabled:cursor-not-allowed disabled:pointer-events-none ${
                                     micTestActive
-                                      ? "glass-card border-2 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 bg-emerald-500/[0.12]"
+                                      ? "cursor-pointer glass-card border-2 border-emerald-500/50 text-emerald-600 dark:text-emerald-400 bg-emerald-500/[0.12]"
                                       : micTestCompleted
-                                        ? "glass-card border-2 border-slate-300/80 text-slate-800 dark:border-white/20 dark:text-slate-200 hover:lp-body"
-                                        : "border-2 border-violet-500/55 bg-violet-500/12 text-violet-900 shadow-[0_0_0_1px_rgba(124,58,237,0.12)] dark:border-violet-400/50 dark:bg-violet-500/20 dark:text-violet-100 dark:shadow-[0_0_24px_rgba(124,58,237,0.18)]"
+                                        ? "glass-card border-2 border-slate-300/80 text-slate-800 dark:border-white/20 dark:text-slate-200"
+                                        : "cursor-pointer border-2 border-violet-500/55 bg-violet-500/12 text-violet-900 shadow-[0_0_0_1px_rgba(124,58,237,0.12)] dark:border-violet-400/50 dark:bg-violet-500/20 dark:text-violet-100 dark:shadow-[0_0_24px_rgba(124,58,237,0.18)]"
                                   }`}
                                 >
                                   <Mic size={16} className="shrink-0" />
@@ -1006,8 +1091,8 @@ export default function StartPage() {
                                 {micTestActive
                                   ? "Listening… Test ends automatically, or press Stop."
                                   : micTestCompleted
-                                    ? "You can change the mic and test again, or use Test microphone to re-check."
-                                    : "We must capture audio once before Start Interview is enabled."}
+                                    ? "Microphone check complete. Change the mic above if you need a different device—that will ask you to run one new test."
+                                    : "We recommend completing the mic test before you start so we know audio works."}
                               </p>
                               {micTestActive && (
                                 <div className="mt-2 h-2 rounded-full overflow-hidden bg-slate-200/80 dark:bg-white/[0.12]">
@@ -1024,13 +1109,18 @@ export default function StartPage() {
                               )}
                             </div>
 
+                            {inlineFieldErrors.micTest && (
+                              <p className="text-xs font-medium text-red-600 dark:text-red-400">
+                                {START_FIELD_REQUIRED}
+                              </p>
+                            )}
+
                           </div>
                         )}
 
                         <button
                           onClick={startInterview}
-                          disabled={isSubmitDisabled}
-                          className="w-full rounded-xl py-3.5 text-sm font-semibold btn-violet disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
+                          className="w-full rounded-xl py-3.5 text-sm font-semibold btn-violet"
                         >
                           Start Interview
                         </button>
