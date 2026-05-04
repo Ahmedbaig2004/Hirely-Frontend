@@ -129,6 +129,7 @@ interface InterviewTurn {
   feedback?: string;
   score?: number;
   audioUrl?: string;
+  improvedAnswer?: string | null;
 }
 
 interface InterviewFeedback {
@@ -1630,6 +1631,24 @@ export default function InterviewDetail() {
                 />
                 &quot;
               </div>
+
+              {turn.improvedAnswer && (
+                <details className="group mb-4 overflow-hidden rounded-lg border border-cyan-500/20 bg-cyan-500/[0.04]">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-cyan-900 transition-colors hover:bg-cyan-500/[0.06] dark:text-cyan-300 [&::-webkit-details-marker]:hidden">
+                    <span className="flex items-center gap-2">
+                      <Lightbulb size={15} />
+                      Show better answer
+                    </span>
+                    <ChevronDown
+                      size={16}
+                      className="shrink-0 transition-transform group-open:rotate-180"
+                    />
+                  </summary>
+                  <div className="border-t border-cyan-500/10 px-4 py-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                    {turn.improvedAnswer}
+                  </div>
+                </details>
+              )}
 
               {/* Feedback Footer */}
               <div className="mt-4 flex flex-col items-start justify-between gap-4 border-t border-outline-variant pt-4 md:flex-row md:items-center">
