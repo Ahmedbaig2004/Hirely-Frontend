@@ -115,6 +115,12 @@ interface DeliveryFeedback {
   topStrength?: string;
   fillerCount?: number;
   hedgingCount?: number;
+  recommendedDoc?: {
+    source?: string | null;
+    title?: string | null;
+    category?: string | null;
+    snippet?: string | null;
+  } | null;
 }
 
 interface InterviewTurn {

@@ -3,7 +3,9 @@
 import { useMemo } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
+  ChevronDown,
   Cpu,
+  FileText,
   Target,
   TrendingDown,
   TrendingUp,
@@ -17,6 +19,14 @@ import { parseNumericScore } from "@/components/dashboard/InterviewReportQuestio
 type TurnInput = {
   score?: number | string | null;
   difficulty?: string;
+  deliveryFeedback?: {
+    recommendedDoc?: {
+      source?: string | null;
+      title?: string | null;
+      category?: string | null;
+      snippet?: string | null;
+    } | null;
+  } | null;
 };
 
 type ScoresInput = {
@@ -70,6 +80,26 @@ type Props = {
  */
 export function InterviewReportTechnicalScoring({ scores, turns }: Props) {
   const reduceMotion = useReducedMotion();
+  const recommendedDocs = useMemo(() => {
+    const bySource = new Map<
+      string,
+      { source: string; title?: string | null; category?: string | null; snippet?: string | null }
+    >();
+
+    for (const turn of turns) {
+      const doc = turn.deliveryFeedback?.recommendedDoc;
+      const source = doc?.source?.trim();
+      if (!source || bySource.has(source)) continue;
+      bySource.set(source, {
+        source,
+        title: doc?.title ?? null,
+        category: doc?.category ?? null,
+        snippet: doc?.snippet ?? null,
+      });
+    }
+
+    return Array.from(bySource.values()).slice(0, 5);
+  }, [turns]);
 
   const derived = useMemo(() => {
     const parsed = turns
@@ -399,6 +429,42 @@ export function InterviewReportTechnicalScoring({ scores, turns }: Props) {
             </div>
           </div>
         </div>
+
+        {recommendedDocs.length > 0 && (
+          <details className="group mt-6 overflow-hidden rounded-3xl border border-emerald-500/20 bg-emerald-500/[0.04]">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-sm font-bold text-emerald-900 transition-colors hover:bg-emerald-500/[0.06] dark:text-emerald-300 [&::-webkit-details-marker]:hidden">
+              <span className="flex items-center gap-2">
+                <FileText size={17} aria-hidden />
+                Recommended reading
+              </span>
+              <ChevronDown
+                size={17}
+                className="shrink-0 transition-transform group-open:rotate-180"
+                aria-hidden
+              />
+            </summary>
+            <div className="space-y-3 border-t border-emerald-500/10 px-5 py-4">
+              {recommendedDocs.map((doc) => (
+                <a
+                  key={doc.source}
+                  href={doc.source}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 transition-colors hover:border-emerald-500/30 hover:bg-emerald-500/[0.04] dark:border-slate-700/80 dark:bg-slate-950/55"
+                >
+                  <span className="block text-sm font-bold text-emerald-900 underline decoration-emerald-500/35 underline-offset-4 dark:text-emerald-300">
+                    {doc.title || doc.source}
+                  </span>
+                  {doc.snippet && (
+                    <span className="mt-1.5 block text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                      {doc.snippet}
+                    </span>
+                  )}
+                </a>
+              ))}
+            </div>
+          </details>
+        )}
 
         <p className="mt-8 flex flex-wrap items-center gap-x-2 gap-y-1 text-center text-[10px] leading-relaxed text-slate-400 sm:text-left dark:text-slate-500">
           <span>
