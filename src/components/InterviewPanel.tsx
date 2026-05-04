@@ -137,7 +137,6 @@ export default function InterviewPanel() {
     return () => clearInterval(t);
   }, [isProcessingReport]);
 
-<<<<<<< HEAD
   /** Hard fallback if primary redirect never runs (e.g. rare promise/timer issues). */
   useEffect(() => {
     if (!isProcessingReport || processingStage !== "done" || !sessionId)
@@ -148,8 +147,6 @@ export default function InterviewPanel() {
     return () => window.clearTimeout(id);
   }, [isProcessingReport, processingStage, sessionId, router]);
 
-=======
->>>>>>> f8a901d31b105cec698b1577e289391164849b83
   useEffect(() => {
     if (interviewMode !== "audio" && interviewMode !== "video") return;
     const t = setInterval(() => {
