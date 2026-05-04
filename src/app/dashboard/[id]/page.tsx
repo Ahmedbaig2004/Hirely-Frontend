@@ -33,6 +33,7 @@ import LpBackground from "@/components/landing/LpBackground";
 import {
   InterviewReportTranscriptQuestionCharts,
   InterviewReportVocalQuestionCharts,
+  InterviewReportBodyLanguageQuestionCharts,
 } from "@/components/dashboard/InterviewReportQuestionCharts";
 import { TranscriptWithFillerHighlight } from "@/components/dashboard/TranscriptWithFillerHighlight";
 import { InterviewAnswerAudioPlayer } from "@/components/dashboard/InterviewAnswerAudioPlayer";
@@ -320,10 +321,7 @@ function aggregateModalityGroups(
       }
       aggregated[groupName].impact += groupData.impact_points;
       aggregated[groupName].count += 1;
-      if (
-        groupData.tips?.length >
-        (aggregated[groupName].tips?.length || 0)
-      ) {
+      if (groupData.tips?.length > (aggregated[groupName].tips?.length || 0)) {
         aggregated[groupName].tips = groupData.tips;
       }
     }
@@ -351,7 +349,8 @@ function sortVoiceGroupEntries(
 }
 
 function tipNumericValue(tip: Pick<VoiceGroupTip, "val" | "value">): number {
-  if (typeof tip.value === "number" && !Number.isNaN(tip.value)) return tip.value;
+  if (typeof tip.value === "number" && !Number.isNaN(tip.value))
+    return tip.value;
   if (typeof tip.val === "number" && !Number.isNaN(tip.val)) return tip.val;
   return 0;
 }
@@ -404,6 +403,16 @@ export default function InterviewDetail() {
   const [data, setData] = useState<InterviewDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [gapExpanded, setGapExpanded] = useState(false);
+  const [showAllVoiceImprovements, setShowAllVoiceImprovements] =
+    useState(false);
+  const [showAllVoiceStrengths, setShowAllVoiceStrengths] = useState(false);
+  const [showAllVoiceObservations, setShowAllVoiceObservations] =
+    useState(false);
+  const [expandedVideoGroups, setExpandedVideoGroups] = useState<
+    Record<string, boolean>
+  >({});
+  const [showAllBodyLanguageGroups, setShowAllBodyLanguageGroups] =
+    useState(false);
 
   useEffect(() => {
     if (id && user) {
@@ -604,15 +613,16 @@ export default function InterviewDetail() {
                             Missing Skills Detected:
                           </span>
                           <div className="flex flex-wrap gap-2">
-                            {(feedback.originalGapAnalysis.missingSkills ??
-                              []).map((skill: string, i: number) => (
-                                <span
-                                  key={i}
-                                  className="glass-card px-2 py-1 text-amber-300 text-xs font-semibold rounded border border-amber-500/20"
-                                >
-                                  {skill}
-                                </span>
-                              ))}
+                            {(
+                              feedback.originalGapAnalysis.missingSkills ?? []
+                            ).map((skill: string, i: number) => (
+                              <span
+                                key={i}
+                                className="glass-card px-2 py-1 text-amber-300 text-xs font-semibold rounded border border-amber-500/20"
+                              >
+                                {skill}
+                              </span>
+                            ))}
                           </div>
                         </div>
                       )}
@@ -672,7 +682,10 @@ export default function InterviewDetail() {
           )}
         </div>
 
-        <InterviewReportTechnicalScoring scores={feedback.scores} turns={data.turns} />
+        <InterviewReportTechnicalScoring
+          scores={feedback.scores}
+          turns={data.turns}
+        />
 
         {/* 4. SCORE BREAKDOWN */}
         {feedback.scores && (
@@ -681,8 +694,9 @@ export default function InterviewDetail() {
               <Gauge size={16} /> Full modality breakdown
             </h3>
             <p className="-mt-4 mb-6 text-xs leading-relaxed text-slate-600 dark:text-slate-500">
-              How each evaluation lane contributed alongside the technical profile above — weights reflect which
-              signals were captured for this session (voice, video, typing).
+              How each evaluation lane contributed alongside the technical
+              profile above — weights reflect which signals were captured for
+              this session (voice, video, typing).
             </p>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {(
@@ -824,9 +838,7 @@ export default function InterviewDetail() {
 
         {/* 5. VOCAL DELIVERY — Actionable metrics + honest framing */}
         {(feedback.voiceSummary ||
-          data.turns.some(
-            (t) => t.voiceAnalysis?.status === "completed",
-          )) &&
+          data.turns.some((t) => t.voiceAnalysis?.status === "completed")) &&
           (() => {
             const voiceTurnsForScore = data.turns.filter(
               (t: InterviewTurn) =>
@@ -927,10 +939,11 @@ export default function InterviewDetail() {
                   )}
                 </div>
 
-                {/* SHAP-driven coaching — final summary + 3 improvements + 2 strengths */}
+                {/* SHAP-driven coaching — final summary + improvements + strengths */}
                 {(() => {
                   const voiceTurns = data.turns.filter(
-                    (t: InterviewTurn) => t.voiceAnalysis?.status === "completed",
+                    (t: InterviewTurn) =>
+                      t.voiceAnalysis?.status === "completed",
                   );
                   if (voiceTurns.length === 0) return null;
 
@@ -974,12 +987,18 @@ export default function InterviewDetail() {
 
                   // Extract ui_sync category sentiments (already sent by backend)
                   const uiSync = voiceTurns
-                    .map((t: InterviewTurn) => t.voiceAnalysis?.rawFeatures?.ui_sync)
+                    .map(
+                      (t: InterviewTurn) =>
+                        t.voiceAnalysis?.rawFeatures?.ui_sync,
+                    )
                     .find((u: UiSyncPayload | undefined) => u?.categories);
 
                   // Final summary: use the first turn that has it
                   const finalSummary = voiceTurns
-                    .map((t: InterviewTurn) => t.voiceAnalysis?.rawFeatures?.finalSummary)
+                    .map(
+                      (t: InterviewTurn) =>
+                        t.voiceAnalysis?.rawFeatures?.finalSummary,
+                    )
                     .find((s: VoiceFinalSummary | undefined) => s?.opening);
 
                   if (
@@ -1029,13 +1048,15 @@ export default function InterviewDetail() {
                     },
                   };
 
-                  const voiceModalityGroupIcons: Record<string, React.ReactNode> =
-                    {
-                      "Loudness & Energy": <Zap size={16} />,
-                      "Pitch & Expressiveness": <Activity size={16} />,
-                      "Voice Quality": <Gauge size={16} />,
-                      "Fluency & Flow": <Mic size={16} />,
-                    };
+                  const voiceModalityGroupIcons: Record<
+                    string,
+                    React.ReactNode
+                  > = {
+                    "Loudness & Energy": <Zap size={16} />,
+                    "Pitch & Expressiveness": <Activity size={16} />,
+                    "Voice Quality": <Gauge size={16} />,
+                    "Fluency & Flow": <Mic size={16} />,
+                  };
 
                   return (
                     <div className="space-y-4 mb-5">
@@ -1072,47 +1093,48 @@ export default function InterviewDetail() {
                           <div className="grid grid-cols-2 gap-3">
                             {Object.entries(uiSync.categories).map(
                               ([key, cat]: [string, UiSyncCategoryRow]) => {
-                              const styles =
-                                statusStyles[cat.status] ??
-                                statusStyles["Minimal Impact"];
-                              const impactPct = cat.impact_pct ?? 0;
-                              return (
-                                <motion.div
-                                  key={key}
-                                  initial={{ opacity: 0, y: 8 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  transition={{ duration: 0.3 }}
-                                  className={`glass-card p-3 rounded-xl border-l-4 ${styles.border}`}
-                                >
-                                  <div className="flex items-center gap-1.5 mb-1.5">
-                                    <span className={styles.text}>
-                                      {categoryIcons[key] ?? (
-                                        <Activity size={13} />
-                                      )}
-                                    </span>
-                                    <span className="text-xs font-bold lp-hi">
-                                      {cat.label}
-                                    </span>
-                                    <div className="flex items-center gap-1 ml-auto">
-                                      {impactPct > 0 &&
-                                        cat.status !== "Minimal Impact" && (
-                                          <span className="text-[9px] lp-faint">
-                                            ~{impactPct}%
-                                          </span>
+                                const styles =
+                                  statusStyles[cat.status] ??
+                                  statusStyles["Minimal Impact"];
+                                const impactPct = cat.impact_pct ?? 0;
+                                return (
+                                  <motion.div
+                                    key={key}
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    className={`glass-card p-3 rounded-xl border-l-4 ${styles.border}`}
+                                  >
+                                    <div className="flex items-center gap-1.5 mb-1.5">
+                                      <span className={styles.text}>
+                                        {categoryIcons[key] ?? (
+                                          <Activity size={13} />
                                         )}
-                                      <span
-                                        className={`text-[9px] px-1.5 py-0.5 rounded-full ${styles.bg} ${styles.text} font-semibold`}
-                                      >
-                                        {cat.status}
                                       </span>
+                                      <span className="text-xs font-bold lp-hi">
+                                        {cat.label}
+                                      </span>
+                                      <div className="flex items-center gap-1 ml-auto">
+                                        {impactPct > 0 &&
+                                          cat.status !== "Minimal Impact" && (
+                                            <span className="text-[9px] lp-faint">
+                                              ~{impactPct}%
+                                            </span>
+                                          )}
+                                        <span
+                                          className={`text-[9px] px-1.5 py-0.5 rounded-full ${styles.bg} ${styles.text} font-semibold`}
+                                        >
+                                          {cat.status}
+                                        </span>
+                                      </div>
                                     </div>
-                                  </div>
-                                  <p className="text-[11px] lp-muted leading-relaxed">
-                                    {cat.top_driver?.tip}
-                                  </p>
-                                </motion.div>
-                              );
-                            })}
+                                    <p className="text-[11px] lp-muted leading-relaxed">
+                                      {cat.top_driver?.tip}
+                                    </p>
+                                  </motion.div>
+                                );
+                              },
+                            )}
                           </div>
                         </div>
                       )}
@@ -1201,12 +1223,18 @@ export default function InterviewDetail() {
                                 Priority Improvements
                               </span>
                               <div className="space-y-2">
-                                {improvements.map((item: ShapExplanation, i: number) => (
+                                {(showAllVoiceImprovements
+                                  ? improvements
+                                  : improvements.slice(0, 3)
+                                ).map((item: ShapExplanation, i: number) => (
                                   <motion.div
                                     key={item.feature}
                                     initial={{ opacity: 0, x: -8 }}
                                     animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: i * 0.07, duration: 0.3 }}
+                                    transition={{
+                                      delay: i * 0.07,
+                                      duration: 0.3,
+                                    }}
                                     className="glass-card p-3 rounded-xl border-l-4 border-rose-500/50"
                                   >
                                     <div className="flex items-center gap-2">
@@ -1227,8 +1255,22 @@ export default function InterviewDetail() {
                                   </motion.div>
                                 ))}
                               </div>
+                              {improvements.length > 3 && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setShowAllVoiceImprovements((prev) => !prev)
+                                  }
+                                  className="mt-3 inline-flex items-center rounded-lg border border-rose-300/60 bg-rose-50/70 px-3 py-1.5 text-xs font-semibold text-rose-800 transition hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20"
+                                >
+                                  {showAllVoiceImprovements
+                                    ? "View less"
+                                    : `View more (${improvements.length - 3} more)`}
+                                </button>
+                              )}
                             </div>
                           )}
+
                           {/* Strengths */}
                           {strengths.length > 0 && (
                             <div>
@@ -1236,7 +1278,10 @@ export default function InterviewDetail() {
                                 Your Strengths
                               </span>
                               <div className="space-y-2">
-                                {strengths.map((item: ShapExplanation, i: number) => (
+                                {(showAllVoiceStrengths
+                                  ? strengths
+                                  : strengths.slice(0, 3)
+                                ).map((item: ShapExplanation, i: number) => (
                                   <motion.div
                                     key={item.feature}
                                     initial={{ opacity: 0, x: -8 }}
@@ -1265,6 +1310,19 @@ export default function InterviewDetail() {
                                   </motion.div>
                                 ))}
                               </div>
+                              {strengths.length > 3 && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setShowAllVoiceStrengths((prev) => !prev)
+                                  }
+                                  className="mt-3 inline-flex items-center rounded-lg border border-emerald-300/60 bg-emerald-50/70 px-3 py-1.5 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
+                                >
+                                  {showAllVoiceStrengths
+                                    ? "View less"
+                                    : `View more (${strengths.length - 3} more)`}
+                                </button>
+                              )}
                             </div>
                           )}
                         </>
@@ -1294,21 +1352,36 @@ export default function InterviewDetail() {
                       Detailed AI Observations
                     </summary>
                     <ul className="mt-3 space-y-2">
-                      {(feedback.voiceSummary?.allInsights ?? []).map(
-                        (insight: string, i: number) => (
-                          <li
-                            key={i}
-                            className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"
-                          >
-                            <MessageCircle
-                              size={14}
-                              className="mt-0.5 shrink-0 text-cyan-700 dark:text-primary"
-                            />
-                            {insight}
-                          </li>
-                        ),
-                      )}
+                      {(showAllVoiceObservations
+                        ? (feedback.voiceSummary?.allInsights ?? [])
+                        : (feedback.voiceSummary?.allInsights ?? []).slice(0, 3)
+                      ).map((insight: string, i: number) => (
+                        <li
+                          key={i}
+                          className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"
+                        >
+                          <MessageCircle
+                            size={14}
+                            className="mt-0.5 shrink-0 text-cyan-700 dark:text-primary"
+                          />
+                          {insight}
+                        </li>
+                      ))}
                     </ul>
+                    {(feedback.voiceSummary?.allInsights?.length ?? 0) > 3 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setShowAllVoiceObservations((prev) => !prev);
+                        }}
+                        className="mt-3 inline-flex items-center rounded-lg border border-cyan-300/60 bg-cyan-50/70 px-3 py-1.5 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-300 dark:hover:bg-cyan-500/20"
+                      >
+                        {showAllVoiceObservations
+                          ? "View less"
+                          : `View more (${(feedback.voiceSummary?.allInsights?.length ?? 0) - 3} more)`}
+                      </button>
+                    )}
                   </details>
                 )}
               </div>
@@ -1371,15 +1444,26 @@ export default function InterviewDetail() {
             .map((t: InterviewTurn) => videoGroupMap(t))
             .filter(Boolean) as Record<string, VideoGroupResult>[];
 
-          const aggregatedGroups: Record<string, { impact: number; status: string; tips: VideoTip[]; count: number }> = {};
+          const aggregatedGroups: Record<
+            string,
+            { impact: number; status: string; tips: VideoTip[]; count: number }
+          > = {};
           for (const gr of allGroupResults) {
             for (const [groupName, groupData] of Object.entries(gr)) {
               if (!aggregatedGroups[groupName]) {
-                aggregatedGroups[groupName] = { impact: 0, status: groupData.status, tips: groupData.tips || [], count: 0 };
+                aggregatedGroups[groupName] = {
+                  impact: 0,
+                  status: groupData.status,
+                  tips: groupData.tips || [],
+                  count: 0,
+                };
               }
               aggregatedGroups[groupName].impact += groupData.impact_points;
               aggregatedGroups[groupName].count += 1;
-              if (groupData.tips?.length > (aggregatedGroups[groupName].tips?.length || 0)) {
+              if (
+                groupData.tips?.length >
+                (aggregatedGroups[groupName].tips?.length || 0)
+              ) {
                 aggregatedGroups[groupName].tips = groupData.tips;
                 aggregatedGroups[groupName].status = groupData.status;
               }
@@ -1398,141 +1482,263 @@ export default function InterviewDetail() {
           };
 
           const statusBadge = (s: string) => {
-            if (s === "green") return { label: "Helped Your Score", bg: "bg-emerald-500/15", text: "text-emerald-400", border: "border-emerald-500/20" };
-            if (s === "red") return { label: "Held Back Your Score", bg: "bg-rose-500/15", text: "text-rose-400", border: "border-rose-500/20" };
-            return { label: "Minimal Impact", bg: "bg-amber-500/15", text: "text-amber-400", border: "border-amber-500/20" };
+            if (s === "green")
+              return {
+                label: "Helped Your Score",
+                bg: "bg-emerald-500/10 dark:bg-emerald-500/15",
+                text: "text-emerald-800 dark:text-emerald-400",
+                border: "border-emerald-500/25 dark:border-emerald-500/25",
+              };
+            if (s === "red")
+              return {
+                label: "Held Back Your Score",
+                bg: "bg-rose-500/10 dark:bg-rose-500/15",
+                text: "text-rose-800 dark:text-rose-400",
+                border: "border-rose-500/25 dark:border-rose-500/25",
+              };
+            return {
+              label: "Minimal Impact",
+              bg: "bg-amber-500/10 dark:bg-amber-500/15",
+              text: "text-amber-900 dark:text-amber-400",
+              border: "border-amber-500/25 dark:border-amber-500/25",
+            };
           };
 
           return (
-            <div className="glass-card mb-8 rounded-xl border-l-4 border-cyan-500/60 p-6 dark:border-cyan-500">
-              {/* Header + Score Circle */}
-              <div className="flex flex-wrap justify-between items-start mb-5 gap-4">
-                <div>
-                  <h3 className="mb-1 flex items-center gap-2 font-bold text-cyan-800 dark:text-cyan-400">
-                    <Video size={20} /> Body Language
-                  </h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-500">
-                    How interviewers typically perceive your body language and
-                    non-verbal cues
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="relative w-[88px] h-[88px]">
-                    <svg
-                      className="w-full h-full -rotate-90"
-                      viewBox="0 0 80 80"
-                    >
-                      <circle
-                        cx="40"
-                        cy="40"
-                        r="36"
-                        fill="none"
-                        stroke="var(--md-sys-color-surface-container-high)"
-                        strokeWidth="6"
-                      />
-                      <circle
-                        cx="40"
-                        cy="40"
-                        r="36"
-                        fill="none"
-                        stroke={videoStroke}
-                        strokeWidth="6"
-                        strokeLinecap="round"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={offset}
-                        style={{ transition: "stroke-dashoffset 1s ease" }}
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span
-                        className="text-lg font-black"
+            <>
+              <div className="glass-card mb-8 rounded-xl border-l-4 border-cyan-500/60 p-6 dark:border-cyan-500">
+                {/* Header + Score Circle */}
+                <div className="flex flex-wrap justify-between items-start mb-5 gap-4">
+                  <div>
+                    <h3 className="mb-1 flex items-center gap-2 font-bold text-cyan-800 dark:text-cyan-400">
+                      <Video size={20} /> Body Language
+                    </h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-500">
+                      How interviewers typically perceive your body language and
+                      non-verbal cues
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-[88px] h-[88px]">
+                      <svg
+                        className="w-full h-full -rotate-90"
+                        viewBox="0 0 80 80"
+                      >
+                        <circle
+                          cx="40"
+                          cy="40"
+                          r="36"
+                          fill="none"
+                          stroke="var(--md-sys-color-surface-container-high)"
+                          strokeWidth="6"
+                        />
+                        <circle
+                          cx="40"
+                          cy="40"
+                          r="36"
+                          fill="none"
+                          stroke={videoStroke}
+                          strokeWidth="6"
+                          strokeLinecap="round"
+                          strokeDasharray={circumference}
+                          strokeDashoffset={offset}
+                          style={{ transition: "stroke-dashoffset 1s ease" }}
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span
+                          className="text-lg font-black"
+                          style={{ color: videoStroke }}
+                        >
+                          {videoPct}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div
+                        className="text-xs font-semibold"
                         style={{ color: videoStroke }}
                       >
-                        {videoPct}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div
-                      className="text-xs font-semibold"
-                      style={{ color: videoStroke }}
-                    >
-                      {videoLabel}
-                    </div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-500 mt-1">
-                      Body Language Score
-                    </div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-500">
-                      {videoTurns.length} video turn{videoTurns.length !== 1 ? "s" : ""} analyzed
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Group Overview Cards */}
-              {hasGroupData && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-                  {Object.entries(aggregatedGroups).map(([groupName, groupData]) => {
-                    const badge = statusBadge(groupData.status);
-                    return (
-                      <div
-                        key={groupName}
-                        className={`rounded-xl p-4 ${badge.bg} border ${badge.border}`}
-                      >
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className={badge.text}>{groupIcons[groupName] || <Activity size={16} />}</span>
-                          <span className="text-xs font-semibold text-white/80">{groupName}</span>
-                        </div>
-                        <div className="flex items-baseline gap-2 mb-1.5">
-                          <span className={`text-lg font-black ${badge.text}`}>
-                            {groupData.impact >= 0 ? "+" : ""}{groupData.impact.toFixed(1)}%
-                          </span>
-                          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${badge.bg} ${badge.text} border ${badge.border}`}>
-                            {badge.label}
-                          </span>
-                        </div>
-                        {groupData.tips?.[0]?.tip && (
-                          <p className="text-[11px] text-white/50 leading-tight line-clamp-2">
-                            {groupData.tips[0].tip}
-                          </p>
-                        )}
+                        {videoLabel}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Elite Zone Bars per Group */}
-              {hasGroupData && Object.entries(aggregatedGroups).map(([groupName, groupData]) => {
-                if (!groupData.tips?.length) return null;
-                return (
-                  <div key={groupName} className="mb-5">
-                    <h4 className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3">
-                      {groupName}
-                    </h4>
-                    {groupData.tips.map((tip) => (
-                      <EliteZoneBar
-                        key={tip.feature}
-                        label={tip.friendly}
-                        tip={tip.tip}
-                        val={tip.val}
-                        zoneMin={tip.zone_min}
-                        zoneMax={tip.zone_max}
-                        direction={tip.zone_direction}
-                        status={tip.status as "green" | "yellow" | "red"}
-                      />
-                    ))}
+                      <div className="text-[10px] text-slate-500 dark:text-slate-500 mt-1">
+                        Body Language Score
+                      </div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-500">
+                        {videoTurns.length} video turn
+                        {videoTurns.length !== 1 ? "s" : ""} analyzed
+                      </div>
+                    </div>
                   </div>
-                );
-              })}
+                </div>
 
-              {/* Honest framing note */}
-              <p className="text-[11px] text-slate-600 dark:text-slate-500 italic mt-4">
-                This score reflects how interviewers may perceive your posture,
-                gestures, and facial expressions. Some factors are influenced by
-                natural tendencies and may not fully reflect conscious improvement.
-              </p>
-            </div>
+                {/* Group Overview Cards */}
+                {hasGroupData && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                    {Object.entries(aggregatedGroups).map(
+                      ([groupName, groupData]) => {
+                        const badge = statusBadge(groupData.status);
+                        return (
+                          <div
+                            key={groupName}
+                            className={`rounded-xl p-4 ${badge.bg} border ${badge.border}`}
+                          >
+                            <div className="mb-2 flex items-center gap-2">
+                              <span className={badge.text}>
+                                {groupIcons[groupName] || (
+                                  <Activity size={16} />
+                                )}
+                              </span>
+                              <span className="text-xs font-semibold text-slate-800 dark:text-slate-100">
+                                {groupName}
+                              </span>
+                            </div>
+                            <div className="mb-1.5 flex flex-wrap items-baseline gap-2">
+                              <span
+                                className={`text-lg font-black ${badge.text}`}
+                              >
+                                {groupData.impact >= 0 ? "+" : ""}
+                                {groupData.impact.toFixed(1)}%
+                              </span>
+                              <span
+                                className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${badge.bg} ${badge.text} border ${badge.border}`}
+                              >
+                                {badge.label}
+                              </span>
+                            </div>
+                            {groupData.tips?.[0]?.tip && (
+                              <p className="text-[11px] leading-snug text-slate-700 dark:text-slate-300">
+                                {groupData.tips[0].tip}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      },
+                    )}
+                  </div>
+                )}
+
+                {/* Elite Zone Bars per Group — compact grid on wide screens, with expand/collapse */}
+                {hasGroupData && (
+                  <div className="space-y-4">
+                    {(() => {
+                      const entries = Object.entries(aggregatedGroups).filter(
+                        ([, groupData]) => groupData.tips?.length,
+                      );
+                      const handEntry = entries.find(
+                        ([name]) => name === "Hand Gestures",
+                      );
+                      const otherEntries = entries.filter(
+                        ([name]) => name !== "Hand Gestures",
+                      );
+
+                      const renderGroup = (
+                        groupName: string,
+                        groupData: {
+                          impact: number;
+                          status: string;
+                          tips: VideoTip[];
+                          count: number;
+                        },
+                      ) => (
+                        <div key={groupName}>
+                          <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                            {groupName}
+                          </h4>
+                          <div className="md:grid md:grid-cols-2 md:gap-x-5 md:gap-y-0">
+                            {(groupName === "Hand Gestures"
+                              ? groupData.tips
+                              : expandedVideoGroups[groupName]
+                                ? groupData.tips
+                                : groupData.tips.slice(0, 3)
+                            ).map((tip) => (
+                              <EliteZoneBar
+                                key={tip.feature}
+                                label={tip.friendly}
+                                tip={tip.tip}
+                                val={tip.val}
+                                zoneMin={tip.zone_min}
+                                zoneMax={tip.zone_max}
+                                direction={tip.zone_direction}
+                                status={
+                                  tip.status as "green" | "yellow" | "red"
+                                }
+                              />
+                            ))}
+                          </div>
+                          {groupName !== "Hand Gestures" &&
+                            groupData.tips.length > 3 && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setExpandedVideoGroups((prev) => ({
+                                    ...prev,
+                                    [groupName]: !prev[groupName],
+                                  }))
+                                }
+                                className="mt-2 inline-flex items-center rounded-lg border border-cyan-300/60 bg-cyan-50/70 px-3 py-1.5 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-300 dark:hover:bg-cyan-500/20"
+                              >
+                                {expandedVideoGroups[groupName]
+                                  ? "View less"
+                                  : `View more (${groupData.tips.length - 3} more)`}
+                              </button>
+                            )}
+                        </div>
+                      );
+
+                      return (
+                        <>
+                          {handEntry && renderGroup(handEntry[0], handEntry[1])}
+                          {otherEntries.length > 0 && (
+                            <div>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setShowAllBodyLanguageGroups((prev) => !prev)
+                                }
+                                className="inline-flex items-center rounded-lg border border-cyan-300/60 bg-cyan-50/70 px-3 py-1.5 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-300 dark:hover:bg-cyan-500/20"
+                              >
+                                {showAllBodyLanguageGroups
+                                  ? "Hide details"
+                                  : "View details"}
+                              </button>
+                              <AnimatePresence initial={false}>
+                                {showAllBodyLanguageGroups && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{
+                                      duration: 0.28,
+                                      ease: "easeInOut",
+                                    }}
+                                    className="overflow-hidden space-y-4 pt-3"
+                                  >
+                                    {otherEntries.map(
+                                      ([groupName, groupData]) =>
+                                        renderGroup(groupName, groupData),
+                                    )}
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {/* Honest framing note */}
+                <p className="mt-4 text-[11px] italic leading-relaxed text-slate-600 dark:text-slate-500">
+                  This score reflects how interviewers may perceive your
+                  posture, gestures, and facial expressions. Some factors are
+                  influenced by natural tendencies and may not fully reflect
+                  conscious improvement.
+                </p>
+              </div>
+              <InterviewReportBodyLanguageQuestionCharts turns={data.turns} />
+            </>
           );
         })()}
 
@@ -1786,258 +1992,347 @@ export default function InterviewDetail() {
             </span>
           </div>
 
-        <div className="space-y-6">
-          {data.turns.map((turn: InterviewTurn, i: number) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05, duration: 0.3 }}
-              className="glass-card p-6 rounded-xl transition-all duration-200"
-            >
-              {/* Metadata Header */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                <span className="rounded bg-surface-container px-2 py-1 text-xs font-bold uppercase tracking-wide text-slate-700 dark:text-slate-400">
-                  Q{i + 1}
-                </span>
-                <span className="flex items-center rounded border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-xs font-bold text-cyan-900 dark:text-cyan-400">
-                  <Tag size={12} className="mr-1" /> {turn.topic || "General"}
-                </span>
-                <span
-                  className={`flex items-center text-xs font-bold px-2 py-1 rounded border ${getDifficultyColor(
-                    turn.difficulty,
-                  )}`}
-                >
-                  <BarChart3 size={12} className="mr-1" />{" "}
-                  {turn.difficulty ?? "Medium"}
-                </span>
-                {turn.voiceAnalysis?.wordsPerMinute != null && (
+          <div className="space-y-6">
+            {data.turns.map((turn: InterviewTurn, i: number) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05, duration: 0.3 }}
+                className="glass-card p-6 rounded-xl transition-all duration-200"
+              >
+                {/* Metadata Header */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <span className="rounded bg-surface-container px-2 py-1 text-xs font-bold uppercase tracking-wide text-slate-700 dark:text-slate-400">
+                    Q{i + 1}
+                  </span>
+                  <span className="flex items-center rounded border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-xs font-bold text-cyan-900 dark:text-cyan-400">
+                    <Tag size={12} className="mr-1" /> {turn.topic || "General"}
+                  </span>
                   <span
-                    className="flex items-center text-xs font-bold px-2 py-1 rounded border"
-                    style={{
-                      background:
-                        "color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent)",
-                      color: "var(--md-sys-color-primary)",
-                      borderColor:
-                        "color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)",
-                    }}
+                    className={`flex items-center text-xs font-bold px-2 py-1 rounded border ${getDifficultyColor(
+                      turn.difficulty,
+                    )}`}
                   >
-                    <Activity size={12} className="mr-1" />
-                    {Math.round(turn.voiceAnalysis.wordsPerMinute)} WPM
+                    <BarChart3 size={12} className="mr-1" />{" "}
+                    {turn.difficulty ?? "Medium"}
                   </span>
-                )}
-                {turn.answerMode === "chat" && (
-                  <span className="flex items-center rounded border border-slate-300 bg-slate-100 px-2 py-1 text-xs font-bold text-slate-800 dark:border-outline-variant dark:bg-surface-container dark:text-slate-300">
-                    <MessageSquare size={12} className="mr-1" />
-                    Chat Answer
-                  </span>
-                )}
-                {/* Inline Fluency badge */}
-                {turn.voiceAnalysis?.speakingFluency != null && (
-                  <span
-                    className={`flex items-center text-xs font-bold px-2 py-1 rounded border ${
-                      turn.voiceAnalysis.speakingFluency >= 0.8
-                        ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400"
-                        : turn.voiceAnalysis.speakingFluency >= 0.5
-                          ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400"
-                          : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"
-                    }`}
-                  >
-                    Fluency{" "}
-                    {(turn.voiceAnalysis.speakingFluency * 100).toFixed(0)}%
-                  </span>
-                )}
-                {/* Inline Pause Ratio badge */}
-                {turn.voiceAnalysis?.pauseRatio != null && (
-                  <span
-                    className={`flex items-center text-xs font-bold px-2 py-1 rounded border ${
-                      turn.voiceAnalysis.pauseRatio <= 0.2
-                        ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400"
-                        : turn.voiceAnalysis.pauseRatio <= 0.4
-                          ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400"
-                          : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"
-                    }`}
-                  >
-                    Pauses {(turn.voiceAnalysis.pauseRatio * 100).toFixed(0)}%
-                  </span>
-                )}
-                {/* Inline Relevance badge from delivery analysis */}
-                {turn.deliveryFeedback?.relevanceScore != null && (
-                  <span
-                    className={`flex items-center text-xs font-bold px-2 py-1 rounded border ${
-                      turn.deliveryFeedback.relevanceScore >= 70
-                        ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400"
-                        : turn.deliveryFeedback.relevanceScore >= 50
-                          ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400"
-                          : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"
-                    }`}
-                  >
-                    Relevance {Math.round(turn.deliveryFeedback.relevanceScore)}
-                    %
-                  </span>
-                )}
-              </div>
+                  {turn.voiceAnalysis?.wordsPerMinute != null && (
+                    <span
+                      className="flex items-center text-xs font-bold px-2 py-1 rounded border"
+                      style={{
+                        background:
+                          "color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent)",
+                        color: "var(--md-sys-color-primary)",
+                        borderColor:
+                          "color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent)",
+                      }}
+                    >
+                      <Activity size={12} className="mr-1" />
+                      {Math.round(turn.voiceAnalysis.wordsPerMinute)} WPM
+                    </span>
+                  )}
+                  {turn.answerMode === "chat" && (
+                    <span className="flex items-center rounded border border-slate-300 bg-slate-100 px-2 py-1 text-xs font-bold text-slate-800 dark:border-outline-variant dark:bg-surface-container dark:text-slate-300">
+                      <MessageSquare size={12} className="mr-1" />
+                      Chat Answer
+                    </span>
+                  )}
+                  {/* Inline Fluency badge */}
+                  {turn.voiceAnalysis?.speakingFluency != null && (
+                    <span
+                      className={`flex items-center text-xs font-bold px-2 py-1 rounded border ${
+                        turn.voiceAnalysis.speakingFluency >= 0.8
+                          ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400"
+                          : turn.voiceAnalysis.speakingFluency >= 0.5
+                            ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400"
+                            : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"
+                      }`}
+                    >
+                      Fluency{" "}
+                      {(turn.voiceAnalysis.speakingFluency * 100).toFixed(0)}%
+                    </span>
+                  )}
+                  {/* Inline Pause Ratio badge */}
+                  {turn.voiceAnalysis?.pauseRatio != null && (
+                    <span
+                      className={`flex items-center text-xs font-bold px-2 py-1 rounded border ${
+                        turn.voiceAnalysis.pauseRatio <= 0.2
+                          ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400"
+                          : turn.voiceAnalysis.pauseRatio <= 0.4
+                            ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400"
+                            : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"
+                      }`}
+                    >
+                      Pauses {(turn.voiceAnalysis.pauseRatio * 100).toFixed(0)}%
+                    </span>
+                  )}
+                  {/* Inline Relevance badge from delivery analysis */}
+                  {turn.deliveryFeedback?.relevanceScore != null && (
+                    <span
+                      className={`flex items-center text-xs font-bold px-2 py-1 rounded border ${
+                        turn.deliveryFeedback.relevanceScore >= 70
+                          ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400"
+                          : turn.deliveryFeedback.relevanceScore >= 50
+                            ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400"
+                            : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"
+                      }`}
+                    >
+                      Relevance{" "}
+                      {Math.round(turn.deliveryFeedback.relevanceScore)}%
+                    </span>
+                  )}
+                </div>
 
-              {/* Per-question video body language summary */}
-              {turn.videoAnalysis &&
-                (turn.videoAnalysis.rawFeatures ?? turn.videoAnalysis.groupResults) &&
-                (() => {
-                const groups = (turn.videoAnalysis!.rawFeatures ??
-                  turn.videoAnalysis!.groupResults) as Record<string, VideoGroupResult>;
-                const groupEntries = Object.entries(groups);
-                if (groupEntries.length === 0) return null;
+                {/* Per-question body language — readable in light/dark; watch-for vs strengths */}
+                {turn.videoAnalysis &&
+                  (turn.videoAnalysis.rawFeatures ??
+                    turn.videoAnalysis.groupResults) &&
+                  (() => {
+                    const groups = (turn.videoAnalysis!.rawFeatures ??
+                      turn.videoAnalysis!.groupResults) as Record<
+                      string,
+                      VideoGroupResult
+                    >;
+                    const groupEntries = Object.entries(groups);
+                    if (groupEntries.length === 0) return null;
 
-                const statusDot: Record<string, string> = { green: "bg-emerald-400", yellow: "bg-amber-400", red: "bg-rose-400" };
-                const groupShort: Record<string, string> = { "Facial Engagement": "Face", "Hand Gestures": "Hands", "Posture & Presence": "Posture" };
+                    const statusDot: Record<string, string> = {
+                      green: "bg-emerald-500 dark:bg-emerald-400",
+                      yellow: "bg-amber-500 dark:bg-amber-400",
+                      red: "bg-rose-500 dark:bg-rose-400",
+                    };
+                    const groupShort: Record<string, string> = {
+                      "Facial Engagement": "Face",
+                      "Hand Gestures": "Hands",
+                      "Posture & Presence": "Posture",
+                    };
 
-                const allTips = groupEntries.flatMap(([, g]) => g.tips || []);
-                const bestPositive = allTips
-                  .filter((t) => t.direction === "positive")
-                  .sort((a, b) => Math.abs(b.shap) - Math.abs(a.shap))[0];
-                const worstNegative = allTips
-                  .filter((t) => t.direction === "negative")
-                  .sort((a, b) => Math.abs(b.shap) - Math.abs(a.shap))[0];
+                    const allTips = groupEntries.flatMap(
+                      ([, g]) => g.tips || [],
+                    );
+                    const watchFor = allTips.filter(
+                      (t) => t.status === "red" || t.status === "yellow",
+                    );
+                    const strengths = allTips.filter(
+                      (t) => t.status === "green",
+                    );
+                    const presencePct =
+                      turn.videoAnalysis.confidenceLevel != null
+                        ? Math.round(
+                            Math.min(
+                              1,
+                              Math.max(0, turn.videoAnalysis.confidenceLevel),
+                            ) * 100,
+                          )
+                        : null;
 
-                return (
-                  <div className="mb-3 flex flex-col gap-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] px-3 py-2">
-                    <div className="flex items-center gap-3">
-                      {groupEntries.map(([name, g]) => (
-                        <span key={name} className="flex items-center gap-1 text-[11px] text-white/60">
-                          {groupShort[name] || name}
-                          <span className={`inline-block h-2 w-2 rounded-full ${statusDot[g.status] || "bg-slate-400"}`} />
-                        </span>
-                      ))}
+                    return (
+                      <div className="mb-4 rounded-xl border border-slate-200/90 bg-surface-container-low p-4 dark:border-outline-variant">
+                        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                            Body language (this answer)
+                          </span>
+                          {presencePct != null && (
+                            <span
+                              className={`rounded-full border px-2 py-0.5 text-[10px] font-bold tabular-nums ${
+                                presencePct >= 70
+                                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400"
+                                  : presencePct >= 45
+                                    ? "border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-400"
+                                    : "border-rose-500/30 bg-rose-500/10 text-rose-800 dark:text-rose-400"
+                              }`}
+                            >
+                              Presence {presencePct}/100
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="mb-3 flex flex-wrap gap-2">
+                          {groupEntries.map(([name, g]) => (
+                            <span
+                              key={name}
+                              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/70 px-2.5 py-1 text-[11px] font-medium text-slate-800 dark:border-outline-variant dark:bg-surface-container-high dark:text-slate-200"
+                            >
+                              <span
+                                className={`inline-block h-2 w-2 rounded-full ${statusDot[g.status] || "bg-slate-400"}`}
+                              />
+                              {groupShort[name] || name}
+                            </span>
+                          ))}
+                        </div>
+
+                        {watchFor.length > 0 && (
+                          <div className="mb-2 rounded-lg border border-amber-500/20 bg-amber-500/[0.07] p-3 dark:bg-amber-500/10">
+                            <span className="mb-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-900 dark:text-amber-400/90">
+                              <AlertTriangle size={12} aria-hidden />
+                              Watch for
+                            </span>
+                            <ul className="space-y-2">
+                              {watchFor.map((t) => (
+                                <li
+                                  key={t.feature}
+                                  className="text-[11px] leading-snug text-slate-800 dark:text-slate-200"
+                                >
+                                  <span className="font-semibold text-slate-900 dark:text-slate-100">
+                                    {t.friendly}
+                                  </span>
+                                  {t.tip ? (
+                                    <span className="text-slate-700 dark:text-slate-300">
+                                      {" "}
+                                      — {t.tip}
+                                    </span>
+                                  ) : null}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {strengths.length > 0 && (
+                          <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] p-3 dark:bg-emerald-500/10">
+                            <span className="mb-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-900 dark:text-emerald-400/90">
+                              <CheckCircle size={12} aria-hidden />
+                              What went well
+                            </span>
+                            <ul className="space-y-1.5">
+                              {strengths.map((t) => (
+                                <li
+                                  key={t.feature}
+                                  className="text-[11px] leading-snug text-slate-800 dark:text-emerald-100/90"
+                                >
+                                  <span className="font-semibold">
+                                    {t.friendly}
+                                  </span>
+                                  {t.tip ? (
+                                    <span className="text-slate-700 dark:text-emerald-100/80">
+                                      {" "}
+                                      — {t.tip}
+                                    </span>
+                                  ) : null}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                {/* Question */}
+                <p className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  {turn.question}
+                </p>
+
+                {/* Answer — fillers from deliveryFeedback.fillerWords (backend Gemini breakdown) */}
+                <div className="mb-4 rounded-lg border-l-4 border-slate-300/90 bg-surface-container-low p-4 italic text-slate-700 dark:border-outline-variant dark:text-slate-300">
+                  &quot;
+                  <TranscriptWithFillerHighlight
+                    transcript={turn.answer ?? ""}
+                    fillerWords={turn.deliveryFeedback?.fillerWords}
+                  />
+                  &quot;
+                </div>
+
+                {turn.improvedAnswer && (
+                  <details className="group mb-4 overflow-hidden rounded-lg border border-cyan-500/20 bg-cyan-500/[0.04]">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-cyan-900 transition-colors hover:bg-cyan-500/[0.06] dark:text-cyan-300 [&::-webkit-details-marker]:hidden">
+                      <span className="flex items-center gap-2">
+                        <Lightbulb size={15} />
+                        Show better answer
+                      </span>
+                      <ChevronDown
+                        size={16}
+                        className="shrink-0 transition-transform group-open:rotate-180"
+                      />
+                    </summary>
+                    <div className="border-t border-cyan-500/10 px-4 py-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                      {turn.improvedAnswer}
                     </div>
-                    {(bestPositive || worstNegative) && (
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px]">
-                        {bestPositive && (
-                          <span className="text-emerald-400">
-                            <CheckCircle size={11} className="inline mr-0.5 -mt-0.5" />
-                            {bestPositive.friendly}
+                  </details>
+                )}
+
+                {/* Feedback Footer */}
+                <div className="mt-4 flex flex-col items-start justify-between gap-4 border-t border-outline-variant pt-4 md:flex-row md:items-center">
+                  <div className="text-sm text-slate-700 dark:text-slate-300">
+                    <span className="mr-2 font-bold text-cyan-800 dark:text-primary">
+                      Feedback:
+                    </span>
+                    {turn.feedback}
+                  </div>
+                  <div
+                    className={`shrink-0 font-bold px-3 py-1 rounded-lg text-sm ${getScoreColor(
+                      turn.score ?? 0,
+                      true,
+                    )}`}
+                  >
+                    Score: {turn.score ?? 0}/100
+                  </div>
+                </div>
+
+                {/* Audio Playback */}
+                {turn.audioUrl && (
+                  <div className="mt-4 pt-4 border-t border-outline-variant">
+                    <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                      Your Recording
+                    </span>
+                    <InterviewAnswerAudioPlayer
+                      audioUrl={turn.audioUrl}
+                      transcript={turn.answer ?? ""}
+                      fillerWords={turn.deliveryFeedback?.fillerWords}
+                    />
+                  </div>
+                )}
+
+                {/* Delivery Feedback — 1 warning + 1 positive */}
+                {turn.deliveryFeedback && (
+                  <div className="mt-4 pt-4 border-t border-outline-variant space-y-2">
+                    {turn.deliveryFeedback.topStrength && (
+                      <div className="flex items-start gap-2 text-sm text-emerald-800 dark:text-emerald-400/90">
+                        <CheckCircle size={14} className="mt-0.5 shrink-0" />
+                        <span>{turn.deliveryFeedback.topStrength}</span>
+                      </div>
+                    )}
+                    {turn.deliveryFeedback.topImprovement && (
+                      <div className="flex items-start gap-2 text-sm text-amber-900 dark:text-amber-400/90">
+                        <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+                        <span>{turn.deliveryFeedback.topImprovement}</span>
+                      </div>
+                    )}
+                    {((turn.deliveryFeedback.fillerCount ?? 0) > 0 ||
+                      (turn.deliveryFeedback.hedgingCount ?? 0) > 0) && (
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {(turn.deliveryFeedback.fillerCount ?? 0) > 0 && (
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${(turn.deliveryFeedback.fillerCount ?? 0) <= 2 ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400" : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"}`}
+                          >
+                            {turn.deliveryFeedback.fillerCount ?? 0} filler
+                            {(turn.deliveryFeedback.fillerCount ?? 0) > 1
+                              ? "s"
+                              : ""}
                           </span>
                         )}
-                        {worstNegative && (
-                          <span className="text-rose-400">
-                            <XCircle size={11} className="inline mr-0.5 -mt-0.5" />
-                            {worstNegative.friendly}
+                        {(turn.deliveryFeedback.hedgingCount ?? 0) > 0 && (
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${(turn.deliveryFeedback.hedgingCount ?? 0) <= 2 ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400" : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"}`}
+                          >
+                            {turn.deliveryFeedback.hedgingCount ?? 0} hedge
+                            {(turn.deliveryFeedback.hedgingCount ?? 0) > 1
+                              ? "s"
+                              : ""}
                           </span>
                         )}
                       </div>
                     )}
                   </div>
-                );
-              })()}
+                )}
+              </motion.div>
+            ))}
+          </div>
 
-              {/* Question */}
-              <p className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
-                {turn.question}
-              </p>
-
-              {/* Answer — fillers from deliveryFeedback.fillerWords (backend Gemini breakdown) */}
-              <div className="mb-4 rounded-lg border-l-4 border-slate-300/90 bg-surface-container-low p-4 italic text-slate-700 dark:border-outline-variant dark:text-slate-300">
-                &quot;
-                <TranscriptWithFillerHighlight
-                  transcript={turn.answer ?? ""}
-                  fillerWords={turn.deliveryFeedback?.fillerWords}
-                />
-                &quot;
-              </div>
-
-              {turn.improvedAnswer && (
-                <details className="group mb-4 overflow-hidden rounded-lg border border-cyan-500/20 bg-cyan-500/[0.04]">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-cyan-900 transition-colors hover:bg-cyan-500/[0.06] dark:text-cyan-300 [&::-webkit-details-marker]:hidden">
-                    <span className="flex items-center gap-2">
-                      <Lightbulb size={15} />
-                      Show better answer
-                    </span>
-                    <ChevronDown
-                      size={16}
-                      className="shrink-0 transition-transform group-open:rotate-180"
-                    />
-                  </summary>
-                  <div className="border-t border-cyan-500/10 px-4 py-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-                    {turn.improvedAnswer}
-                  </div>
-                </details>
-              )}
-
-              {/* Feedback Footer */}
-              <div className="mt-4 flex flex-col items-start justify-between gap-4 border-t border-outline-variant pt-4 md:flex-row md:items-center">
-                <div className="text-sm text-slate-700 dark:text-slate-300">
-                  <span className="mr-2 font-bold text-cyan-800 dark:text-primary">
-                    Feedback:
-                  </span>
-                  {turn.feedback}
-                </div>
-                <div
-                  className={`shrink-0 font-bold px-3 py-1 rounded-lg text-sm ${getScoreColor(
-                    turn.score ?? 0,
-                    true,
-                  )}`}
-                >
-                  Score: {turn.score ?? 0}/100
-                </div>
-              </div>
-
-              {/* Audio Playback */}
-              {turn.audioUrl && (
-                <div className="mt-4 pt-4 border-t border-outline-variant">
-                  <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                    Your Recording
-                  </span>
-                  <InterviewAnswerAudioPlayer
-                    audioUrl={turn.audioUrl}
-                    transcript={turn.answer ?? ""}
-                    fillerWords={turn.deliveryFeedback?.fillerWords}
-                  />
-                </div>
-              )}
-
-              {/* Delivery Feedback — 1 warning + 1 positive */}
-              {turn.deliveryFeedback && (
-                <div className="mt-4 pt-4 border-t border-outline-variant space-y-2">
-                  {turn.deliveryFeedback.topStrength && (
-                    <div className="flex items-start gap-2 text-sm text-emerald-800 dark:text-emerald-400/90">
-                      <CheckCircle size={14} className="mt-0.5 shrink-0" />
-                      <span>{turn.deliveryFeedback.topStrength}</span>
-                    </div>
-                  )}
-                  {turn.deliveryFeedback.topImprovement && (
-                    <div className="flex items-start gap-2 text-sm text-amber-900 dark:text-amber-400/90">
-                      <AlertTriangle size={14} className="mt-0.5 shrink-0" />
-                      <span>{turn.deliveryFeedback.topImprovement}</span>
-                    </div>
-                  )}
-                  {((turn.deliveryFeedback.fillerCount ?? 0) > 0 ||
-                    (turn.deliveryFeedback.hedgingCount ?? 0) > 0) && (
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {(turn.deliveryFeedback.fillerCount ?? 0) > 0 && (
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${(turn.deliveryFeedback.fillerCount ?? 0) <= 2 ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400" : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"}`}
-                        >
-                          {turn.deliveryFeedback.fillerCount ?? 0} filler
-                          {(turn.deliveryFeedback.fillerCount ?? 0) > 1 ? "s" : ""}
-                        </span>
-                      )}
-                      {(turn.deliveryFeedback.hedgingCount ?? 0) > 0 && (
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${(turn.deliveryFeedback.hedgingCount ?? 0) <= 2 ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400" : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"}`}
-                        >
-                          {turn.deliveryFeedback.hedgingCount ?? 0} hedge
-                          {(turn.deliveryFeedback.hedgingCount ?? 0) > 1 ? "s" : ""}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </motion.div>
-          ))}
-        </div>
-
-        <div className="mt-10">
-          <InterviewReportTranscriptQuestionCharts turns={data.turns} />
-        </div>
+          <div className="mt-10">
+            <InterviewReportTranscriptQuestionCharts turns={data.turns} />
+          </div>
         </section>
       </motion.div>
     </main>
