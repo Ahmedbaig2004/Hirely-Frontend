@@ -15,6 +15,18 @@ function formatTime(sec: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+/** Avoid unhandled rejections when play() is interrupted (navigation, src change, load()). */
+function safeAudioPlay(el: HTMLAudioElement) {
+  void el.play().catch((err: unknown) => {
+    const name =
+      err instanceof DOMException ? err.name : (err as Error)?.name;
+    const msg = err instanceof Error ? err.message : "";
+    if (name === "AbortError" || msg.toLowerCase().includes("interrupted"))
+      return;
+    console.warn("Playback error:", err);
+  });
+}
+
 type Props = {
   audioUrl: string;
   transcript: string;
@@ -103,7 +115,7 @@ export function InterviewAnswerAudioPlayer({
   const togglePlay = useCallback(() => {
     const el = audioRef.current;
     if (!el) return;
-    if (el.paused) void el.play();
+    if (el.paused) safeAudioPlay(el);
     else el.pause();
   }, []);
 
@@ -194,7 +206,7 @@ export function InterviewAnswerAudioPlayer({
                       const el = audioRef.current;
                       if (el && duration) {
                         el.currentTime = Math.min(duration, Math.max(0, m.sec));
-                        void el.play();
+                        safeAudioPlay(el);
                       }
                     }}
                   />

@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { StartFlowBackdrop } from "@/components/start/StartFlowBackdrop";
 import { useVoiceActivity } from "../hooks/useVoiceActivity";
-import { useNavigationGuard } from "../hooks/useNavigationGuard";
 import { useInterviewStore } from "../stores/useInterviewStore";
 import { useRouter } from "next/navigation";
 import axios from "axios";
@@ -96,12 +95,6 @@ export default function InterviewPanel() {
   // Exit modal state
   const [showExitModal, setShowExitModal] = useState(false);
 
-  // Navigation guard — intercepts <Link> clicks, browser back, tab close
-  const { pendingUrl, clearPending } = useNavigationGuard(!!sessionId);
-  useEffect(() => {
-    if (pendingUrl) setShowExitModal(true);
-  }, [pendingUrl]);
-
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -110,7 +103,7 @@ export default function InterviewPanel() {
   const [isProcessingReport, setIsProcessingReport] = useState(false);
   const [voiceProgress, setVoiceProgress] = useState({
     completed: 0,
-    total: 0,
+    total: 9,
   });
   const [processingStage, setProcessingStage] =
     useState<ProcessingStage>("evaluating");
@@ -153,7 +146,7 @@ export default function InterviewPanel() {
   const pollingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const voiceRetryRef = useRef(0);
   const finalizeRetryRef = useRef(0);
-  const MAX_POLL_RETRIES = 60;
+  const MAX_POLL_RETRIES = 125;
   useEffect(() => {
     return () => {
       pollingAbortRef.current = true;
@@ -169,6 +162,16 @@ export default function InterviewPanel() {
     }, 4500);
     return () => clearInterval(t);
   }, [isProcessingReport]);
+
+  /** Hard fallback if primary redirect never runs (e.g. rare promise/timer issues). */
+  useEffect(() => {
+    if (!isProcessingReport || processingStage !== "done" || !sessionId)
+      return;
+    const id = window.setTimeout(() => {
+      router.replace(`/dashboard/${sessionId}`);
+    }, 8000);
+    return () => window.clearTimeout(id);
+  }, [isProcessingReport, processingStage, sessionId, router]);
 
   useEffect(() => {
     if (interviewMode !== "audio" && interviewMode !== "video") return;
@@ -331,7 +334,7 @@ export default function InterviewPanel() {
       toast.error(
         "Report generation is taking longer than expected. We’ll notify you when it’s ready.",
       );
-      window.location.replace("/dashboard");
+      router.push("/dashboard");
     };
 
     const bumpVoiceRetry = () => {
@@ -390,7 +393,7 @@ export default function InterviewPanel() {
                 if (statusData.status === "completed") {
                   setProcessingStage("done");
                   setTimeout(
-                    () => window.location.replace(`/dashboard/${sessionId}`),
+                    () => router.replace(`/dashboard/${sessionId}`),
                     1200,
                   );
                 } else if (statusData.status === "failed") {
@@ -399,7 +402,7 @@ export default function InterviewPanel() {
                       "Failed to generate report. Please try again.",
                   );
                   setTimeout(
-                    () => window.location.replace(`/dashboard/${sessionId}`),
+                    () => router.replace(`/dashboard/${sessionId}`),
                     2000,
                   );
                 } else {
@@ -421,10 +424,7 @@ export default function InterviewPanel() {
             if (pollingAbortRef.current) return;
             console.error("Finalize error:", finalizeErr);
             toast.error("Failed to generate report. Please try again.");
-            setTimeout(
-              () => window.location.replace(`/dashboard/${sessionId}`),
-              2000,
-            );
+            setTimeout(() => router.replace(`/dashboard/${sessionId}`), 2000);
           }
         } else {
           if (bumpVoiceRetry()) return;
@@ -518,27 +518,13 @@ export default function InterviewPanel() {
     }
   };
 
-  const handleExitConfirm = async () => {
+  const handleExitConfirm = () => {
     if (audioRef.current) {
-      audioRef.current.onerror = null;
-      audioRef.current.onended = null;
       audioRef.current.pause();
       audioRef.current.src = "";
     }
-    try {
-      if (sessionId) {
-        await axios.delete(
-          `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/interview/${sessionId}`,
-        );
-      }
-    } catch {
-      // non-blocking — proceed with local cleanup regardless
-    }
-    const dest =
-      pendingUrl && pendingUrl !== "__BACK__" ? pendingUrl : "/start";
     resetSession();
-    clearPending();
-    router.replace(dest);
+    router.replace("/start");
   };
 
   const handleManualStop = async () => {
@@ -604,13 +590,14 @@ export default function InterviewPanel() {
           pollVoiceProgress();
         } else {
           setProcessingStage("generating_report");
+<<<<<<< HEAD
           seedFinalizeReportProgress();
           setVoiceProgress({ completed: 0, total: 0 });
+=======
+>>>>>>> 5ac65fe1f8153a49cbba09236367ad91f6a42eeb
           const backendUrl2 =
             process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
           try {
-            pollingAbortRef.current = false;
-            if (pollingTimerRef.current) clearTimeout(pollingTimerRef.current);
             await axios.post(`${backendUrl2}/api/finalize-interview`, {
               sessionId,
             });
@@ -624,7 +611,7 @@ export default function InterviewPanel() {
               toast.error(
                 "Report generation is taking longer than expected. We’ll notify you when it’s ready.",
               );
-              window.location.replace("/dashboard");
+              router.push("/dashboard");
             };
             const bumpFinalizeRetry = () => {
               finalizeRetryRef.current += 1;
@@ -646,7 +633,7 @@ export default function InterviewPanel() {
                 if (statusData.status === "completed") {
                   setProcessingStage("done");
                   setTimeout(
-                    () => window.location.replace(`/dashboard/${sessionId}`),
+                    () => router.replace(`/dashboard/${sessionId}`),
                     1200,
                   );
                 } else if (statusData.status === "failed") {
@@ -655,7 +642,7 @@ export default function InterviewPanel() {
                       "Failed to generate report. Please try again.",
                   );
                   setTimeout(
-                    () => window.location.replace(`/dashboard/${sessionId}`),
+                    () => router.replace(`/dashboard/${sessionId}`),
                     2000,
                   );
                 } else {
@@ -678,10 +665,7 @@ export default function InterviewPanel() {
           } catch (finalizeErr: unknown) {
             console.error("Finalize error:", finalizeErr);
             toast.error("Failed to generate report. Please try again.");
-            setTimeout(
-              () => window.location.replace(`/dashboard/${sessionId}`),
-              2000,
-            );
+            setTimeout(() => router.replace(`/dashboard/${sessionId}`), 2000);
           }
         }
         return;
@@ -728,7 +712,6 @@ export default function InterviewPanel() {
           )
         : 0;
     const retryTelemetry = voiceRetryCount + finalizeRetryCount;
-    const hasVoiceStage = hasAudioTurns;
 
     const stages: {
       key: ProcessingStage;
@@ -740,6 +723,7 @@ export default function InterviewPanel() {
         label: "Answer Evaluated",
         subtitle: "Your response has been graded",
       },
+<<<<<<< HEAD
       ...(hasVoiceStage
         ? [
             {
@@ -749,6 +733,13 @@ export default function InterviewPanel() {
             },
           ]
         : []),
+=======
+      {
+        key: "analyzing_voice",
+        label: "Analyzing Voice Patterns",
+        subtitle: `${voiceProgress.completed} of ${voiceProgress.total} audio samples processed`,
+      },
+>>>>>>> 5ac65fe1f8153a49cbba09236367ad91f6a42eeb
       {
         key: "generating_report",
         label: "Generating Combined Report",
@@ -761,9 +752,12 @@ export default function InterviewPanel() {
       },
     ];
 
-    const stageOrder: ProcessingStage[] = hasVoiceStage
-      ? ["evaluating", "analyzing_voice", "generating_report", "done"]
-      : ["evaluating", "generating_report", "done"];
+    const stageOrder: ProcessingStage[] = [
+      "evaluating",
+      "analyzing_voice",
+      "generating_report",
+      "done",
+    ];
     const currentIdx = stageOrder.indexOf(processingStage);
     const overallPct = Math.min(
       100,
@@ -1676,7 +1670,7 @@ export default function InterviewPanel() {
                 background: "rgba(0,0,0,0.6)",
                 backdropFilter: "blur(4px)",
               }}
-              onClick={() => { setShowExitModal(false); clearPending(); }}
+              onClick={() => setShowExitModal(false)}
             />
 
             {/* Modal */}
@@ -1720,8 +1714,13 @@ export default function InterviewPanel() {
 
                 <div className="flex gap-3">
                   <button
+<<<<<<< HEAD
                     onClick={() => { setShowExitModal(false); clearPending(); }}
                     className="flex-1 py-3 rounded-xl text-sm font-semibold transition-all duration-200"
+=======
+                    onClick={() => setShowExitModal(false)}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
+>>>>>>> 5ac65fe1f8153a49cbba09236367ad91f6a42eeb
                     style={{
                       background: "var(--md-sys-color-surface-container-high)",
                       border: "1px solid color-mix(in srgb, var(--md-sys-color-outline) 65%, transparent)",

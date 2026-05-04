@@ -26,6 +26,7 @@ import {
   Smile,
   Hand,
   PersonStanding,
+  Layers,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LpBackground from "@/components/landing/LpBackground";
@@ -70,6 +71,8 @@ interface VoiceRawFeatures {
   shapExplanations?: ShapExplanation[];
   ui_sync?: UiSyncPayload;
   finalSummary?: VoiceFinalSummary;
+  /** Voice modality groups (same shape as video; tips may use `value` / U_SHAPED) */
+  groupResults?: Record<string, VoiceGroupResult>;
 }
 
 interface VoiceAnalysis {
@@ -79,8 +82,11 @@ interface VoiceAnalysis {
   speakingFluency?: number;
   pauseRatio?: number;
   rawFeatures?: VoiceRawFeatures;
+  /** Some API responses attach groupResults at the root of voiceAnalysis */
+  groupResults?: Record<string, VoiceGroupResult>;
 }
 
+/** Video body-language tips (strict; matches stored video JSON). */
 interface VideoTip {
   feature: string;
   base: string;
@@ -101,9 +107,34 @@ interface VideoGroupResult {
   tips: VideoTip[];
 }
 
+/** Voice group tips — backend may send `value` instead of `val`, or U_SHAPED zones. */
+interface VoiceGroupTip {
+  feature: string;
+  base: string;
+  friendly: string;
+  shap: number;
+  direction: "positive" | "negative";
+  tip: string;
+  status: "green" | "yellow" | "red";
+  val?: number;
+  value?: number;
+  zone_min: number;
+  zone_max: number;
+  zone_direction: "INCREASING" | "DECREASING" | "INVERTED_U" | "U_SHAPED";
+}
+
+interface VoiceGroupResult {
+  impact_points: number;
+  status: "green" | "yellow" | "red";
+  tips: VoiceGroupTip[];
+}
+
 interface VideoAnalysis {
+  status?: string;
   confidenceLevel?: number;
+  /** Body-language groups (Prisma often stores groupResults here). */
   rawFeatures?: Record<string, VideoGroupResult>;
+  groupResults?: Record<string, VideoGroupResult>;
 }
 
 interface DeliveryFeedback {
@@ -115,6 +146,12 @@ interface DeliveryFeedback {
   topStrength?: string;
   fillerCount?: number;
   hedgingCount?: number;
+  recommendedDoc?: {
+    source?: string | null;
+    title?: string | null;
+    category?: string | null;
+    snippet?: string | null;
+  } | null;
 }
 
 interface InterviewTurn {
@@ -129,6 +166,7 @@ interface InterviewTurn {
   feedback?: string;
   score?: number;
   audioUrl?: string;
+  improvedAnswer?: string | null;
 }
 
 interface InterviewFeedback {
@@ -147,6 +185,8 @@ interface InterviewFeedback {
     delivery?: number | null;
     voice?: number | null;
     video?: number | null;
+    /** Fused voice + video confidence (multimodal fusion) */
+    fusedScore?: number | null;
     contentQuality?: number;
     combined?: number;
   };
@@ -169,6 +209,13 @@ interface InterviewDetailData {
   finalScore: number;
   finalFeedback?: InterviewFeedback | null;
   turns: InterviewTurn[];
+  /** Some API builds expose modality scores here; falls back to finalFeedback.scores */
+  jsscores?: {
+    voice?: number | null;
+    video?: number | null;
+    fusedScore?: number | null;
+    combined?: number | null;
+  };
 }
 
 // Frontend label override — always shows latest human-friendly names
@@ -198,6 +245,158 @@ const VOICE_FEATURE_LABELS: Record<string, string> = {
   F3frequency_sma3nz_stddevNorm: "Tone Consistency",
   F3amplitudeLogRelF0_sma3nz_amean: "Voice Richness",
 };
+
+const VOICE_MODALITY_GROUP_ORDER = [
+  "Loudness & Energy",
+  "Pitch & Expressiveness",
+  "Voice Quality",
+  "Fluency & Flow",
+] as const;
+
+type AggregatedVoiceGroup = {
+  impact: number;
+  status: string;
+  tips: VoiceGroupTip[];
+  count: number;
+};
+
+/** Severity for merging statuses across turns (red > yellow > green > unknown). */
+function voiceGroupStatusSeverity(s: string | undefined): number {
+  const x = (s ?? "").trim().toLowerCase();
+  if (x === "red") return 3;
+  if (x === "yellow" || x === "amber") return 2;
+  if (x === "green") return 1;
+  return 0;
+}
+
+function pickStricterVoiceGroupStatus(a: string, b: string): string {
+  return voiceGroupStatusSeverity(a) >= voiceGroupStatusSeverity(b) ? a : b;
+}
+
+function collectVoiceGroupMapsFromTurns(
+  turns: InterviewTurn[],
+): Record<string, VoiceGroupResult>[] {
+  return turns
+    .filter((t) => t.voiceAnalysis?.status === "completed")
+    .map((t) => {
+      const raw =
+        t.voiceAnalysis?.groupResults ??
+        t.voiceAnalysis?.rawFeatures?.groupResults;
+      if (!raw || typeof raw !== "object") return null;
+      const cleaned: Record<string, VoiceGroupResult> = {};
+      for (const [k, v] of Object.entries(raw)) {
+        if (k === "_metadata") continue;
+        if (
+          v &&
+          typeof v === "object" &&
+          "impact_points" in (v as VoiceGroupResult)
+        ) {
+          cleaned[k] = v as VoiceGroupResult;
+        }
+      }
+      return Object.keys(cleaned).length ? cleaned : null;
+    })
+    .filter(Boolean) as Record<string, VoiceGroupResult>[];
+}
+
+function aggregateModalityGroups(
+  groupMaps: Record<string, VoiceGroupResult>[],
+): Record<string, AggregatedVoiceGroup> {
+  const aggregated: Record<string, AggregatedVoiceGroup> = {};
+  for (const gr of groupMaps) {
+    for (const [groupName, groupData] of Object.entries(gr)) {
+      if (groupName === "_metadata") continue;
+      if (!aggregated[groupName]) {
+        aggregated[groupName] = {
+          impact: 0,
+          status: groupData.status,
+          tips: groupData.tips || [],
+          count: 0,
+        };
+      } else {
+        aggregated[groupName].status = pickStricterVoiceGroupStatus(
+          aggregated[groupName].status,
+          groupData.status,
+        );
+      }
+      aggregated[groupName].impact += groupData.impact_points;
+      aggregated[groupName].count += 1;
+      if (
+        groupData.tips?.length >
+        (aggregated[groupName].tips?.length || 0)
+      ) {
+        aggregated[groupName].tips = groupData.tips;
+      }
+    }
+  }
+  for (const g of Object.values(aggregated)) {
+    if (g.count > 1) g.impact = g.impact / g.count;
+  }
+  return aggregated;
+}
+
+function sortVoiceGroupEntries(
+  entries: [string, AggregatedVoiceGroup][],
+): [string, AggregatedVoiceGroup][] {
+  return [...entries].sort(([a], [b]) => {
+    const ia = VOICE_MODALITY_GROUP_ORDER.indexOf(
+      a as (typeof VOICE_MODALITY_GROUP_ORDER)[number],
+    );
+    const ib = VOICE_MODALITY_GROUP_ORDER.indexOf(
+      b as (typeof VOICE_MODALITY_GROUP_ORDER)[number],
+    );
+    const da = ia === -1 ? 999 : ia;
+    const db = ib === -1 ? 999 : ib;
+    return da - db || a.localeCompare(b);
+  });
+}
+
+function tipNumericValue(tip: Pick<VoiceGroupTip, "val" | "value">): number {
+  if (typeof tip.value === "number" && !Number.isNaN(tip.value)) return tip.value;
+  if (typeof tip.val === "number" && !Number.isNaN(tip.val)) return tip.val;
+  return 0;
+}
+
+function eliteDirectionFromTip(
+  d: string | undefined,
+): "INCREASING" | "DECREASING" | "INVERTED_U" {
+  if (d === "U_SHAPED" || d === "INVERTED_U") return "INVERTED_U";
+  if (d === "DECREASING") return "DECREASING";
+  return "INCREASING";
+}
+
+function normalizeVoiceGroupStatusForBadge(
+  s: string | undefined,
+): "green" | "yellow" | "red" {
+  const x = (s ?? "").trim().toLowerCase();
+  if (x === "green") return "green";
+  if (x === "red") return "red";
+  return "yellow";
+}
+
+function voiceModalityStatusBadge(s: string) {
+  const st = normalizeVoiceGroupStatusForBadge(s);
+  if (st === "green")
+    return {
+      label: "Helped Your Score",
+      bg: "bg-emerald-500/15",
+      text: "text-emerald-400",
+      border: "border-emerald-500/20",
+    };
+  if (st === "red")
+    return {
+      label: "Held Back Your Score",
+      bg: "bg-rose-500/15",
+      text: "text-rose-400",
+      border: "border-rose-500/20",
+    };
+  return {
+    label: "Needs Attention",
+    bg: "bg-amber-500/15",
+    text: "text-amber-400",
+    border: "border-amber-500/20",
+  };
+}
 
 export default function InterviewDetail() {
   const { id } = useParams();
@@ -270,6 +469,14 @@ export default function InterviewDetail() {
   }
 
   const feedback: InterviewFeedback = data.finalFeedback ?? {};
+  const fusedMultimodalRaw =
+    data.jsscores?.fusedScore ?? feedback.scores?.fusedScore ?? null;
+  const fusedMultimodalPct =
+    fusedMultimodalRaw != null &&
+    typeof fusedMultimodalRaw === "number" &&
+    !Number.isNaN(fusedMultimodalRaw)
+      ? Math.round(Math.min(100, Math.max(0, fusedMultimodalRaw)))
+      : null;
 
   return (
     <main
@@ -316,16 +523,22 @@ export default function InterviewDetail() {
                 • {new Date(data.createdAt).toLocaleDateString()}
               </p>
             </div>
-            <div className="flex items-center gap-4 glass-card p-3 rounded-xl">
+            <div
+              className="flex items-center gap-4 glass-card p-3 rounded-xl"
+              title="Average of your per-question answer scores. Reflects technical answer quality and content only — voice and video do not change this number."
+            >
               <div className="text-right">
                 <span className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                  Score
+                  Technical score
                 </span>
                 <span
                   className={`text-3xl font-black ${getScoreTextColor(data.finalScore)}`}
                   style={{ textShadow: getScoreGlow(data.finalScore) }}
                 >
                   {data.finalScore}%
+                </span>
+                <span className="mt-1 block max-w-[200px] text-[10px] font-medium leading-snug text-slate-500 dark:text-slate-500 sm:max-w-[220px]">
+                  Based on answer quality and content only
                 </span>
               </div>
               <div
@@ -579,8 +792,47 @@ export default function InterviewDetail() {
           </div>
         )}
 
+        {fusedMultimodalPct != null && (
+          <div
+            className="glass-card-raised mb-6 flex flex-col gap-4 rounded-2xl border border-violet-500/15 bg-gradient-to-br from-violet-500/[0.06] via-transparent to-cyan-500/[0.06] p-5 sm:flex-row sm:items-center sm:justify-between dark:border-violet-400/20 dark:from-violet-500/10 dark:to-cyan-500/10"
+            title="Fused from vocal and visual confidence only. Not derived from your technical answers — a separate view of how confidently you came across."
+          >
+            <div className="flex min-w-0 flex-1 items-start gap-4">
+              <div
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-violet-500/25 bg-violet-500/10 text-violet-700 dark:border-violet-400/30 dark:bg-violet-500/15 dark:text-violet-300"
+                aria-hidden
+              >
+                <Layers size={22} strokeWidth={2} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-violet-900 dark:text-violet-300/90">
+                  Audio-visual confidence score
+                </p>
+                <p className="mt-1 text-sm leading-snug text-slate-600 dark:text-slate-400">
+                  Combined vocal delivery and visual presence score, measured
+                  independently from answer quality.
+                </p>
+              </div>
+            </div>
+            <div className="flex shrink-0 flex-col items-start border-t border-violet-500/10 pt-4 sm:border-t-0 sm:border-l sm:pl-6 sm:pt-0 dark:border-violet-400/15">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Presence score
+              </span>
+              <span
+                className={`text-3xl font-black tabular-nums leading-none sm:text-4xl ${getScoreTextColor(fusedMultimodalPct)}`}
+                style={{ textShadow: getScoreGlow(fusedMultimodalPct) }}
+              >
+                {fusedMultimodalPct}%
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* 5. VOCAL DELIVERY — Actionable metrics + honest framing */}
-        {feedback.voiceSummary &&
+        {(feedback.voiceSummary ||
+          data.turns.some(
+            (t) => t.voiceAnalysis?.status === "completed",
+          )) &&
           (() => {
             const voiceTurnsForScore = data.turns.filter(
               (t: InterviewTurn) =>
@@ -688,6 +940,14 @@ export default function InterviewDetail() {
                   );
                   if (voiceTurns.length === 0) return null;
 
+                  const voiceGroupMaps = collectVoiceGroupMapsFromTurns(
+                    data.turns,
+                  );
+                  const aggregatedVoiceGroups =
+                    aggregateModalityGroups(voiceGroupMaps);
+                  const hasVoiceGroupData =
+                    Object.keys(aggregatedVoiceGroups).length > 0;
+
                   // Collect all shapExplanations across turns, deduplicate by feature, keep highest impact
                   const byFeature: Record<string, ShapExplanation> = {};
                   voiceTurns.forEach((t: InterviewTurn) => {
@@ -732,7 +992,8 @@ export default function InterviewDetail() {
                     improvements.length === 0 &&
                     strengths.length === 0 &&
                     !finalSummary &&
-                    !uiSync
+                    !uiSync &&
+                    !hasVoiceGroupData
                   )
                     return null;
 
@@ -773,6 +1034,14 @@ export default function InterviewDetail() {
                       bg: "bg-amber-500/10",
                     },
                   };
+
+                  const voiceModalityGroupIcons: Record<string, React.ReactNode> =
+                    {
+                      "Loudness & Energy": <Zap size={16} />,
+                      "Pitch & Expressiveness": <Activity size={16} />,
+                      "Voice Quality": <Gauge size={16} />,
+                      "Fluency & Flow": <Mic size={16} />,
+                    };
 
                   return (
                     <div className="space-y-4 mb-5">
@@ -854,6 +1123,7 @@ export default function InterviewDetail() {
                         </div>
                       )}
 
+<<<<<<< HEAD
                       {/* Priority Improvements */}
                       {improvements.length > 0 && (
                         <div>
@@ -880,13 +1150,55 @@ export default function InterviewDetail() {
                                         {item.category}
                                       </span>
                                     )}
+=======
+                      {hasVoiceGroupData ? (
+                        <>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+                            {sortVoiceGroupEntries(
+                              Object.entries(aggregatedVoiceGroups),
+                            ).map(([groupName, groupData]) => {
+                              const badge = voiceModalityStatusBadge(
+                                groupData.status,
+                              );
+                              return (
+                                <div
+                                  key={groupName}
+                                  className={`rounded-xl p-4 ${badge.bg} border ${badge.border}`}
+                                >
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className={badge.text}>
+                                      {voiceModalityGroupIcons[groupName] ?? (
+                                        <Activity size={16} />
+                                      )}
+                                    </span>
+                                    <span className="text-xs font-semibold text-white/80 dark:text-slate-200">
+                                      {groupName}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-wrap items-baseline gap-2 mb-1.5">
+                                    <span
+                                      className={`text-lg font-black ${badge.text}`}
+                                    >
+                                      {groupData.impact >= 0 ? "+" : ""}
+                                      {groupData.impact.toFixed(1)}%
+                                    </span>
+                                    <span
+                                      className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${badge.bg} ${badge.text} border ${badge.border}`}
+                                    >
+                                      {badge.label}
+                                    </span>
+                                  </div>
+                                  {groupData.tips?.[0]?.tip && (
+                                    <p className="text-[11px] text-white/50 dark:text-slate-500 leading-tight line-clamp-2">
+                                      {groupData.tips[0].tip}
+                                    </p>
+                                  )}
+>>>>>>> 5ac65fe1f8153a49cbba09236367ad91f6a42eeb
                                 </div>
-                                <p className="text-xs lp-body mt-1 leading-relaxed">
-                                  {item.explanation}
-                                </p>
-                              </motion.div>
-                            ))}
+                              );
+                            })}
                           </div>
+<<<<<<< HEAD
                           {improvements.length > 3 && (
                             <button
                               type="button"
@@ -949,6 +1261,113 @@ export default function InterviewDetail() {
                             </button>
                           )}
                         </div>
+=======
+                          {sortVoiceGroupEntries(
+                            Object.entries(aggregatedVoiceGroups),
+                          ).map(([groupName, groupData]) => {
+                            if (!groupData.tips?.length) return null;
+                            return (
+                              <div key={groupName} className="mb-5">
+                                <h4 className="text-xs font-semibold text-white/60 dark:text-slate-500 uppercase tracking-wider mb-3">
+                                  {groupName}
+                                </h4>
+                                {groupData.tips.map((tip) => (
+                                  <EliteZoneBar
+                                    key={`${groupName}-${tip.feature}`}
+                                    label={tip.friendly}
+                                    tip={tip.tip}
+                                    val={tipNumericValue(tip)}
+                                    zoneMin={tip.zone_min}
+                                    zoneMax={tip.zone_max}
+                                    direction={eliteDirectionFromTip(
+                                      tip.zone_direction,
+                                    )}
+                                    status={
+                                      tip.status as "green" | "yellow" | "red"
+                                    }
+                                  />
+                                ))}
+                              </div>
+                            );
+                          })}
+                        </>
+                      ) : (
+                        <>
+                          {/* Priority Improvements */}
+                          {improvements.length > 0 && (
+                            <div>
+                              <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.3em] text-rose-800 dark:text-rose-400/80">
+                                Priority Improvements
+                              </span>
+                              <div className="space-y-2">
+                                {improvements.map((item: ShapExplanation, i: number) => (
+                                  <motion.div
+                                    key={item.feature}
+                                    initial={{ opacity: 0, x: -8 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: i * 0.07, duration: 0.3 }}
+                                    className="glass-card p-3 rounded-xl border-l-4 border-rose-500/50"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] font-bold uppercase tracking-wider text-rose-800 dark:text-rose-400/70">
+                                        {VOICE_FEATURE_LABELS[item.feature] ||
+                                          item.label}
+                                      </span>
+                                      {item.category &&
+                                        item.category !== "Other" && (
+                                          <span className="text-[9px] px-1.5 py-0.5 rounded-full lp-surface-lo lp-dim font-medium">
+                                            {item.category}
+                                          </span>
+                                        )}
+                                    </div>
+                                    <p className="text-xs lp-body mt-1 leading-relaxed">
+                                      {item.explanation}
+                                    </p>
+                                  </motion.div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {/* Strengths */}
+                          {strengths.length > 0 && (
+                            <div>
+                              <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.3em] text-emerald-800 dark:text-emerald-400/80">
+                                Your Strengths
+                              </span>
+                              <div className="space-y-2">
+                                {strengths.map((item: ShapExplanation, i: number) => (
+                                  <motion.div
+                                    key={item.feature}
+                                    initial={{ opacity: 0, x: -8 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{
+                                      delay: i * 0.07 + 0.21,
+                                      duration: 0.3,
+                                    }}
+                                    className="glass-card p-3 rounded-xl border-l-4 border-emerald-500/50"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400/70">
+                                        {VOICE_FEATURE_LABELS[item.feature] ||
+                                          item.label}
+                                      </span>
+                                      {item.category &&
+                                        item.category !== "Other" && (
+                                          <span className="text-[9px] px-1.5 py-0.5 rounded-full lp-surface-lo lp-dim font-medium">
+                                            {item.category}
+                                          </span>
+                                        )}
+                                    </div>
+                                    <p className="text-xs lp-body mt-1 leading-relaxed">
+                                      {item.explanation}
+                                    </p>
+                                  </motion.div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </>
+>>>>>>> 5ac65fe1f8153a49cbba09236367ad91f6a42eeb
                       )}
                     </div>
                   );
@@ -969,15 +1388,19 @@ export default function InterviewDetail() {
                 </div>
 
                 {/* Keep Gemini insights but filter out jargon-heavy ones */}
-                {(feedback.voiceSummary.allInsights?.length ?? 0) > 0 && (
+                {(feedback.voiceSummary?.allInsights?.length ?? 0) > 0 && (
                   <details className="group">
                     <summary className="cursor-pointer select-none text-xs font-bold uppercase tracking-wider text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200">
                       Detailed AI Observations
                     </summary>
                     <ul className="mt-3 space-y-2">
+<<<<<<< HEAD
                       {(showAllVoiceObservations
                         ? (feedback.voiceSummary.allInsights ?? [])
                         : (feedback.voiceSummary.allInsights ?? []).slice(0, 3)).map(
+=======
+                      {(feedback.voiceSummary?.allInsights ?? []).map(
+>>>>>>> 5ac65fe1f8153a49cbba09236367ad91f6a42eeb
                         (insight: string, i: number) => (
                           <li
                             key={i}
@@ -1016,19 +1439,41 @@ export default function InterviewDetail() {
 
         {/* 5b. BODY LANGUAGE (Video Analysis) */}
         {(() => {
-          const videoTurns = data.turns.filter(
-            (t: InterviewTurn) => t.videoAnalysis?.confidenceLevel != null,
-          );
+          const videoGroupMap = (t: InterviewTurn) => {
+            const va = t.videoAnalysis;
+            if (!va) return null;
+            const gr = va.rawFeatures ?? va.groupResults;
+            if (!gr || typeof gr !== "object") return null;
+            return gr as Record<string, VideoGroupResult>;
+          };
+
+          const videoTurns = data.turns.filter((t: InterviewTurn) => {
+            const va = t.videoAnalysis;
+            if (!va) return false;
+            if (va.confidenceLevel != null) return true;
+            if (va.status === "completed") return true;
+            const gr = videoGroupMap(t);
+            return gr != null && Object.keys(gr).length > 0;
+          });
           if (videoTurns.length === 0) return null;
-          const videoPct = Math.round(
-            (videoTurns.reduce(
-              (s: number, t: InterviewTurn) =>
-                s + (t.videoAnalysis?.confidenceLevel ?? 0),
-              0,
-            ) /
-              videoTurns.length) *
-              100,
+
+          const turnsWithLevel = videoTurns.filter(
+            (t: InterviewTurn) =>
+              typeof t.videoAnalysis?.confidenceLevel === "number",
           );
+          const videoPct =
+            turnsWithLevel.length > 0
+              ? Math.round(
+                  (turnsWithLevel.reduce(
+                    (s: number, t: InterviewTurn) =>
+                      s + (t.videoAnalysis!.confidenceLevel as number),
+                    0,
+                  ) /
+                    turnsWithLevel.length) *
+                    100,
+                )
+              : 0;
+
           const videoStroke =
             videoPct >= 70 ? "#10B981" : videoPct >= 50 ? "#F59E0B" : "#EF4444";
           const videoLabel =
@@ -1043,7 +1488,7 @@ export default function InterviewDetail() {
           const offset = circumference * (1 - videoPct / 100);
 
           const allGroupResults = videoTurns
-            .map((t: InterviewTurn) => t.videoAnalysis?.rawFeatures)
+            .map((t: InterviewTurn) => videoGroupMap(t))
             .filter(Boolean) as Record<string, VideoGroupResult>[];
 
           const aggregatedGroups: Record<string, { impact: number; status: string; tips: VideoTip[]; count: number }> = {};
@@ -1641,9 +2086,18 @@ export default function InterviewDetail() {
                 )}
               </div>
 
+<<<<<<< HEAD
               {/* Per-question body language — readable in light/dark; watch-for vs strengths */}
               {turn.videoAnalysis?.rawFeatures && (() => {
                 const groups = turn.videoAnalysis.rawFeatures as Record<string, VideoGroupResult>;
+=======
+              {/* Per-question video body language summary */}
+              {turn.videoAnalysis &&
+                (turn.videoAnalysis.rawFeatures ?? turn.videoAnalysis.groupResults) &&
+                (() => {
+                const groups = (turn.videoAnalysis!.rawFeatures ??
+                  turn.videoAnalysis!.groupResults) as Record<string, VideoGroupResult>;
+>>>>>>> 5ac65fe1f8153a49cbba09236367ad91f6a42eeb
                 const groupEntries = Object.entries(groups);
                 if (groupEntries.length === 0) return null;
 
@@ -1772,6 +2226,24 @@ export default function InterviewDetail() {
                 />
                 &quot;
               </div>
+
+              {turn.improvedAnswer && (
+                <details className="group mb-4 overflow-hidden rounded-lg border border-cyan-500/20 bg-cyan-500/[0.04]">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-cyan-900 transition-colors hover:bg-cyan-500/[0.06] dark:text-cyan-300 [&::-webkit-details-marker]:hidden">
+                    <span className="flex items-center gap-2">
+                      <Lightbulb size={15} />
+                      Show better answer
+                    </span>
+                    <ChevronDown
+                      size={16}
+                      className="shrink-0 transition-transform group-open:rotate-180"
+                    />
+                  </summary>
+                  <div className="border-t border-cyan-500/10 px-4 py-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                    {turn.improvedAnswer}
+                  </div>
+                </details>
+              )}
 
               {/* Feedback Footer */}
               <div className="mt-4 flex flex-col items-start justify-between gap-4 border-t border-outline-variant pt-4 md:flex-row md:items-center">
