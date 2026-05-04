@@ -7,9 +7,7 @@ import SectionWrapper from "@/components/ui/SectionWrapper";
 import FloatingShapes from "@/components/ui/FloatingShapes";
 import { fadeInUp, pageStagger, cardPop, staggerSpring } from "@/lib/motion";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { Navbar } from "@/components/landing/Navbar";
-import { Footer } from "@/components/landing/Footer";
-
+import { LpGradientText } from "@/components/landing/LpGradientText";
 const plans = [
   {
     name: "Basic",
@@ -74,12 +72,10 @@ export default function PricingPage() {
     <div
       className="lp-page relative min-h-screen overflow-x-hidden"
       style={{
-        background: "var(--lp-background)",
+        background: "transparent",
         color: "var(--lp-foreground)",
       }}
     >
-      <Navbar />
-
       <main className="relative z-10 flex flex-col pt-24">
         <section className="relative py-20 sm:py-28">
           <FloatingShapes />
@@ -90,24 +86,30 @@ export default function PricingPage() {
             className="mx-auto flex max-w-3xl flex-col gap-6 px-4 text-center"
           >
             <motion.div variants={fadeInUp} className="space-y-5">
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary">Pricing</p>
-              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-                Plans That <span className="gradient-text">Scale with You</span>
+              <p className="text-xs font-semibold uppercase tracking-widest text-cyan-800 dark:text-primary">
+                Pricing
+              </p>
+              <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl dark:text-slate-50">
+                Plans That <LpGradientText>Scale with You</LpGradientText>
               </h1>
-              <p className="mx-auto max-w-lg text-lg text-muted-foreground">
+              <p className="mx-auto max-w-lg text-lg text-slate-600 dark:text-muted-foreground">
                 Start free, upgrade when you&apos;re ready. Cancel anytime.
               </p>
             </motion.div>
             <motion.div variants={fadeInUp} className="flex items-center justify-center gap-3">
               <span
-                className={`text-sm font-medium transition ${!yearly ? "text-foreground" : "text-muted-foreground"}`}
+                className={`text-sm font-medium transition ${
+                  !yearly ? "text-slate-900 dark:text-foreground" : "text-slate-500 dark:text-muted-foreground"
+                }`}
               >
                 Monthly
               </span>
               <button
                 type="button"
                 onClick={() => setYearly(!yearly)}
-                className={`relative h-7 w-12 rounded-full transition-colors ${yearly ? "bg-primary" : "bg-muted"}`}
+                className={`relative h-7 w-12 rounded-full transition-colors ${
+                  yearly ? "bg-primary" : "bg-slate-300/95 dark:bg-muted"
+                }`}
                 aria-label={yearly ? "Switch to monthly billing" : "Switch to yearly billing"}
               >
                 <motion.div
@@ -117,7 +119,9 @@ export default function PricingPage() {
                 />
               </button>
               <span
-                className={`text-sm font-medium transition ${yearly ? "text-foreground" : "text-muted-foreground"}`}
+                className={`text-sm font-medium transition ${
+                  yearly ? "text-slate-900 dark:text-foreground" : "text-slate-500 dark:text-muted-foreground"
+                }`}
               >
                 Yearly <span className="text-xs font-semibold text-primary">Save 20%</span>
               </span>
@@ -148,17 +152,22 @@ export default function PricingPage() {
                     Most Popular
                   </div>
                 )}
-                <div className="text-xs font-semibold text-muted-foreground">{p.name}</div>
+                <div className="text-xs font-semibold text-slate-600 dark:text-muted-foreground">{p.name}</div>
                 <div className="mt-2 flex items-baseline gap-1">
                   <span className="text-4xl font-extrabold tracking-tight">
                     ${yearly ? p.yearly : p.monthly}
                   </span>
-                  {p.monthly > 0 && <span className="text-sm text-muted-foreground">/ mo</span>}
+                  {p.monthly > 0 && (
+                    <span className="text-sm text-slate-600 dark:text-muted-foreground">/ mo</span>
+                  )}
                 </div>
-                <p className="mt-2 text-sm text-muted-foreground">{p.desc}</p>
+                <p className="mt-2 text-sm text-slate-600 dark:text-muted-foreground">{p.desc}</p>
                 <ul className="mt-6 space-y-2.5">
                   {p.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm">
+                    <li
+                      key={f}
+                      className="flex items-start gap-2 text-sm text-slate-800 dark:text-inherit"
+                    >
                       <svg
                         width="16"
                         height="16"
@@ -183,7 +192,7 @@ export default function PricingPage() {
                   className={`mt-7 flex h-11 items-center justify-center rounded-full text-sm font-semibold transition-transform hover:scale-[1.02] active:scale-[0.98] ${
                     p.highlight
                       ? "bg-gradient-to-r from-primary to-primary-light text-white shadow-lg shadow-[0_8px_24px_rgba(59,130,246,0.25)]"
-                      : "border border-border bg-muted/40 backdrop-blur-sm hover:bg-muted"
+                      : "border border-[var(--lp-glass-border)] bg-[var(--lp-glass)] backdrop-blur-md hover:bg-[var(--lp-inner-well)] dark:border-border dark:bg-muted/40 dark:backdrop-blur-sm dark:hover:bg-muted"
                   }`}
                 >
                   {isLoggedIn ? (p.monthly === 0 ? "Current Plan" : `Upgrade to ${p.name}`) : p.cta}
@@ -199,7 +208,7 @@ export default function PricingPage() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            className="text-center text-2xl font-bold tracking-tight sm:text-3xl"
+            className="text-center text-2xl font-bold tracking-tight text-slate-800 sm:text-3xl dark:text-slate-50"
           >
             Feature Comparison
           </motion.h2>
@@ -213,7 +222,9 @@ export default function PricingPage() {
             <table className="w-full min-w-[580px] text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="px-5 py-3 text-left font-medium text-muted-foreground">Feature</th>
+                  <th className="px-5 py-3 text-left font-medium text-slate-600 dark:text-muted-foreground">
+                    Feature
+                  </th>
                   <th className="px-5 py-3 text-center font-medium">Basic</th>
                   <th className="px-5 py-3 text-center font-medium text-primary">Pro</th>
                   <th className="px-5 py-3 text-center font-medium">Premium</th>
@@ -222,10 +233,10 @@ export default function PricingPage() {
               <tbody>
                 {comparison.map((r) => (
                   <tr key={r.feature} className="border-b border-border/50">
-                    <td className="px-5 py-3 text-muted-foreground">{r.feature}</td>
-                    <td className="px-5 py-3 text-center">{r.basic}</td>
-                    <td className="px-5 py-3 text-center font-medium">{r.pro}</td>
-                    <td className="px-5 py-3 text-center">{r.premium}</td>
+                    <td className="px-5 py-3 text-slate-600 dark:text-muted-foreground">{r.feature}</td>
+                    <td className="px-5 py-3 text-center text-slate-800 dark:text-inherit">{r.basic}</td>
+                    <td className="px-5 py-3 text-center font-medium text-slate-900 dark:text-inherit">{r.pro}</td>
+                    <td className="px-5 py-3 text-center text-slate-800 dark:text-inherit">{r.premium}</td>
                   </tr>
                 ))}
               </tbody>
@@ -233,8 +244,6 @@ export default function PricingPage() {
           </motion.div>
         </SectionWrapper>
       </main>
-
-      <Footer />
     </div>
   );
 }

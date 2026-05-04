@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { IconBrandGoogle, IconBrandLinkedin } from "@tabler/icons-react";
 import { Eye, EyeOff, Loader2, Rocket, Shield, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
-
+import { LpGradientText } from "@/components/landing/LpGradientText";
 export default function AuthPage() {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -88,7 +88,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="auth-page lp-page relative min-h-screen w-full overflow-x-hidden bg-[var(--auth-bg-right)] text-[var(--lp-foreground)]">
+    <div className="auth-page lp-page relative min-h-screen w-full overflow-x-hidden bg-transparent text-[var(--lp-foreground)]">
       <div className="grid min-h-screen w-full lg:grid-cols-2">
         {/* Left — branding (deeper + gradient vs. right panel) */}
         <div className="auth-split-left relative hidden flex-col justify-between overflow-hidden px-10 py-12 lg:flex lg:px-14 xl:px-16">
@@ -98,7 +98,7 @@ export default function AuthPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
               className="text-xl font-bold tracking-tight"
-              style={{ color: "#99f6e4" }}
+              style={{ color: "var(--auth-accent-mint)" }}
             >
               Hirely
             </motion.p>
@@ -106,10 +106,10 @@ export default function AuthPage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: 0.05 }}
-              className="mt-10 max-w-lg text-4xl font-bold leading-[1.15] tracking-tight text-white xl:text-5xl"
+              className="mt-10 max-w-lg text-4xl font-bold leading-[1.15] tracking-tight text-[var(--auth-hero-text)] xl:text-5xl"
             >
               Master your next{" "}
-              <span className="lp-gradient-text bg-clip-text text-transparent">interview session.</span>
+              <LpGradientText>interview session.</LpGradientText>
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 12 }}
@@ -136,12 +136,12 @@ export default function AuthPage() {
         {/* Right — form (flatter, slightly lighter than left) */}
         <div className="auth-split-right relative flex flex-col justify-center px-6 py-12 sm:px-10 lg:px-14 xl:px-20">
           <div
-            className="pointer-events-none absolute inset-0 lg:border-l lg:border-white/[0.07]"
+            className="pointer-events-none absolute inset-0 lg:border-l lg:border-[var(--lp-border)]"
             aria-hidden
           />
           <div className="relative z-10 mx-auto w-full max-w-md">
             <div className="mb-2 lg:hidden">
-              <p className="text-lg font-bold" style={{ color: "#99f6e4" }}>
+              <p className="text-lg font-bold" style={{ color: "var(--auth-accent-mint)" }}>
                 Hirely
               </p>
             </div>
@@ -151,7 +151,7 @@ export default function AuthPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45 }}
             >
-              <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              <h2 className="text-2xl font-bold tracking-tight text-[var(--auth-hero-text)] sm:text-3xl">
                 {isLogin ? "Welcome Back" : "Create your account"}
               </h2>
               <p className="mt-2 text-sm text-[var(--lp-muted-foreground)]">
@@ -314,7 +314,7 @@ export default function AuthPage() {
                     setError(null);
                     setMsg(null);
                   }}
-                  className="font-semibold text-white underline-offset-4 transition-colors hover:text-[var(--lp-primary-light)] hover:underline"
+                  className="font-semibold text-[var(--auth-link-emphasis)] underline-offset-4 transition-colors hover:text-[var(--lp-primary-light)] hover:underline"
                 >
                   {isLogin ? "Create an account" : "Sign in"}
                 </button>

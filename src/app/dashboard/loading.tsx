@@ -3,7 +3,7 @@ export default function Loading() {
     <main
       className="lp-page min-h-screen p-8"
       style={{
-        background: "var(--lp-background)",
+        background: "transparent",
         color: "var(--lp-foreground)",
       }}
     >

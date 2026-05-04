@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { LpGradientText } from "./LpGradientText";
 
 /* ─── Animated Counter ─── */
 function CountUp({ target, suffix = "", prefix = "", duration = 2000 }: {
@@ -90,9 +91,9 @@ const stats = [
 export function StatsSection() {
   return (
     <section
+      className="lp-stats-section"
       style={{
         position: "relative",
-        background: "linear-gradient(180deg, #162236 0%, #111827 100%)",
         padding: "60px 24px",
         overflow: "hidden",
       }}
@@ -110,18 +111,35 @@ export function StatsSection() {
       }} />
 
       {/* Decorative shapes */}
-      <div style={{
-        position: "absolute", top: "20%", right: "10%", width: 120, height: 120,
-        border: "1px solid rgba(255,255,255,0.03)", borderRadius: 20,
-        transform: "rotate(45deg)", opacity: 0.5,
-        animation: "lp-particle-float 18s ease-in-out infinite",
-      }} />
-      <div style={{
-        position: "absolute", bottom: "15%", left: "8%", width: 80, height: 80,
-        border: "1px solid rgba(255,255,255,0.03)", borderRadius: "50%",
-        opacity: 0.4,
-        animation: "lp-particle-float 22s ease-in-out 3s infinite",
-      }} />
+      <div
+        className="lp-stats-deco"
+        style={{
+          position: "absolute",
+          top: "20%",
+          right: "10%",
+          width: 120,
+          height: 120,
+          border: "1px solid transparent",
+          borderRadius: 20,
+          transform: "rotate(45deg)",
+          opacity: 0.5,
+          animation: "lp-particle-float 18s ease-in-out infinite",
+        }}
+      />
+      <div
+        className="lp-stats-deco"
+        style={{
+          position: "absolute",
+          bottom: "15%",
+          left: "8%",
+          width: 80,
+          height: 80,
+          border: "1px solid transparent",
+          borderRadius: "50%",
+          opacity: 0.4,
+          animation: "lp-particle-float 22s ease-in-out 3s infinite",
+        }}
+      />
 
       <div style={{ maxWidth: 1000, margin: "0 auto", position: "relative", zIndex: 2 }}>
         {/* Header */}
@@ -132,23 +150,31 @@ export function StatsSection() {
           transition={{ duration: 0.6 }}
           style={{ textAlign: "center", marginBottom: 56 }}
         >
-          <span style={{
-            fontSize: 12, fontWeight: 600, color: "#22d3ee",
-            letterSpacing: "0.08em", textTransform: "uppercase",
-            display: "block", marginBottom: 12,
-          }}>
+          <span
+            className="lp-stats-kicker"
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              display: "block",
+              marginBottom: 12,
+            }}
+          >
             OUR IMPACT
           </span>
-          <h2 style={{
-            fontSize: "clamp(30px, 5vw, 48px)",
-            fontWeight: 800,
-            color: "#e2e8f0",
-            lineHeight: 1.2,
-            marginBottom: 14,
-          }}>
-            Trusted by <span className="lp-gradient-text">Thousands</span>
+          <h2
+            className="lp-stats-heading"
+            style={{
+              fontSize: "clamp(30px, 5vw, 48px)",
+              fontWeight: 800,
+              lineHeight: 1.2,
+              marginBottom: 14,
+            }}
+          >
+            Trusted by <LpGradientText>Thousands</LpGradientText>
           </h2>
-          <p style={{ fontSize: 16, color: "#94a3b8", maxWidth: 500, margin: "0 auto" }}>
+          <p className="lp-stats-sub" style={{ fontSize: 16, maxWidth: 500, margin: "0 auto" }}>
             Thousands of candidates have improved their interview skills with our platform.
           </p>
         </motion.div>
@@ -218,7 +244,7 @@ export function StatsSection() {
                 </div>
 
                 {/* Label */}
-                <p style={{ fontSize: 14, color: "#94a3b8", fontWeight: 500 }}>
+                <p className="lp-stats-label" style={{ fontSize: 14, fontWeight: 500 }}>
                   {stat.label}
                 </p>
               </div>

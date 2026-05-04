@@ -5,6 +5,15 @@ import { cn } from "@/components/lib/utils";
 
 type Direction = "TOP" | "LEFT" | "BOTTOM" | "RIGHT";
 
+type HoverBorderGradientProps = {
+  as?: React.ElementType;
+  containerClassName?: string;
+  className?: string;
+  duration?: number;
+  clockwise?: boolean;
+  children?: React.ReactNode;
+} & Omit<React.HTMLAttributes<HTMLElement>, "children">;
+
 export function HoverBorderGradient({
   children,
   containerClassName,
@@ -13,15 +22,7 @@ export function HoverBorderGradient({
   duration = 1,
   clockwise = true,
   ...props
-}: React.PropsWithChildren<
-  {
-    as?: React.ElementType;
-    containerClassName?: string;
-    className?: string;
-    duration?: number;
-    clockwise?: boolean;
-  } & React.HTMLAttributes<HTMLElement>
->) {
+}: HoverBorderGradientProps) {
   const [hovered, setHovered] = useState<boolean>(false);
   const [direction, setDirection] = useState<Direction>("TOP");
 
@@ -55,8 +56,12 @@ export function HoverBorderGradient({
     }
   }, [hovered, duration, clockwise]); // Added dependencies
 
+  const TagComponent = Tag as React.ComponentType<
+    React.HTMLAttributes<HTMLElement> & { children?: React.ReactNode }
+  >;
+
   return (
-    <Tag
+    <TagComponent
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className={cn(
@@ -96,6 +101,6 @@ export function HoverBorderGradient({
       />
       {/* FIXED: Changed bg-black to bg-white AND rounded-[100px] to rounded-[inherit] */}
       <div className="bg-white absolute z-1 flex-none inset-[2px] rounded-[inherit]" />
-    </Tag>
+    </TagComponent>
   );
 }

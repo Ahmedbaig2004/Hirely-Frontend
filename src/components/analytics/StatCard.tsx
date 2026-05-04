@@ -13,11 +13,11 @@ interface StatCardProps {
 }
 
 const ACCENT_STYLES: Record<string, { icon: string; border: string }> = {
-  violet: { icon: "text-violet-400", border: "border-violet-500/20" },
-  cyan:   { icon: "text-cyan-400",   border: "border-cyan-500/20" },
-  emerald:{ icon: "text-emerald-400",border: "border-emerald-500/20" },
-  amber:  { icon: "text-amber-400",  border: "border-amber-500/20" },
-  rose:   { icon: "text-rose-400",   border: "border-rose-500/20" },
+  violet: { icon: "text-violet-600 dark:text-violet-400", border: "border-violet-500/45 dark:border-violet-500/20" },
+  cyan: { icon: "text-cyan-600 dark:text-cyan-400", border: "border-cyan-500/45 dark:border-cyan-500/20" },
+  emerald: { icon: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-500/45 dark:border-emerald-500/20" },
+  amber: { icon: "text-amber-600 dark:text-amber-400", border: "border-amber-500/45 dark:border-amber-500/20" },
+  rose: { icon: "text-rose-600 dark:text-rose-400", border: "border-rose-500/45 dark:border-rose-500/20" },
 };
 
 export function StatCard({ icon, label, value, suffix, accent = "violet", delay = 0 }: StatCardProps) {
@@ -35,7 +35,7 @@ export function StatCard({ icon, label, value, suffix, accent = "violet", delay 
         {icon}
       </div>
       <div>
-        <p className="label-caps lp-muted mb-1">{label}</p>
+        <p className="label-caps lp-sub mb-1">{label}</p>
         <p className="text-2xl font-black lp-hi">{display}</p>
       </div>
     </motion.div>

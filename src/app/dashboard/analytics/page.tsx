@@ -8,8 +8,6 @@ import {
   BarChart3, TrendingUp, Trophy, MessageSquare,
   Percent, ArrowLeft, Zap,
 } from "lucide-react";
-import LpBackground from "@/components/landing/LpBackground";
-import { Navbar } from "@/components/landing/Navbar";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { AnalyticsSkeleton } from "@/components/analytics/AnalyticsSkeleton";
 import { FilterBar, type AnalyticsFilters } from "@/components/analytics/FilterBar";
@@ -98,7 +96,7 @@ function EmptyState({ filtered, onClear, onStart }: { filtered: boolean; onClear
       <h2 className="text-xl lp-hi font-medium mb-2">
         {filtered ? "No interviews match these filters" : "No data to analyze yet"}
       </h2>
-      <p className="lp-muted text-sm mb-6">
+      <p className="lp-sub text-sm mb-6">
         {filtered
           ? "Try adjusting the type or date range filters."
           : "Complete at least one interview to unlock analytics."}
@@ -171,7 +169,7 @@ function AnalyticsGrid({ data }: { data: AnalyticsResponse }) {
           transition={{ delay: 0.1, duration: 0.35 }}
           className="lg:col-span-2 glass-card rounded-2xl p-6 border lp-border-sub"
         >
-          <p className="label-caps lp-muted mb-4">Score Trend</p>
+          <p className="label-caps lp-sub mb-4">Score Trend</p>
           <ScoreTrendChart trend={data.trend} />
         </motion.div>
 
@@ -181,7 +179,7 @@ function AnalyticsGrid({ data }: { data: AnalyticsResponse }) {
           transition={{ delay: 0.16, duration: 0.35 }}
           className="glass-card rounded-2xl p-6 border lp-border-sub"
         >
-          <p className="label-caps lp-muted mb-4">Score by Modality</p>
+          <p className="label-caps lp-sub mb-4">Score by Modality</p>
           <ModalityRadar modality={data.modality} />
         </motion.div>
       </div>
@@ -194,7 +192,7 @@ function AnalyticsGrid({ data }: { data: AnalyticsResponse }) {
           transition={{ delay: 0.2, duration: 0.35 }}
           className="glass-card rounded-2xl p-6 border lp-border-sub"
         >
-          <p className="label-caps lp-muted mb-4">Performance by Interview Type</p>
+          <p className="label-caps lp-sub mb-4">Performance by Interview Type</p>
           <TypeBreakdownChart byType={data.byType} />
         </motion.div>
 
@@ -204,7 +202,7 @@ function AnalyticsGrid({ data }: { data: AnalyticsResponse }) {
           transition={{ delay: 0.26, duration: 0.35 }}
           className="glass-card rounded-2xl p-6 border lp-border-sub"
         >
-          <p className="label-caps lp-muted mb-4">Hiring Decision Breakdown</p>
+          <p className="label-caps lp-sub mb-4">Hiring Decision Breakdown</p>
           <DecisionBreakdown
             decisionBreakdown={data.decisionBreakdown}
             totalInterviews={data.kpis.totalInterviews}
@@ -219,8 +217,8 @@ function AnalyticsGrid({ data }: { data: AnalyticsResponse }) {
         transition={{ delay: 0.3, duration: 0.35 }}
         className="glass-card rounded-2xl p-6 border lp-border-sub"
       >
-        <p className="label-caps lp-muted mb-4">Topic × Difficulty Heatmap</p>
-        <p className="text-xs lp-dim mb-5">Avg score per topic at each difficulty level (top 10 topics by volume)</p>
+        <p className="label-caps lp-sub mb-4">Topic × Difficulty Heatmap</p>
+        <p className="text-xs lp-sub mb-5 opacity-90">Avg score per topic at each difficulty level (top 10 topics by volume)</p>
         <TopicHeatmap topicHeatmap={data.topicHeatmap} />
       </motion.div>
 
@@ -231,7 +229,7 @@ function AnalyticsGrid({ data }: { data: AnalyticsResponse }) {
         transition={{ delay: 0.36, duration: 0.35 }}
         className="glass-card rounded-2xl p-6 border border-l-4 border-cyan-500/40"
       >
-        <p className="label-caps lp-muted mb-4">Delivery Analysis</p>
+        <p className="label-caps lp-sub mb-4">Delivery Analysis</p>
         <DeliveryChart delivery={data.delivery} />
       </motion.div>
     </div>
@@ -274,27 +272,25 @@ export default function AnalyticsPage() {
     <main
       className="lp-page relative min-h-screen overflow-hidden"
       style={{
-        background: "var(--lp-background)",
+        background: "transparent",
         color: "var(--lp-foreground)",
       }}
     >
-      <LpBackground />
-      <Navbar />
       <motion.div
-        className="relative z-[2] max-w-6xl mx-auto px-6 pt-32 pb-16"
+        className="relative z-[2] mx-auto max-w-6xl px-6 pb-16 pt-32"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-black lp-hi">Analytics</h1>
-            <p className="lp-muted text-sm mt-1">Insights across all your interviews</p>
+            <p className="lp-sub mt-1 text-sm">Insights across all your interviews</p>
           </div>
           <button
             onClick={() => router.push("/dashboard")}
-            className="flex items-center gap-2 lp-muted hover:lp-hi transition-colors text-sm"
+            className="flex items-center gap-2 text-sm lp-sub transition-colors hover:lp-hi"
           >
             <ArrowLeft size={15} />
             History

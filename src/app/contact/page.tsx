@@ -1,26 +1,69 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { toast } from "react-toastify";
-import { fadeInUp, pageStagger, cardPop, staggerSpring } from "@/lib/motion";
+import { useState, useEffect, useId } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { Building2, Clock, Mail, Phone } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
-import FloatingShapes from "@/components/ui/FloatingShapes";
-import { Navbar } from "@/components/landing/Navbar";
-import { Footer } from "@/components/landing/Footer";
+import { ContactPromoVideo } from "@/components/contact/ContactPromoVideo";
+import { InternationalPhoneField } from "@/components/contact/InternationalPhoneField";
+import { DEFAULT_PHONE_COUNTRY_ISO } from "@/lib/countryDialCodes";
+
+/** Slow, readable entrance (reference: ~1.2s ease-out) */
+const LOAD_DURATION = 1.2;
+const LOAD_EASE = [0.16, 1, 0.3, 1] as const;
+
+const INFO_CARDS = [
+  {
+    title: "Head office",
+    value: "Karachi, Pakistan",
+    icon: Building2,
+  },
+  {
+    title: "Call us",
+    value: "+92 300 0000000",
+    icon: Phone,
+  },
+  {
+    title: "Email",
+    value: "hello@hirely.ai",
+    icon: Mail,
+  },
+  {
+    title: "Working hours",
+    value: "Mon – Fri · 9:00 – 18:00",
+    icon: Clock,
+  },
+] as const;
 
 export default function ContactPage() {
   const user = useAuthStore((s) => s.user);
   const [sending, setSending] = useState(false);
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [phoneCountry, setPhoneCountry] = useState(DEFAULT_PHONE_COUNTRY_ISO);
+  const [phoneLocal, setPhoneLocal] = useState("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
+
+  const reduceMotion = useReducedMotion();
+  const heroStrokeId = `contact-hero-stroke-${useId().replace(/:/g, "")}`;
+
+  const loadTransition = reduceMotion
+    ? { duration: 0.2 }
+    : { duration: LOAD_DURATION, ease: LOAD_EASE };
 
   useEffect(() => {
     if (user) {
       const meta = user.user_metadata as { full_name?: string } | undefined;
-      setName(meta?.full_name ?? "");
+      const full = meta?.full_name ?? "";
+      const parts = full.trim().split(/\s+/);
+      if (parts.length > 1) {
+        setLastName(parts.pop() ?? "");
+        setFirstName(parts.join(" "));
+      } else {
+        setFirstName(full);
+      }
       setEmail(user.email ?? "");
     }
   }, [user]);
@@ -30,152 +73,258 @@ export default function ContactPage() {
     setSending(true);
     setTimeout(() => {
       setSending(false);
-      toast.success("Message sent! We'll get back to you within 24 hours.");
     }, 1500);
   };
 
   const inputCls =
-    "mt-1.5 block w-full rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm shadow-sm backdrop-blur transition placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/35";
+    "mt-1.5 block w-full rounded-xl border border-white/50 bg-[var(--lp-input-bg)] px-4 py-3 text-sm text-slate-900 shadow-sm backdrop-blur-md transition placeholder:text-slate-600 focus:border-cyan-600/45 focus:outline-none focus:ring-2 focus:ring-cyan-500/25 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-cyan-400/35 dark:focus:ring-cyan-500/15";
 
   return (
     <div
       className="lp-page relative min-h-screen overflow-x-hidden"
       style={{
-        background: "var(--lp-background)",
+        background: "transparent",
         color: "var(--lp-foreground)",
       }}
     >
-      <Navbar />
-
-      <div className="relative mx-auto max-w-2xl px-4 pb-24 pt-28 sm:py-28">
-        <FloatingShapes />
-        <motion.div initial="hidden" animate="visible" variants={pageStagger} className="relative z-0">
-          <motion.div variants={fadeInUp} className="space-y-4 text-center">
-            <p className="text-xs font-semibold uppercase tracking-widest text-primary">Contact Us</p>
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-              Get in <span className="gradient-text">Touch</span>
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Have a question, feedback, or partnership inquiry? We&apos;d love to hear from you.
-            </p>
-          </motion.div>
-
-          <motion.form variants={fadeInUp} onSubmit={submit} className="glass-card mt-12 space-y-5 rounded-2xl p-7">
-            <div className="grid gap-5 sm:grid-cols-2">
-              <div>
-                <label className="text-sm font-medium">Name</label>
-                <input
-                  required
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Your name"
-                  className={inputCls}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Email</label>
-                <input
-                  required
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className={inputCls}
-                />
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Subject</label>
-              <input
-                required
-                type="text"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                placeholder="How can we help?"
-                className={inputCls}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Message</label>
-              <textarea
-                required
-                rows={5}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Tell us more..."
-                className={`${inputCls} resize-none`}
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={sending}
-              className="h-12 w-full rounded-full bg-gradient-to-r from-primary to-primary-light text-sm font-semibold text-white shadow-[0_8px_24px_rgba(59,130,246,0.22)] transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
-            >
-              {sending ? (
-                <div className="mx-auto h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-              ) : (
-                "Send Message"
-              )}
-            </button>
-          </motion.form>
-
-          <motion.div
-            variants={staggerSpring}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="mt-12 grid gap-6 sm:grid-cols-3"
+      <div className="relative z-[2] mx-auto max-w-7xl px-4 pb-24 pt-24 sm:px-6 sm:pt-28 sm:pb-28">
+        <div className="relative flex flex-col items-stretch">
+          {/* Background atmosphere */}
+          <div
+            className="pointer-events-none absolute -top-24 left-1/2 h-[min(520px,70vh)] w-[min(1100px,100vw)] -translate-x-1/2 overflow-visible"
+            aria-hidden
           >
-            {[
-              {
-                label: "Email",
-                value: "hello@hirely.ai",
-                icon: (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                    <polyline points="22,6 12,13 2,6" />
-                  </svg>
-                ),
-              },
-              {
-                label: "Location",
-                value: "Karachi, Pakistan",
-                icon: (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                ),
-              },
-              {
-                label: "Response time",
-                value: "Within 24 hours",
-                icon: (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12 6 12 12 16 14" />
-                  </svg>
-                ),
-              },
-            ].map((c, i) => (
-              <motion.div
-                key={c.label}
-                custom={i}
-                variants={cardPop}
-                whileHover={{ y: -4, transition: { type: "spring", stiffness: 300, damping: 20 } }}
-                className="glass-card rounded-xl p-5 text-center"
-              >
-                <div className="mx-auto grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary">{c.icon}</div>
-                <div className="mt-3 text-xs text-muted-foreground">{c.label}</div>
-                <div className="mt-0.5 text-sm font-semibold">{c.value}</div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </motion.div>
-      </div>
+            <div
+              className="absolute left-[8%] top-[12%] h-[280px] w-[280px] rounded-full opacity-[0.35] blur-[100px]"
+              style={{
+                background:
+                  "radial-gradient(circle at 30% 30%, rgba(34, 211, 238, 0.35), transparent 62%)",
+              }}
+            />
+            <div
+              className="absolute right-[6%] top-[22%] h-[320px] w-[320px] rounded-full opacity-[0.3] blur-[110px]"
+              style={{
+                background:
+                  "radial-gradient(circle at 70% 40%, rgba(139, 92, 246, 0.38), transparent 58%)",
+              }}
+            />
+            <svg
+              className="absolute left-1/2 top-[10%] w-[min(720px,92vw)] -translate-x-1/2 opacity-[0.28]"
+              viewBox="0 0 720 120"
+              fill="none"
+              aria-hidden
+            >
+              <path
+                d="M0 96 C 120 24, 200 104, 360 56 S 560 8, 720 88"
+                stroke={`url(#${heroStrokeId})`}
+                strokeWidth="1.25"
+                strokeLinecap="round"
+                strokeDasharray="6 10"
+              />
+              <defs>
+                <linearGradient id={heroStrokeId} x1="0" y1="0" x2="720" y2="0">
+                  <stop stopColor="rgba(34,211,238,0.45)" />
+                  <stop offset="0.5" stopColor="rgba(139,92,246,0.4)" />
+                  <stop offset="1" stopColor="rgba(59,130,246,0.35)" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
 
-      <Footer />
+          {/* Two-column contact block (reference: left info + right form) */}
+          <div className="relative z-[2] grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-start lg:gap-14 xl:gap-16">
+            {/* Left: slides in from the right (starts off-screen right → settles left) */}
+            <motion.div
+              className="order-1 flex flex-col lg:order-1"
+              initial={reduceMotion ? { opacity: 0 } : { opacity: 0, x: 200 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={loadTransition}
+            >
+              <div className="mb-2 inline-flex w-fit items-center gap-2 rounded-full border border-cyan-600/25 bg-cyan-500/15 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-cyan-800 dark:border-cyan-400/30 dark:bg-cyan-500/10 dark:text-cyan-300">
+                <Phone className="h-3.5 w-3.5 opacity-90" aria-hidden />
+                Contact us
+              </div>
+              <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:text-4xl lg:text-[2.35rem] lg:leading-[1.15] dark:text-white">
+                <span className="bg-gradient-to-r from-cyan-700 to-blue-600 bg-clip-text text-transparent dark:from-cyan-300 dark:to-blue-400">
+                  Get in touch
+                </span>{" "}
+                <span className="text-slate-800 dark:text-slate-100">with our team</span>
+              </h1>
+              <p className="mt-4 max-w-md text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
+                Fill out the form and we&apos;ll get back to you within 1–2 business days.
+              </p>
+
+              <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {INFO_CARDS.map(({ title, value, icon: Icon }) => (
+                  <div
+                    key={title}
+                    className="rounded-2xl border border-[var(--lp-glass-border)] bg-[var(--lp-glass)] p-4 shadow-[0_12px_40px_-24px_rgba(15,23,42,0.12)] backdrop-blur-[28px] backdrop-saturate-150 transition-colors hover:border-cyan-500/35 dark:border-white/[0.08] dark:bg-white/[0.03] dark:shadow-[0_12px_40px_-20px_rgba(0,0,0,0.5)] dark:backdrop-blur-sm dark:hover:border-cyan-500/20"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-500/15 text-blue-700 dark:text-blue-400">
+                        <Icon className="h-5 w-5" aria-hidden />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">{title}</div>
+                        <div className="mt-0.5 text-sm font-medium text-slate-800 dark:text-slate-200">{value}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Right: form slides up from below */}
+            <motion.div
+              className="order-2 lg:order-2"
+              initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 140 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={loadTransition}
+            >
+              <div className="overflow-hidden rounded-[1.75rem] border border-[var(--lp-glass-border)] bg-[var(--lp-glass)] shadow-[0_32px_80px_-32px_rgba(15,23,42,0.14)] backdrop-blur-[28px] backdrop-saturate-150 dark:border-white/[0.09] dark:bg-slate-950/50 dark:shadow-[0_32px_80px_-32px_rgba(0,0,0,0.75)] dark:backdrop-blur-xl">
+                <div
+                  className="h-2 w-full bg-gradient-to-r from-blue-600 via-cyan-500 to-sky-400"
+                  aria-hidden
+                />
+                <div className="bg-white/[0.06] p-6 backdrop-blur-md sm:p-8 dark:bg-gradient-to-b dark:from-slate-900/40 dark:via-slate-900/50 dark:to-slate-950/80 dark:backdrop-blur-none">
+                  <p className="mb-6 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-600 dark:text-slate-500">
+                    Send a message
+                  </p>
+                  <form onSubmit={submit} className="space-y-5">
+                    <div className="grid gap-5 sm:grid-cols-2">
+                      <div>
+                        <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                          First name
+                        </label>
+                        <input
+                          required
+                          type="text"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                          placeholder="Enter first name"
+                          className={inputCls}
+                          autoComplete="given-name"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                          Last name
+                        </label>
+                        <input
+                          required
+                          type="text"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                          placeholder="Enter last name"
+                          className={inputCls}
+                          autoComplete="family-name"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid gap-5 sm:grid-cols-2">
+                      <div>
+                        <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                          Work email
+                        </label>
+                        <input
+                          required
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="you@company.com"
+                          className={inputCls}
+                          autoComplete="email"
+                        />
+                      </div>
+                      <div>
+                        <p
+                          className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
+                          id="contact-phone-group-label"
+                        >
+                          Phone <span className="font-normal text-slate-500">(optional)</span>
+                        </p>
+                        <div className="mt-1.5" aria-labelledby="contact-phone-group-label">
+                          <label htmlFor="contact-phone-local" className="sr-only">
+                            Phone number (optional)
+                          </label>
+                          <InternationalPhoneField
+                            inputId="contact-phone-local"
+                            countryIso={phoneCountry}
+                            onCountryChange={setPhoneCountry}
+                            localDigits={phoneLocal}
+                            onLocalChange={setPhoneLocal}
+                          />
+                        </div>
+                        <p className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-500">
+                          Choose country on the left, type the rest of your number on the right.
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Subject</label>
+                      <input
+                        required
+                        type="text"
+                        value={subject}
+                        onChange={(e) => setSubject(e.target.value)}
+                        placeholder="How can we help?"
+                        className={inputCls}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Message</label>
+                      <textarea
+                        required
+                        rows={5}
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        placeholder="Tell us more..."
+                        className={`${inputCls} resize-none`}
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={sending}
+                      className="h-12 w-full rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-sm font-semibold text-white shadow-[0_10px_36px_-10px_rgba(59,130,246,0.55)] transition-all hover:brightness-110 active:scale-[0.99] disabled:opacity-50"
+                    >
+                      {sending ? (
+                        <div className="mx-auto h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      ) : (
+                        "Submit"
+                      )}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Live product preview — full width */}
+          <motion.div
+            id="live-preview"
+            className="relative z-[2] mt-16 w-full scroll-mt-28 lg:mt-24"
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 36 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px", amount: 0.1 }}
+            transition={reduceMotion ? { duration: 0.2 } : { duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <div className="mx-auto w-full max-w-6xl">
+              <div className="mb-6 text-center sm:mb-8">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-fuchsia-600 dark:text-fuchsia-400/95">
+                  Inside Hirely
+                </p>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+                  Coaching that hears how you interview—not just what you say
+                </h2>
+                <p className="mx-auto mt-2 max-w-xl text-sm text-slate-600 dark:text-slate-400">
+                  Live preview of session intelligence: delivery signals, STAR-aware nudges, and scoring aligned with real hiring feedback—same stack as your mock interviews.
+                </p>
+              </div>
+              <ContactPromoVideo />
+            </div>
+          </motion.div>
+        </div>
+      </div>
     </div>
   );
 }

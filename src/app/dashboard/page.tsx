@@ -5,12 +5,10 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Calendar, ChevronDown, CheckCircle, XCircle, ArrowRight, Inbox, Zap, Trash2 } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
-import SignOutButton from "@/components/logOutButton";
 import { LoaderFour } from "@/components/ui/loader";
 import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
-import LpBackground from "@/components/landing/LpBackground";
-import { Navbar } from "@/components/landing/Navbar";
+import { PersonalDashboardExperience } from "@/components/dashboard/PersonalDashboardExperience";
 
 interface InterviewFeedback {
   decision?: string;
@@ -37,7 +35,11 @@ function ScoreBar({ score }: { score: number }) {
       : { gradient: "linear-gradient(90deg, #EF4444, #F87171)", glow: "rgba(239,68,68,0.5)" };
 
   const textColor =
-    score >= 70 ? "text-emerald-400" : score >= 50 ? "text-amber-400" : "text-rose-400";
+    score >= 70
+      ? "text-emerald-700 dark:text-emerald-400"
+      : score >= 50
+        ? "text-amber-700 dark:text-amber-400"
+        : "text-rose-700 dark:text-rose-400";
 
   return (
     <div className="flex items-center gap-2 min-w-[120px]">
@@ -60,8 +62,8 @@ function DecisionBadge({ decision }: { decision?: string }) {
     <span
       className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
         isHire
-          ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/20"
-          : "bg-rose-500/15 text-rose-400 border-rose-500/20"
+          ? "bg-emerald-500/15 text-emerald-800 border-emerald-600/35 dark:text-emerald-400 dark:border-emerald-500/20"
+          : "bg-rose-500/15 text-rose-800 border-rose-600/35 dark:text-rose-400 dark:border-rose-500/20"
       }`}
     >
       {decision}
@@ -112,7 +114,7 @@ function InterviewCard({
         >
           <div className="flex-1 min-w-0 mr-4">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <h2 className="font-bold text-lg text-on-surface truncate opacity-90">
+              <h2 className="font-bold text-lg text-slate-900 truncate dark:text-on-surface dark:opacity-90">
                 {item.jobDescription
                   ? item.jobDescription.substring(0, 50) + (item.jobDescription.length > 50 ? "…" : "")
                   : item.interviewType === "TECHNICAL"
@@ -124,7 +126,7 @@ function InterviewCard({
               <DecisionBadge decision={fb?.decision} />
             </div>
             <div className="flex flex-wrap items-center gap-4">
-              <span className="flex items-center gap-1 text-on-surface-variant text-sm opacity-40">
+              <span className="flex items-center gap-1 text-sm text-slate-700 dark:text-slate-400">
                 <Calendar size={14} />
                 {new Date(item.createdAt).toLocaleDateString()}
               </span>
@@ -133,7 +135,7 @@ function InterviewCard({
           </div>
           <ChevronDown
             size={18}
-            className={`text-on-surface-variant shrink-0 transition-transform duration-300 opacity-40 ${expanded ? "rotate-180" : ""}`}
+            className={`shrink-0 text-slate-700 transition-transform duration-300 dark:text-slate-400 ${expanded ? "rotate-180" : ""}`}
           />
         </button>
 
@@ -180,7 +182,7 @@ function InterviewCard({
             <div className="px-6 pb-6 border-t border-outline-variant pt-4 space-y-4">
               {/* Summary */}
               {fb?.summary && (
-                <p className="text-sm text-on-surface-variant leading-relaxed line-clamp-3 opacity-65">
+                <p className="text-sm leading-relaxed line-clamp-3 text-slate-800 dark:text-on-surface-variant dark:opacity-90">
                   {fb.summary}
                 </p>
               )}
@@ -190,26 +192,30 @@ function InterviewCard({
                 <div className="grid sm:grid-cols-2 gap-3">
                   {strengths.length > 0 && (
                     <div className="space-y-1.5">
-                      <span className="text-[10px] font-bold text-emerald-400/60 uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider dark:text-emerald-400/90">
                         Strengths
                       </span>
                       {strengths.map((s, i) => (
                         <div key={i} className="flex items-start gap-2">
-                          <CheckCircle size={12} className="mt-0.5 shrink-0 text-emerald-500" />
-                          <span className="text-xs text-on-surface-variant leading-relaxed opacity-65">{s}</span>
+                          <CheckCircle size={12} className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-500" />
+                          <span className="text-sm leading-relaxed text-slate-800 dark:text-on-surface-variant dark:opacity-90">
+                            {s}
+                          </span>
                         </div>
                       ))}
                     </div>
                   )}
                   {weaknesses.length > 0 && (
                     <div className="space-y-1.5">
-                      <span className="text-[10px] font-bold text-rose-400/60 uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-rose-800 uppercase tracking-wider dark:text-rose-400/90">
                         Areas to Improve
                       </span>
                       {weaknesses.map((s, i) => (
                         <div key={i} className="flex items-start gap-2">
-                          <XCircle size={12} className="mt-0.5 shrink-0 text-rose-500" />
-                          <span className="text-xs text-on-surface-variant leading-relaxed opacity-65">{s}</span>
+                          <XCircle size={12} className="mt-0.5 shrink-0 text-rose-600 dark:text-rose-500" />
+                          <span className="text-sm leading-relaxed text-slate-800 dark:text-on-surface-variant dark:opacity-90">
+                            {s}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -219,10 +225,11 @@ function InterviewCard({
 
               {/* CTA */}
               <button
+                type="button"
                 onClick={onNavigate}
-                className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:opacity-80 transition-opacity mt-1"
+                className="btn-violet mt-2 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold"
               >
-                View full report <ArrowRight size={13} />
+                View full report <ArrowRight size={16} />
               </button>
             </div>
           </motion.div>
@@ -246,6 +253,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");
+  const [dashSection, setDashSection] = useState<"overview" | "sessions">("overview");
   const { user } = useAuthStore();
   const router = useRouter();
 
@@ -260,9 +268,15 @@ export default function Dashboard() {
       await axios.delete(`${backendUrl}/api/interviews/${id}?userId=${user?.id ?? ""}`);
       setInterviews((prev) => prev.filter((iv) => iv.id !== id));
       if (expandedId === id) setExpandedId(null);
-      toast.success("Interview deleted.");
-    } catch (err: any) {
-      toast.error("Failed to delete: " + (err.response?.data?.error || err.message));
+    } catch (err: unknown) {
+      let message = "Unknown error";
+      if (axios.isAxiosError(err)) {
+        const data = err.response?.data as { error?: string } | undefined;
+        message = data?.error ?? err.message;
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
+      toast.error("Failed to delete: " + message);
     }
   };
 
@@ -288,145 +302,113 @@ export default function Dashboard() {
     return (
       <div
         className="lp-page dark flex h-screen w-full items-center justify-center"
-        style={{ background: "var(--lp-background)" }}
+        style={{ background: "transparent" }}
       >
         <LoaderFour />
       </div>
     );
   }
 
-  const Header = () => (
-    <div className="flex justify-between items-center mb-8">
-      <div>
-        <h1 className="text-3xl font-bold text-on-surface opacity-90">Your Interviews</h1>
-        <p className="text-on-surface-variant text-sm mt-1 opacity-50">Welcome back, {user?.email}</p>
+  const sessionsBlock = (
+    <>
+      <div className="flex flex-wrap gap-2 mb-6">
+        {FILTER_OPTIONS.map((opt) => {
+          const isActive = filter === opt.value;
+          const count =
+            opt.value === "all"
+              ? interviews.length
+              : interviews.filter((iv) => (iv.interviewType ?? "JOB_SPECIFIC") === opt.value).length;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setFilter(opt.value)}
+              className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-all duration-200 ${
+                isActive
+                  ? "border-violet-600/45 bg-violet-500/15 text-slate-900 shadow-[0_0_20px_rgba(124,58,237,0.18)] dark:border-violet-400/45 dark:bg-violet-500/20 dark:text-slate-100 dark:shadow-[0_0_22px_rgba(124,58,237,0.28)]"
+                  : "border-slate-400/55 bg-white/55 text-slate-800 hover:border-slate-500/70 hover:bg-white/75 hover:text-slate-900 dark:border-white/18 dark:bg-white/[0.07] dark:text-slate-200 dark:hover:border-white/28 dark:hover:bg-white/10 dark:hover:text-slate-50"
+              }`}
+            >
+              {opt.label}
+              <span
+                className={`ml-2 tabular-nums ${isActive ? "text-slate-700 dark:text-slate-200" : "text-slate-600 dark:text-slate-400"}`}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
       </div>
-      <div className="flex gap-3">
-        <SignOutButton />
-        <button onClick={() => router.push("/")} className="btn-violet flex items-center gap-2 rounded-lg px-4 py-2">
-          <Zap size={16} />
-          New Interview
-        </button>
-      </div>
-    </div>
-  );
 
-  if (loading) {
-    return (
-      <main
-        className="lp-page relative min-h-screen overflow-hidden"
-        style={{
-          background: "var(--lp-background)",
-          color: "var(--lp-foreground)",
-        }}
-      >
-        <LpBackground />
-        <Navbar />
-        <div className="relative z-[2] max-w-4xl mx-auto px-8 pt-32 pb-8">
-          <Header />
-          <div className="grid gap-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-surface-container p-6 rounded-xl border border-outline-variant animate-pulse">
-                <div className="h-6 w-3/4 bg-surface-container-high rounded mb-4"></div>
-                <div className="flex items-center gap-4">
-                  <div className="h-4 w-32 bg-surface-container-high rounded"></div>
-                  <div className="h-4 w-24 bg-surface-container-high rounded"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </main>
-    );
-  }
+      <div className="grid gap-4">
+        {filteredInterviews.map((item, i) => (
+          <InterviewCard
+            key={item.id}
+            item={item}
+            index={i}
+            expanded={expandedId === item.id}
+            onToggle={() => setExpandedId(expandedId === item.id ? null : item.id)}
+            onNavigate={() => router.push(`/dashboard/${item.id}`)}
+            onDelete={() => handleDelete(item.id)}
+          />
+        ))}
+
+        {filteredInterviews.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="flex flex-col items-center justify-center py-20 text-center"
+          >
+            <Inbox size={48} className="text-on-surface-variant mb-4 opacity-25" />
+            <p className="text-on-surface-variant text-lg font-medium mb-2 opacity-55">
+              {interviews.length === 0
+                ? "No interviews yet"
+                : `No ${FILTER_OPTIONS.find((o) => o.value === filter)?.label} interviews`}
+            </p>
+            <p className="text-on-surface-variant text-sm mb-6 opacity-30">
+              {interviews.length === 0
+                ? "Start your first interview to see results here"
+                : "Try a different filter or start a new interview"}
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push("/start")}
+              className="btn-violet flex items-center gap-2 rounded-lg px-4 py-2"
+            >
+              <Zap size={16} />
+              {interviews.length === 0 ? "Start your first interview" : "New Interview"}
+            </button>
+          </motion.div>
+        )}
+      </div>
+    </>
+  );
 
   return (
     <main
       className="lp-page relative min-h-screen overflow-hidden"
       style={{
-        background: "var(--lp-background)",
+        background: "transparent",
         color: "var(--lp-foreground)",
       }}
     >
-      <LpBackground />
-      <Navbar />
-      <motion.div
-        className="relative z-[2] max-w-4xl mx-auto px-8 pt-32 pb-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4 }}
-      >
-        <Header />
-
-        {/* Interview type filter */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          {FILTER_OPTIONS.map((opt) => {
-            const isActive = filter === opt.value;
-            const count =
-              opt.value === "all"
-                ? interviews.length
-                : interviews.filter((iv) => (iv.interviewType ?? "JOB_SPECIFIC") === opt.value).length;
-            return (
-              <button
-                key={opt.value}
-                onClick={() => setFilter(opt.value)}
-                className="glass-card rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200"
-                style={
-                  isActive
-                    ? {
-                        borderColor: "rgba(124,58,237,0.4)",
-                        boxShadow: "0 0 20px rgba(124,58,237,0.15)",
-                        color: "rgba(255,255,255,0.95)",
-                      }
-                    : { color: "rgba(255,255,255,0.5)" }
-                }
-              >
-                {opt.label}
-                <span className="ml-2 opacity-50">{count}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="grid gap-4">
-          {filteredInterviews.map((item, i) => (
-            <InterviewCard
-              key={item.id}
-              item={item}
-              index={i}
-              expanded={expandedId === item.id}
-              onToggle={() => setExpandedId(expandedId === item.id ? null : item.id)}
-              onNavigate={() => router.push(`/dashboard/${item.id}`)}
-              onDelete={() => handleDelete(item.id)}
-            />
-          ))}
-
-          {filteredInterviews.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="flex flex-col items-center justify-center py-20 text-center"
-            >
-              <Inbox size={48} className="text-on-surface-variant mb-4 opacity-25" />
-              <p className="text-on-surface-variant text-lg font-medium mb-2 opacity-55">
-                {interviews.length === 0
-                  ? "No interviews yet"
-                  : `No ${FILTER_OPTIONS.find((o) => o.value === filter)?.label} interviews`}
-              </p>
-              <p className="text-on-surface-variant text-sm mb-6 opacity-30">
-                {interviews.length === 0
-                  ? "Start your first interview to see results here"
-                  : "Try a different filter or start a new interview"}
-              </p>
-              <button onClick={() => router.push("/")} className="btn-violet flex items-center gap-2 rounded-lg px-4 py-2">
-                <Zap size={16} />
-                {interviews.length === 0 ? "Start your first interview" : "New Interview"}
-              </button>
-            </motion.div>
-          )}
-        </div>
-      </motion.div>
+      <div className="relative z-[2]">
+        <PersonalDashboardExperience
+          interviews={interviews}
+          loading={loading}
+          drillType={filter !== "all" ? filter : null}
+          onDrill={(type) => {
+            setFilter(type as FilterType);
+            setDashSection("sessions");
+          }}
+          onClearDrill={() => setFilter("all")}
+          section={dashSection}
+          onSectionChange={setDashSection}
+        >
+          {sessionsBlock}
+        </PersonalDashboardExperience>
+      </div>
     </main>
   );
 }

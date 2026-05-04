@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Montserrat } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "../components/AuthProvider";
 import { ThemeProvider } from "../components/ThemeProvider";
 import { ThemedToastContainer } from "../components/ThemedToastContainer";
+import { Navbar } from "../components/landing/Navbar";
+import { Footer } from "../components/landing/Footer";
+import { PreloaderProvider } from "../components/landing/PreloaderContext";
+import { LandingPreloader } from "../components/landing/Preloader";
+import { GlobalSubpageBackdrop } from "../components/backgrounds/GlobalSubpageBackdrop";
 import "react-toastify/dist/ReactToastify.css";
 
 const geistSans = Geist({
@@ -14,6 +19,12 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const brandSans = Montserrat({
+  variable: "--font-brand",
+  subsets: ["latin"],
+  weight: ["700", "800", "900"],
 });
 
 export const metadata: Metadata = {
@@ -28,10 +39,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${brandSans.variable} antialiased relative min-h-screen`}
+      >
         <ThemeProvider>
           <AuthProvider>
-            {children}
+            <PreloaderProvider>
+              <GlobalSubpageBackdrop />
+              <Navbar />
+              <LandingPreloader />
+              {children}
+              <Footer />
+            </PreloaderProvider>
           </AuthProvider>
           <ThemedToastContainer />
         </ThemeProvider>

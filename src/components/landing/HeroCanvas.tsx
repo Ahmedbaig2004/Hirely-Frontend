@@ -3,6 +3,7 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Float, MeshTransmissionMaterial } from "@react-three/drei";
 import { useReducedMotion } from "framer-motion";
+import { useTheme } from "next-themes";
 import { Suspense, useMemo, useRef } from "react";
 import * as THREE from "three";
 
@@ -10,9 +11,11 @@ import * as THREE from "three";
 function ThresholdArch({
   pointer,
   reducedMotion,
+  isLight,
 }: {
   pointer: React.MutableRefObject<{ x: number; y: number }>;
   reducedMotion: boolean;
+  isLight: boolean;
 }) {
   const group = useRef<THREE.Group>(null);
 
@@ -41,14 +44,14 @@ function ThresholdArch({
       <mesh castShadow receiveShadow>
         <torusKnotGeometry args={[0.95, 0.24, 220, 36, 2, 3]} />
         <meshPhysicalMaterial
-          color="#0d1e3a"
-          emissive="#2f76f0"
-          emissiveIntensity={0.22}
-          metalness={0.92}
-          roughness={0.15}
+          color={isLight ? "#7dd3fc" : "#0d1e3a"}
+          emissive={isLight ? "#38bdf8" : "#2f76f0"}
+          emissiveIntensity={isLight ? 0.26 : 0.22}
+          metalness={isLight ? 0.28 : 0.92}
+          roughness={isLight ? 0.22 : 0.15}
           clearcoat={1}
           clearcoatRoughness={0.08}
-          reflectivity={0.9}
+          reflectivity={isLight ? 0.82 : 0.9}
         />
       </mesh>
     </group>
@@ -60,10 +63,12 @@ function FloatingDocument({
   position,
   rotationOffset,
   reducedMotion,
+  isLight,
 }: {
   position: [number, number, number];
   rotationOffset: number;
   reducedMotion: boolean;
+  isLight: boolean;
 }) {
   const mesh = useRef<THREE.Mesh>(null);
 
@@ -84,19 +89,19 @@ function FloatingDocument({
         backside={false}
         samples={4}
         resolution={256}
-        transmission={0.92}
-        roughness={0.2}
+        transmission={isLight ? 0.82 : 0.92}
+        roughness={isLight ? 0.14 : 0.2}
         thickness={0.04}
         ior={1.5}
         chromaticAberration={0.02}
-        color="#c5ced9"
+        color={isLight ? "#dbeafe" : "#c5ced9"}
       />
     </mesh>
   );
 }
 
 /* ── Voice ribbon (abstract waveform ring) ── */
-function VoiceRibbon({ reducedMotion }: { reducedMotion: boolean }) {
+function VoiceRibbon({ reducedMotion, isLight }: { reducedMotion: boolean; isLight: boolean }) {
   const mesh = useRef<THREE.Mesh>(null);
   const geo = useMemo(() => new THREE.TorusGeometry(1.8, 0.012, 8, 180), []);
 
@@ -110,20 +115,20 @@ function VoiceRibbon({ reducedMotion }: { reducedMotion: boolean }) {
   return (
     <mesh ref={mesh} geometry={geo} rotation={[Math.PI / 2.5, 0, 0]}>
       <meshStandardMaterial
-        color="#94a3b8"
-        emissive="#22d3ee"
-        emissiveIntensity={0.04}
-        metalness={0.9}
-        roughness={0.3}
+        color={isLight ? "#38bdf8" : "#94a3b8"}
+        emissive={isLight ? "#bae6fd" : "#22d3ee"}
+        emissiveIntensity={isLight ? 0.14 : 0.04}
+        metalness={isLight ? 0.55 : 0.85}
+        roughness={isLight ? 0.28 : 0.3}
         transparent
-        opacity={0.35}
+        opacity={isLight ? 0.52 : 0.35}
       />
     </mesh>
   );
 }
 
 /* ── Cyan orbit ring ── */
-function OrbitRing({ reducedMotion }: { reducedMotion: boolean }) {
+function OrbitRing({ reducedMotion, isLight }: { reducedMotion: boolean; isLight: boolean }) {
   const mesh = useRef<THREE.Mesh>(null);
 
   useFrame((state) => {
@@ -137,13 +142,13 @@ function OrbitRing({ reducedMotion }: { reducedMotion: boolean }) {
     <mesh ref={mesh} rotation={[0.45, 0.3, 0]}>
       <torusGeometry args={[2.0, 0.016, 16, 140]} />
       <meshStandardMaterial
-        color="#06b6d4"
-        emissive="#06b6d4"
-        emissiveIntensity={0.05}
-        metalness={1}
-        roughness={0.32}
+        color={isLight ? "#22d3ee" : "#06b6d4"}
+        emissive={isLight ? "#a5f3fc" : "#06b6d4"}
+        emissiveIntensity={isLight ? 0.14 : 0.05}
+        metalness={isLight ? 0.65 : 1}
+        roughness={isLight ? 0.26 : 0.32}
         transparent
-        opacity={0.45}
+        opacity={isLight ? 0.58 : 0.45}
       />
     </mesh>
   );
@@ -153,47 +158,56 @@ function OrbitRing({ reducedMotion }: { reducedMotion: boolean }) {
 function Scene({
   pointer,
   reducedMotion,
+  isLight,
 }: {
   pointer: React.MutableRefObject<{ x: number; y: number }>;
   reducedMotion: boolean;
+  isLight: boolean;
 }) {
+  /* Light: sky-cyan meshes over page-matched fog; dark unchanged */
+  const bg = isLight ? "#f2f9ff" : "#060a12";
   return (
     <>
-      <color attach="background" args={["#060a12"]} />
-      <fog attach="fog" args={["#060a12", 4, 12]} />
-      <ambientLight intensity={0.35} />
+      <color attach="background" args={[bg]} />
+      <fog attach="fog" args={[bg, isLight ? 5.5 : 4, isLight ? 15 : 12]} />
+      <ambientLight intensity={isLight ? 0.78 : 0.35} color={isLight ? "#e0f2fe" : "#ffffff"} />
       <spotLight
         position={[5, 8, 5]}
         angle={0.3}
         penumbra={0.7}
-        intensity={2.2}
-        color="#e1e6ed"
+        intensity={isLight ? 1.42 : 2.2}
+        color={isLight ? "#ffffff" : "#e1e6ed"}
         castShadow
       />
-      <pointLight position={[-4, -2, 3]} intensity={0.7} color="#2f76f0" />
-      <pointLight position={[3, 3, -3]} intensity={0.5} color="#22d3ee" />
+      <pointLight position={[-4, -2, 3]} intensity={isLight ? 0.48 : 0.7} color={isLight ? "#38bdf8" : "#38bdf8"} />
+      <pointLight position={[3, 3, -3]} intensity={isLight ? 0.4 : 0.5} color={isLight ? "#7dd3fc" : "#0ea5e9"} />
+      <hemisphereLight
+        args={[isLight ? "#bae6fd" : "#404060", isLight ? "#f0f9ff" : "#060a12", isLight ? 0.35 : 0.2]}
+      />
 
       <Float
         speed={reducedMotion ? 0 : 0.3}
         rotationIntensity={reducedMotion ? 0 : 0.08}
         floatIntensity={reducedMotion ? 0 : 0.1}
       >
-        <ThresholdArch pointer={pointer} reducedMotion={reducedMotion} />
+        <ThresholdArch pointer={pointer} reducedMotion={reducedMotion} isLight={isLight} />
       </Float>
 
       <FloatingDocument
         position={[-1.9, 0.4, 0.6]}
         rotationOffset={-0.3}
         reducedMotion={reducedMotion}
+        isLight={isLight}
       />
       <FloatingDocument
         position={[1.85, -0.2, 0.8]}
         rotationOffset={0.25}
         reducedMotion={reducedMotion}
+        isLight={isLight}
       />
 
-      <VoiceRibbon reducedMotion={reducedMotion} />
-      <OrbitRing reducedMotion={reducedMotion} />
+      <VoiceRibbon reducedMotion={reducedMotion} isLight={isLight} />
+      <OrbitRing reducedMotion={reducedMotion} isLight={isLight} />
     </>
   );
 }
@@ -201,6 +215,8 @@ function Scene({
 export function HeroCanvas() {
   const pointer = useRef({ x: 0, y: 0 });
   const reducedMotion = useReducedMotion() === true;
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme !== "dark";
 
   return (
     <div
@@ -224,7 +240,7 @@ export function HeroCanvas() {
         camera={{ position: [0, 0.3, 4.8], fov: 40 }}
       >
         <Suspense fallback={null}>
-          <Scene pointer={pointer} reducedMotion={reducedMotion} />
+          <Scene pointer={pointer} reducedMotion={reducedMotion} isLight={isLight} />
         </Suspense>
       </Canvas>
     </div>

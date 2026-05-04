@@ -17,11 +17,12 @@ export function VoiceVisualizer({ volume, isRecording, isAIThinking }: VoiceVisu
   // Map raw analyzer value (avg of 256 frequency bins) to 0-1
   const norm = Math.min(volume / 80, 1);
 
+  /* MD light primary/tertiary are too pale on lp-background; use saturated hues */
   const color = isAIThinking
-    ? "var(--md-sys-color-primary)"
+    ? "rgb(8, 145, 178)"
     : isRecording
-    ? "var(--md-sys-color-tertiary)"
-    : "var(--md-sys-color-on-surface-variant)";
+    ? "rgb(13, 148, 136)"
+    : "rgb(100, 116, 139)";
 
   return (
     <div
@@ -43,7 +44,11 @@ export function VoiceVisualizer({ volume, isRecording, isAIThinking }: VoiceVisu
             style={{ width: 4, backgroundColor: color }}
             animate={{
               height: h,
-              opacity: isRecording ? 0.7 + m * 0.3 : 0.25,
+              opacity: isAIThinking
+                ? 0.55 + m * 0.35
+                : isRecording
+                  ? 0.7 + m * 0.3
+                  : 0.4,
             }}
             transition={{
               delay: isRecording ? i * 0.015 : 0,
