@@ -53,6 +53,29 @@ type ChatMessage = {
   content: string;
 };
 
+type NextQuestionPayload = {
+  bridge?: string;
+  question?: string;
+};
+
+function formatInterviewerMessage(nextQuestion?: NextQuestionPayload | null) {
+  if (!nextQuestion) return "";
+  const bridge = nextQuestion.bridge?.trim();
+  let question = nextQuestion.question?.trim();
+
+  if (bridge && question) {
+    const lowerBridge = bridge.toLowerCase();
+    const lowerQuestion = question.toLowerCase();
+    if (lowerQuestion === lowerBridge) question = "";
+    else if (lowerQuestion.startsWith(`${lowerBridge} `)) {
+      question = question.slice(bridge.length).trim();
+    }
+  }
+
+  if (bridge && question) return `${bridge} ${question}`;
+  return question || bridge || "";
+}
+
 const REPORT_BUILDER_TIPS = [
   "Your report blends what you said with how you said it—clarity and pace matter for hiring signals.",
   "Audio samples are processed in order; the bar reflects real queue progress, not a guess.",
@@ -519,14 +542,15 @@ export default function InterviewPanel() {
         return;
       }
 
-      setQuestion(nextQuestion?.question);
+      const deliveredNextQuestion = formatInterviewerMessage(nextQuestion);
+      setQuestion(deliveredNextQuestion);
       setQuestionCount(questionCount + 1);
 
       // Add next AI question to chat history
-      if (nextQuestion?.question) {
+      if (deliveredNextQuestion) {
         setChatMessages((prev) => [
           ...prev,
-          { role: "ai", content: nextQuestion.question },
+          { role: "ai", content: deliveredNextQuestion },
         ]);
       }
 
@@ -674,11 +698,12 @@ export default function InterviewPanel() {
         return;
       }
 
-      setQuestion(nextQuestion?.question);
+      const deliveredNextQuestion = formatInterviewerMessage(nextQuestion);
+      setQuestion(deliveredNextQuestion);
       setQuestionCount(questionCount + 1);
       setChatMessages((prev) => [
         ...prev,
-        { role: "ai", content: nextQuestion?.question },
+        { role: "ai", content: deliveredNextQuestion },
       ]);
       setIsAIThinking(false);
     } catch (err: unknown) {
