@@ -255,6 +255,7 @@ export default function Dashboard() {
   const [filter, setFilter] = useState<FilterType>("all");
   const [dashSection, setDashSection] = useState<"overview" | "sessions">("overview");
   const { user } = useAuthStore();
+  const userId = user?.id;
   const router = useRouter();
 
   const filteredInterviews =
@@ -281,22 +282,22 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (user) {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
-      axios
-        .get(`${backendUrl}/api/interviews?userId=${user?.id ?? ""}`)
-        .then((res) => {
-          setInterviews(res.data);
-          setLoading(false);
-        })
-        .catch((err) => {
-          const errorMsg = err.response?.data?.error || err.message || "Failed to load interviews";
-          toast.error(`Error: ${errorMsg}`);
-          console.error(err);
-          setLoading(false);
-        });
-    }
-  }, [user]);
+    if (!userId) return;
+
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
+    axios
+      .get(`${backendUrl}/api/interviews?userId=${userId}`)
+      .then((res) => {
+        setInterviews(res.data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        const errorMsg = err.response?.data?.error || err.message || "Failed to load interviews";
+        toast.error(`Error: ${errorMsg}`);
+        console.error(err);
+        setLoading(false);
+      });
+  }, [userId]);
 
   if (!user) {
     return (

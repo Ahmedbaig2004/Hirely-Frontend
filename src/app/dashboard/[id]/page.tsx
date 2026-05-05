@@ -34,7 +34,6 @@ import {
   InterviewReportTranscriptQuestionCharts,
   InterviewReportVocalQuestionCharts,
   InterviewReportBodyLanguageQuestionCharts,
-  InterviewReportBodyLanguageQuestionCharts,
 } from "@/components/dashboard/InterviewReportQuestionCharts";
 import { TranscriptWithFillerHighlight } from "@/components/dashboard/TranscriptWithFillerHighlight";
 import { InterviewAnswerAudioPlayer } from "@/components/dashboard/InterviewAnswerAudioPlayer";
@@ -409,6 +408,7 @@ export default function InterviewDetail() {
   const [showAllVoiceStrengths, setShowAllVoiceStrengths] = useState(false);
   const [showAllVoiceObservations, setShowAllVoiceObservations] =
     useState(false);
+  const [showVoiceDetails, setShowVoiceDetails] = useState(false);
   const [expandedVideoGroups, setExpandedVideoGroups] = useState<
     Record<string, boolean>
   >({});
@@ -1140,37 +1140,9 @@ export default function InterviewDetail() {
                         </div>
                       )}
 
-<<<<<<< HEAD
-                      {/* Priority Improvements */}
-                      {improvements.length > 0 && (
-                        <div>
-                          <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.3em] text-rose-800 dark:text-rose-400/80">
-                            Priority Improvements
-                          </span>
-                          <div className="space-y-2">
-                            {(showAllVoiceImprovements ? improvements : improvements.slice(0, 3)).map((item: ShapExplanation, i: number) => (
-                              <motion.div
-                                key={item.feature}
-                                initial={{ opacity: 0, x: -8 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: i * 0.07, duration: 0.3 }}
-                                className="glass-card p-3 rounded-xl border-l-4 border-rose-500/50"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-800 dark:text-rose-400/70">
-                                    {VOICE_FEATURE_LABELS[item.feature] ||
-                                      item.label}
-                                  </span>
-                                  {item.category &&
-                                    item.category !== "Other" && (
-                                      <span className="text-[9px] px-1.5 py-0.5 rounded-full lp-surface-lo lp-dim font-medium">
-                                        {item.category}
-                                      </span>
-                                    )}
-=======
                       {hasVoiceGroupData ? (
                         <>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
                             {sortVoiceGroupEntries(
                               Object.entries(aggregatedVoiceGroups),
                             ).map(([groupName, groupData]) => {
@@ -1210,103 +1182,65 @@ export default function InterviewDetail() {
                                       {groupData.tips[0].tip}
                                     </p>
                                   )}
->>>>>>> 5ac65fe1f8153a49cbba09236367ad91f6a42eeb
                                 </div>
                               );
                             })}
                           </div>
-<<<<<<< HEAD
-                          {improvements.length > 3 && (
-                            <button
-                              type="button"
-                              onClick={() => setShowAllVoiceImprovements((prev) => !prev)}
-                              className="mt-3 inline-flex items-center rounded-lg border border-rose-300/60 bg-rose-50/70 px-3 py-1.5 text-xs font-semibold text-rose-800 transition hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20"
-                            >
-                              {showAllVoiceImprovements
-                                ? "View less"
-                                : `View more (${improvements.length - 3} more)`}
-                            </button>
-                          )}
-                        </div>
-                      )}
 
-                      {/* Strengths */}
-                      {strengths.length > 0 && (
-                        <div>
-                          <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.3em] text-emerald-800 dark:text-emerald-400/80">
-                            Your Strengths
-                          </span>
-                          <div className="space-y-2">
-                            {(showAllVoiceStrengths ? strengths : strengths.slice(0, 3)).map((item: ShapExplanation, i: number) => (
+                          <button
+                            type="button"
+                            onClick={() => setShowVoiceDetails((prev) => !prev)}
+                            className="inline-flex items-center rounded-lg border border-cyan-300/60 bg-cyan-50/70 px-3 py-1.5 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-300 dark:hover:bg-cyan-500/20"
+                          >
+                            {showVoiceDetails ? "Hide details" : "View details"}
+                          </button>
+
+                          <AnimatePresence initial={false}>
+                            {showVoiceDetails && (
                               <motion.div
-                                key={item.feature}
-                                initial={{ opacity: 0, x: -8 }}
-                                animate={{ opacity: 1, x: 0 }}
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
                                 transition={{
-                                  delay: i * 0.07 + 0.21,
-                                  duration: 0.3,
+                                  duration: 0.28,
+                                  ease: "easeInOut",
                                 }}
-                                className="glass-card p-3 rounded-xl border-l-4 border-emerald-500/50"
+                                className="overflow-hidden pt-3"
                               >
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400/70">
-                                    {VOICE_FEATURE_LABELS[item.feature] ||
-                                      item.label}
-                                  </span>
-                                  {item.category &&
-                                    item.category !== "Other" && (
-                                      <span className="text-[9px] px-1.5 py-0.5 rounded-full lp-surface-lo lp-dim font-medium">
-                                        {item.category}
-                                      </span>
-                                    )}
-                                </div>
-                                <p className="text-xs lp-body mt-1 leading-relaxed">
-                                  {item.explanation}
-                                </p>
+                                {sortVoiceGroupEntries(
+                                  Object.entries(aggregatedVoiceGroups),
+                                ).map(([groupName, groupData]) => {
+                                  if (!groupData.tips?.length) return null;
+                                  return (
+                                    <div key={groupName} className="mb-5">
+                                      <h4 className="text-xs font-semibold text-white/60 dark:text-slate-500 uppercase tracking-wider mb-3">
+                                        {groupName}
+                                      </h4>
+                                      {groupData.tips.map((tip) => (
+                                        <EliteZoneBar
+                                          key={`${groupName}-${tip.feature}`}
+                                          label={tip.friendly}
+                                          tip={tip.tip}
+                                          val={tipNumericValue(tip)}
+                                          zoneMin={tip.zone_min}
+                                          zoneMax={tip.zone_max}
+                                          direction={eliteDirectionFromTip(
+                                            tip.zone_direction,
+                                          )}
+                                          status={
+                                            tip.status as
+                                              | "green"
+                                              | "yellow"
+                                              | "red"
+                                          }
+                                        />
+                                      ))}
+                                    </div>
+                                  );
+                                })}
                               </motion.div>
-                            ))}
-                          </div>
-                          {strengths.length > 3 && (
-                            <button
-                              type="button"
-                              onClick={() => setShowAllVoiceStrengths((prev) => !prev)}
-                              className="mt-3 inline-flex items-center rounded-lg border border-emerald-300/60 bg-emerald-50/70 px-3 py-1.5 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
-                            >
-                              {showAllVoiceStrengths
-                                ? "View less"
-                                : `View more (${strengths.length - 3} more)`}
-                            </button>
-                          )}
-                        </div>
-=======
-                          {sortVoiceGroupEntries(
-                            Object.entries(aggregatedVoiceGroups),
-                          ).map(([groupName, groupData]) => {
-                            if (!groupData.tips?.length) return null;
-                            return (
-                              <div key={groupName} className="mb-5">
-                                <h4 className="text-xs font-semibold text-white/60 dark:text-slate-500 uppercase tracking-wider mb-3">
-                                  {groupName}
-                                </h4>
-                                {groupData.tips.map((tip) => (
-                                  <EliteZoneBar
-                                    key={`${groupName}-${tip.feature}`}
-                                    label={tip.friendly}
-                                    tip={tip.tip}
-                                    val={tipNumericValue(tip)}
-                                    zoneMin={tip.zone_min}
-                                    zoneMax={tip.zone_max}
-                                    direction={eliteDirectionFromTip(
-                                      tip.zone_direction,
-                                    )}
-                                    status={
-                                      tip.status as "green" | "yellow" | "red"
-                                    }
-                                  />
-                                ))}
-                              </div>
-                            );
-                          })}
+                            )}
+                          </AnimatePresence>
                         </>
                       ) : (
                         <>
@@ -1420,7 +1354,6 @@ export default function InterviewDetail() {
                             </div>
                           )}
                         </>
->>>>>>> 5ac65fe1f8153a49cbba09236367ad91f6a42eeb
                       )}
                     </div>
                   );
@@ -1733,115 +1666,103 @@ export default function InterviewDetail() {
                   </div>
                 )}
 
-                {/* Elite Zone Bars per Group — compact grid on wide screens, with expand/collapse */}
                 {hasGroupData && (
-                  <div className="space-y-4">
-                    {(() => {
-                      const entries = Object.entries(aggregatedGroups).filter(
-                        ([, groupData]) => groupData.tips?.length,
-                      );
-                      const handEntry = entries.find(
-                        ([name]) => name === "Hand Gestures",
-                      );
-                      const otherEntries = entries.filter(
-                        ([name]) => name !== "Hand Gestures",
-                      );
+                  <>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowAllBodyLanguageGroups((prev) => !prev)
+                      }
+                      className="mb-1 inline-flex items-center rounded-lg border border-cyan-300/60 bg-cyan-50/70 px-3 py-1.5 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-300 dark:hover:bg-cyan-500/20"
+                    >
+                      {showAllBodyLanguageGroups
+                        ? "Hide details"
+                        : "View details"}
+                    </button>
 
-                      const renderGroup = (
-                        groupName: string,
-                        groupData: {
-                          impact: number;
-                          status: string;
-                          tips: VideoTip[];
-                          count: number;
-                        },
-                      ) => (
-                        <div key={groupName}>
-                          <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                            {groupName}
-                          </h4>
-                          <div className="md:grid md:grid-cols-2 md:gap-x-5 md:gap-y-0">
-                            {(groupName === "Hand Gestures"
-                              ? groupData.tips
-                              : expandedVideoGroups[groupName]
-                                ? groupData.tips
-                                : groupData.tips.slice(0, 3)
-                            ).map((tip) => (
-                              <EliteZoneBar
-                                key={tip.feature}
-                                label={tip.friendly}
-                                tip={tip.tip}
-                                val={tip.val}
-                                zoneMin={tip.zone_min}
-                                zoneMax={tip.zone_max}
-                                direction={tip.zone_direction}
-                                status={
-                                  tip.status as "green" | "yellow" | "red"
-                                }
-                              />
-                            ))}
+                    <AnimatePresence initial={false}>
+                      {showAllBodyLanguageGroups && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{
+                            duration: 0.28,
+                            ease: "easeInOut",
+                          }}
+                          className="overflow-hidden pt-3"
+                        >
+                          <div className="space-y-4">
+                            {(() => {
+                              const entries = Object.entries(
+                                aggregatedGroups,
+                              ).filter(([, groupData]) => groupData.tips?.length);
+                              const handEntry = entries.find(
+                                ([name]) => name === "Hand Gestures",
+                              );
+                              const otherEntries = entries.filter(
+                                ([name]) => name !== "Hand Gestures",
+                              );
+                              const orderedEntries = handEntry
+                                ? [handEntry, ...otherEntries]
+                                : otherEntries;
+
+                              return orderedEntries.map(
+                                ([groupName, groupData]) => (
+                                  <div key={groupName}>
+                                    <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                                      {groupName}
+                                    </h4>
+                                    <div className="md:grid md:grid-cols-2 md:gap-x-5 md:gap-y-0">
+                                      {(groupName === "Hand Gestures"
+                                        ? groupData.tips
+                                        : expandedVideoGroups[groupName]
+                                          ? groupData.tips
+                                          : groupData.tips.slice(0, 3)
+                                      ).map((tip) => (
+                                        <EliteZoneBar
+                                          key={tip.feature}
+                                          label={tip.friendly}
+                                          tip={tip.tip}
+                                          val={tip.val}
+                                          zoneMin={tip.zone_min}
+                                          zoneMax={tip.zone_max}
+                                          direction={tip.zone_direction}
+                                          status={
+                                            tip.status as
+                                              | "green"
+                                              | "yellow"
+                                              | "red"
+                                          }
+                                        />
+                                      ))}
+                                    </div>
+                                    {groupName !== "Hand Gestures" &&
+                                      groupData.tips.length > 3 && (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setExpandedVideoGroups((prev) => ({
+                                              ...prev,
+                                              [groupName]: !prev[groupName],
+                                            }))
+                                          }
+                                          className="mt-2 inline-flex items-center rounded-lg border border-cyan-300/60 bg-cyan-50/70 px-3 py-1.5 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-300 dark:hover:bg-cyan-500/20"
+                                        >
+                                          {expandedVideoGroups[groupName]
+                                            ? "View less"
+                                            : `View more (${groupData.tips.length - 3} more)`}
+                                        </button>
+                                      )}
+                                  </div>
+                                ),
+                              );
+                            })()}
                           </div>
-                          {groupName !== "Hand Gestures" &&
-                            groupData.tips.length > 3 && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setExpandedVideoGroups((prev) => ({
-                                    ...prev,
-                                    [groupName]: !prev[groupName],
-                                  }))
-                                }
-                                className="mt-2 inline-flex items-center rounded-lg border border-cyan-300/60 bg-cyan-50/70 px-3 py-1.5 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-300 dark:hover:bg-cyan-500/20"
-                              >
-                                {expandedVideoGroups[groupName]
-                                  ? "View less"
-                                  : `View more (${groupData.tips.length - 3} more)`}
-                              </button>
-                            )}
-                        </div>
-                      );
-
-                      return (
-                        <>
-                          {handEntry && renderGroup(handEntry[0], handEntry[1])}
-                          {otherEntries.length > 0 && (
-                            <div>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setShowAllBodyLanguageGroups((prev) => !prev)
-                                }
-                                className="inline-flex items-center rounded-lg border border-cyan-300/60 bg-cyan-50/70 px-3 py-1.5 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-100 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-300 dark:hover:bg-cyan-500/20"
-                              >
-                                {showAllBodyLanguageGroups
-                                  ? "Hide details"
-                                  : "View details"}
-                              </button>
-                              <AnimatePresence initial={false}>
-                                {showAllBodyLanguageGroups && (
-                                  <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: "auto", opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    transition={{
-                                      duration: 0.28,
-                                      ease: "easeInOut",
-                                    }}
-                                    className="overflow-hidden space-y-4 pt-3"
-                                  >
-                                    {otherEntries.map(
-                                      ([groupName, groupData]) =>
-                                        renderGroup(groupName, groupData),
-                                    )}
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </div>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </>
                 )}
 
                 {/* Honest framing note */}
@@ -2226,12 +2147,13 @@ export default function InterviewDetail() {
                     const allTips = groupEntries.flatMap(
                       ([, g]) => g.tips || [],
                     );
-                    const watchFor = allTips.filter(
-                      (t) => t.status === "red" || t.status === "yellow",
-                    );
+                    const watchFor = [
+                      allTips.find((t) => t.status === "yellow") ??
+                        allTips.find((t) => t.status === "red"),
+                    ].filter(Boolean) as VideoTip[];
                     const strengths = allTips.filter(
                       (t) => t.status === "green",
-                    );
+                    ).slice(0, 1);
                     const presencePct =
                       turn.videoAnalysis.confidenceLevel != null
                         ? Math.round(

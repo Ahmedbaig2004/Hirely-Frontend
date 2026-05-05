@@ -723,7 +723,7 @@ export default function InterviewPanel() {
       {
         key: "analyzing_voice",
         label: "Analyzing Voice Patterns",
-        subtitle: `${voiceProgress.completed} of ${voiceProgress.total} audio samples processed`,
+        subtitle: `${voiceProgress.completed} of ${voiceProgress.total} recordings analyzed`,
       },
       {
         key: "generating_report",
