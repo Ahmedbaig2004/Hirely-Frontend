@@ -191,6 +191,7 @@ export default function InterviewPanel() {
     startVideoRecording,
     stopVideoRecording,
     setVideoPreviewElement,
+    manualStopRef,
   } = useVoiceActivity(
     isAIThinking,
     interviewMode,
@@ -198,6 +199,7 @@ export default function InterviewPanel() {
     selectedCameraId,
   );
   const prevRecordingState = useRef(false);
+  const isSubmittingRef = useRef(false);
 
   const typewriterEnabled =
     interviewMode === "audio" || interviewMode === "video";
@@ -307,6 +309,9 @@ export default function InterviewPanel() {
       isRecording === false &&
       (interviewMode === "audio" || interviewMode === "video")
     ) {
+      // Skip auto-submit if manual stop is in progress — handleManualStop handles it
+      if (manualStopRef.current) return;
+      if (isSubmittingRef.current) return;
       handleSubmission();
     }
     prevRecordingState.current = isRecording;
@@ -440,12 +445,16 @@ export default function InterviewPanel() {
   }, [sessionId, router]);
 
   const handleSubmission = async (manualBlob?: Blob) => {
+    if (isSubmittingRef.current) return;
+
     const audioBlob = manualBlob || getAudioBlob();
     if (audioBlob.size < 3000) {
+      toast.warn("Recording too short — please speak a bit longer.");
       resetRecorder();
       return;
     }
 
+    isSubmittingRef.current = true;
     setIsAIThinking(true);
     setHasSpoken(false);
 
@@ -480,6 +489,7 @@ export default function InterviewPanel() {
       }
 
       if (isFinished) {
+        isSubmittingRef.current = false;
         setIsProcessingReport(true);
         setProcessingStage("analyzing_voice");
         pollVoiceProgress();
@@ -501,8 +511,10 @@ export default function InterviewPanel() {
       else setCurrentAudioData(null);
 
       if (audio && isTtsEnabled) {
+        isSubmittingRef.current = false;
         void playAudio(audio, audioMime);
       } else {
+        isSubmittingRef.current = false;
         resetRecorder();
         setIsAIThinking(false);
         setIsPlaying(false);
@@ -511,6 +523,7 @@ export default function InterviewPanel() {
       const errorMsg = submitAnswerErrorMessage(err);
       toast.error(`Error: ${errorMsg}`);
       console.error(err);
+      isSubmittingRef.current = false;
       setIsAIThinking(false);
       resetRecorder();
     }
@@ -527,6 +540,7 @@ export default function InterviewPanel() {
 
   const handleManualStop = async () => {
     if (isAIThinking) return;
+    if (isSubmittingRef.current) return;
     const blob = await stopRecordingManual();
     await handleSubmission(blob);
   };

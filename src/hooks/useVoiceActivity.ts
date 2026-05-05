@@ -15,6 +15,10 @@ export const useVoiceActivity = (
   const silenceTimer = useRef<NodeJS.Timeout | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  // Race condition guards
+  const isStoppingRef = useRef(false);   // mutex: prevents double .stop()
+  const manualStopRef = useRef(false);   // signals manual stop in progress
+
   // Video-specific refs
   const videoRecorderRef = useRef<MediaRecorder | null>(null);
   const videoChunksRef = useRef<Blob[]>([]);
@@ -58,6 +62,7 @@ export const useVoiceActivity = (
       };
 
       mediaRecorder.onstop = () => {
+        isStoppingRef.current = false;
         setIsRecording(false);
       };
 
@@ -79,6 +84,8 @@ export const useVoiceActivity = (
         if (currentVol > MIN_VOLUME) {
           if (mediaRecorder.state === "inactive") {
             audioChunksRef.current = [];
+            isStoppingRef.current = false;
+            manualStopRef.current = false;
             mediaRecorder.start();
             setIsRecording(true);
           }
@@ -105,10 +112,15 @@ export const useVoiceActivity = (
   };
 
   const stopAndReturnAudio = () => {
+    // Skip if manual stop is in progress or already stopping
+    if (manualStopRef.current) return;
+    if (isStoppingRef.current) return;
+
     if (
       mediaRecorderRef.current &&
       mediaRecorderRef.current.state === "recording"
     ) {
+      isStoppingRef.current = true;
       mediaRecorderRef.current.stop();
     }
     if (silenceTimer.current) {
@@ -119,6 +131,9 @@ export const useVoiceActivity = (
 
   const stopRecordingManual = (): Promise<Blob> => {
     return new Promise((resolve) => {
+      // Signal: manual stop takes priority over VAD
+      manualStopRef.current = true;
+
       if (silenceTimer.current) {
         clearTimeout(silenceTimer.current);
         silenceTimer.current = null;
@@ -128,19 +143,30 @@ export const useVoiceActivity = (
         mediaRecorderRef.current &&
         mediaRecorderRef.current.state === "recording"
       ) {
+        if (isStoppingRef.current) {
+          // VAD already fired stop — wait for it and collect the chunks
+          mediaRecorderRef.current.addEventListener(
+            "stop",
+            () => {
+              resolve(new Blob(audioChunksRef.current, { type: "audio/webm" }));
+            },
+            { once: true },
+          );
+          return;
+        }
+
+        isStoppingRef.current = true;
         mediaRecorderRef.current.addEventListener(
           "stop",
           () => {
-            const blob = new Blob(audioChunksRef.current, {
-              type: "audio/webm",
-            });
-            resolve(blob);
+            resolve(new Blob(audioChunksRef.current, { type: "audio/webm" }));
           },
           { once: true },
         );
         mediaRecorderRef.current.stop();
       } else {
-        resolve(new Blob([], { type: "audio/webm" }));
+        // Not recording — return existing chunks (VAD may have just stopped)
+        resolve(new Blob(audioChunksRef.current, { type: "audio/webm" }));
       }
     });
   };
@@ -292,5 +318,6 @@ export const useVoiceActivity = (
     startVideoRecording,
     stopVideoRecording,
     setVideoPreviewElement,
+    manualStopRef,
   };
 };
