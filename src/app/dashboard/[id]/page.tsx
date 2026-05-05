@@ -838,11 +838,14 @@ export default function InterviewDetail() {
         )}
 
         {/* 5. VOCAL DELIVERY — Actionable metrics + honest framing */}
-        {(feedback.voiceSummary ||
-          data.turns.some((t) => t.voiceAnalysis?.status === "completed")) &&
+        {data.turns.some(
+          (t) =>
+            t.answerMode !== "chat" && t.voiceAnalysis?.status === "completed",
+        ) &&
           (() => {
             const voiceTurnsForScore = data.turns.filter(
               (t: InterviewTurn) =>
+                t.answerMode !== "chat" &&
                 t.voiceAnalysis?.status === "completed" &&
                 typeof t.voiceAnalysis?.confidenceLevel === "number",
             );
@@ -944,6 +947,7 @@ export default function InterviewDetail() {
                 {(() => {
                   const voiceTurns = data.turns.filter(
                     (t: InterviewTurn) =>
+                      t.answerMode !== "chat" &&
                       t.voiceAnalysis?.status === "completed",
                   );
                   if (voiceTurns.length === 0) return null;
@@ -1416,7 +1420,10 @@ export default function InterviewDetail() {
             );
           })()}
 
-        <InterviewReportVocalQuestionCharts turns={data.turns} />
+        {data.turns.some(
+          (t) =>
+            t.answerMode !== "chat" && t.voiceAnalysis?.status === "completed",
+        ) && <InterviewReportVocalQuestionCharts turns={data.turns} />}
 
         {/* 5b. BODY LANGUAGE (Video Analysis) */}
         {(() => {
@@ -1429,6 +1436,7 @@ export default function InterviewDetail() {
           };
 
           const videoTurns = data.turns.filter((t: InterviewTurn) => {
+            if (t.answerMode === "chat") return false;
             const va = t.videoAnalysis;
             if (!va) return false;
             if (va.confidenceLevel != null) return true;
@@ -1696,7 +1704,9 @@ export default function InterviewDetail() {
                             {(() => {
                               const entries = Object.entries(
                                 aggregatedGroups,
-                              ).filter(([, groupData]) => groupData.tips?.length);
+                              ).filter(
+                                ([, groupData]) => groupData.tips?.length,
+                              );
                               const handEntry = entries.find(
                                 ([name]) => name === "Hand Gestures",
                               );
@@ -2151,9 +2161,9 @@ export default function InterviewDetail() {
                       allTips.find((t) => t.status === "yellow") ??
                         allTips.find((t) => t.status === "red"),
                     ].filter(Boolean) as VideoTip[];
-                    const strengths = allTips.filter(
-                      (t) => t.status === "green",
-                    ).slice(0, 1);
+                    const strengths = allTips
+                      .filter((t) => t.status === "green")
+                      .slice(0, 1);
                     const presencePct =
                       turn.videoAnalysis.confidenceLevel != null
                         ? Math.round(

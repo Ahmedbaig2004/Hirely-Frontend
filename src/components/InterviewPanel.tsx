@@ -101,9 +101,13 @@ export default function InterviewPanel() {
 
   // Report Processing State
   const [isProcessingReport, setIsProcessingReport] = useState(false);
-  const [voiceProgress, setVoiceProgress] = useState({
+  const [audioProgress, setAudioProgress] = useState({
     completed: 0,
-    total: 9,
+    total: 0,
+  });
+  const [videoProgress, setVideoProgress] = useState({
+    completed: 0,
+    total: 0,
   });
   const [processingStage, setProcessingStage] =
     useState<ProcessingStage>("evaluating");
@@ -123,14 +127,15 @@ export default function InterviewPanel() {
     });
   };
 
+  // FIX 2: Accept partial updates — update total even when evaluated is 0
   const mergeFinalizeProgressFromResponse = (
     statusData: Record<string, unknown>,
   ) => {
     const te = statusData.questionsTotal;
     const ev = statusData.questionsEvaluated;
-    if (typeof te === "number" && typeof ev === "number" && te > 0) {
+    if (typeof te === "number" && te > 0) {
       setFinalizeReportProgress({
-        evaluated: Math.min(ev, te),
+        evaluated: typeof ev === "number" ? Math.min(ev, te) : 0,
         total: te,
       });
     }
@@ -138,6 +143,7 @@ export default function InterviewPanel() {
 
   // Track whether any audio turns have been submitted (for smart finalization)
   const [hasAudioTurns, setHasAudioTurns] = useState(false);
+  const isTextOnlyInterview = interviewMode === "chat" && !hasAudioTurns;
   const [reportTipIdx, setReportTipIdx] = useState(0);
   const [sessionTipIdx, setSessionTipIdx] = useState(0);
 
@@ -320,6 +326,53 @@ export default function InterviewPanel() {
   // ─────────────────────────────────────────────────────────────
   // VOICE PROGRESS POLLING + FINALIZATION
   // ─────────────────────────────────────────────────────────────
+
+  // FIX 3: Shared helper to build a finalize poller with faster interval (800ms)
+  const buildFinalizePoller = useCallback(
+    (backendUrl: string, bumpFinalizeRetry: () => boolean) => {
+      const pollFinalizeStatus = async () => {
+        if (pollingAbortRef.current) return;
+        try {
+          const { data: statusData } = await axios.get(
+            `${backendUrl}/api/finalize-status/${sessionId}`,
+          );
+          if (pollingAbortRef.current) return;
+
+          // Always merge whatever progress we have first
+          mergeFinalizeProgressFromResponse(
+            statusData as Record<string, unknown>,
+          );
+
+          if (statusData.status === "completed") {
+            // Force 100% before redirecting so bar fills completely
+            setFinalizeReportProgress((prev) => ({
+              ...prev,
+              evaluated: prev.total,
+            }));
+            setProcessingStage("done");
+            setTimeout(() => router.replace(`/dashboard/${sessionId}`), 1200);
+          } else if (statusData.status === "failed") {
+            toast.error(
+              statusData.error ||
+                "Failed to generate report. Please try again.",
+            );
+            setTimeout(() => router.replace(`/dashboard/${sessionId}`), 2000);
+          } else {
+            if (bumpFinalizeRetry()) return;
+            // FIX 3: Poll at 800ms so incremental updates feel live, not jumpy
+            pollingTimerRef.current = setTimeout(pollFinalizeStatus, 800);
+          }
+        } catch {
+          if (pollingAbortRef.current) return;
+          if (bumpFinalizeRetry()) return;
+          pollingTimerRef.current = setTimeout(pollFinalizeStatus, 3000);
+        }
+      };
+      return pollFinalizeStatus;
+    },
+    [sessionId, router],
+  );
+
   const pollVoiceProgress = useCallback(() => {
     const backendUrl =
       process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
@@ -367,15 +420,17 @@ export default function InterviewPanel() {
           `${backendUrl}/api/voice-progress/${sessionId}`,
         );
         if (pollingAbortRef.current) return;
-        const sampleDone =
-          typeof data.samplesCompleted === "number"
-            ? data.samplesCompleted
-            : data.completed + (data.video?.completed ?? 0);
-        const sampleTotal =
-          typeof data.samplesTotal === "number"
-            ? data.samplesTotal
-            : data.total + (data.video?.total ?? 0);
-        setVoiceProgress({ completed: sampleDone, total: sampleTotal });
+        setAudioProgress({
+          completed: typeof data.completed === "number" ? data.completed : 0,
+          total: typeof data.total === "number" ? data.total : 0,
+        });
+        setVideoProgress({
+          completed:
+            typeof data.video?.completed === "number"
+              ? data.video.completed
+              : 0,
+          total: typeof data.video?.total === "number" ? data.video.total : 0,
+        });
 
         if (data.allDone) {
           setProcessingStage("generating_report");
@@ -385,43 +440,11 @@ export default function InterviewPanel() {
               sessionId,
             });
             if (pollingAbortRef.current) return;
-            // Poll finalize status until completed/failed
-            const pollStatus = async () => {
-              if (pollingAbortRef.current) return;
-              try {
-                const { data: statusData } = await axios.get(
-                  `${backendUrl}/api/finalize-status/${sessionId}`,
-                );
-                if (pollingAbortRef.current) return;
-                if (statusData.status === "completed") {
-                  setProcessingStage("done");
-                  setTimeout(
-                    () => router.replace(`/dashboard/${sessionId}`),
-                    1200,
-                  );
-                } else if (statusData.status === "failed") {
-                  toast.error(
-                    statusData.error ||
-                      "Failed to generate report. Please try again.",
-                  );
-                  setTimeout(
-                    () => router.replace(`/dashboard/${sessionId}`),
-                    2000,
-                  );
-                } else {
-                  mergeFinalizeProgressFromResponse(
-                    statusData as Record<string, unknown>,
-                  );
-                  if (bumpFinalizeRetry()) return;
-                  pollingTimerRef.current = setTimeout(pollStatus, 2000);
-                }
-              } catch {
-                if (pollingAbortRef.current) return;
-                if (bumpFinalizeRetry()) return;
-                pollingTimerRef.current = setTimeout(pollStatus, 3000);
-              }
-            };
-            pollStatus();
+            const pollFinalizeStatus = buildFinalizePoller(
+              backendUrl,
+              bumpFinalizeRetry,
+            );
+            pollFinalizeStatus();
             return;
           } catch (finalizeErr: unknown) {
             if (pollingAbortRef.current) return;
@@ -442,7 +465,7 @@ export default function InterviewPanel() {
     };
 
     poll();
-  }, [sessionId, router]);
+  }, [sessionId, router, buildFinalizePoller]);
 
   const handleSubmission = async (manualBlob?: Blob) => {
     if (isSubmittingRef.current) return;
@@ -601,10 +624,12 @@ export default function InterviewPanel() {
           setProcessingStage("analyzing_voice");
           pollVoiceProgress();
         } else {
+          pollingAbortRef.current = false;
+          if (pollingTimerRef.current) clearTimeout(pollingTimerRef.current);
           setProcessingStage("generating_report");
-          // CONFLICT 1 RESOLVED: keep HEAD — initializes finalize progress properly
           seedFinalizeReportProgress();
-          setVoiceProgress({ completed: 0, total: 0 });
+          setAudioProgress({ completed: 0, total: 0 });
+          setVideoProgress({ completed: 0, total: 0 });
           const backendUrl2 =
             process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:4000";
           try {
@@ -613,6 +638,7 @@ export default function InterviewPanel() {
             });
             finalizeRetryRef.current = 0;
             setFinalizeRetryCount(0);
+
             const handleFinalizeTimeout = () => {
               if (pollingAbortRef.current) return;
               pollingAbortRef.current = true;
@@ -623,6 +649,7 @@ export default function InterviewPanel() {
               );
               router.push("/dashboard");
             };
+
             const bumpFinalizeRetry = () => {
               finalizeRetryRef.current += 1;
               setFinalizeRetryCount(finalizeRetryRef.current);
@@ -632,45 +659,11 @@ export default function InterviewPanel() {
               }
               return false;
             };
-            // Poll finalize status until completed/failed
-            const pollFinalizeStatus = async () => {
-              if (pollingAbortRef.current) return;
-              try {
-                const { data: statusData } = await axios.get(
-                  `${backendUrl2}/api/finalize-status/${sessionId}`,
-                );
-                if (pollingAbortRef.current) return;
-                if (statusData.status === "completed") {
-                  setProcessingStage("done");
-                  setTimeout(
-                    () => router.replace(`/dashboard/${sessionId}`),
-                    1200,
-                  );
-                } else if (statusData.status === "failed") {
-                  toast.error(
-                    statusData.error ||
-                      "Failed to generate report. Please try again.",
-                  );
-                  setTimeout(
-                    () => router.replace(`/dashboard/${sessionId}`),
-                    2000,
-                  );
-                } else {
-                  mergeFinalizeProgressFromResponse(
-                    statusData as Record<string, unknown>,
-                  );
-                  if (bumpFinalizeRetry()) return;
-                  pollingTimerRef.current = setTimeout(
-                    pollFinalizeStatus,
-                    2000,
-                  );
-                }
-              } catch {
-                if (pollingAbortRef.current) return;
-                if (bumpFinalizeRetry()) return;
-                pollingTimerRef.current = setTimeout(pollFinalizeStatus, 3000);
-              }
-            };
+
+            const pollFinalizeStatus = buildFinalizePoller(
+              backendUrl2,
+              bumpFinalizeRetry,
+            );
             pollFinalizeStatus();
           } catch (finalizeErr: unknown) {
             console.error("Finalize error:", finalizeErr);
@@ -706,9 +699,13 @@ export default function InterviewPanel() {
   // REPORT PROCESSING SCREEN
   // ─────────────────────────────────────────────────────────────
   if (isProcessingReport) {
-    const pct =
-      voiceProgress.total > 0
-        ? Math.round((voiceProgress.completed / voiceProgress.total) * 100)
+    const audioPct =
+      audioProgress.total > 0
+        ? Math.round((audioProgress.completed / audioProgress.total) * 100)
+        : 0;
+    const videoPct =
+      videoProgress.total > 0
+        ? Math.round((videoProgress.completed / videoProgress.total) * 100)
         : 0;
     const reportPct =
       finalizeReportProgress.total > 0
@@ -727,36 +724,51 @@ export default function InterviewPanel() {
       key: ProcessingStage;
       label: string;
       subtitle: string;
-    }[] = [
-      {
-        key: "evaluating",
-        label: "Answer Evaluated",
-        subtitle: "Your response has been graded",
-      },
-      // CONFLICT 2 RESOLVED: use incoming — simple and no undefined hasVoiceStage
-      {
-        key: "analyzing_voice",
-        label: "Analyzing Voice Patterns",
-        subtitle: `${voiceProgress.completed} of ${voiceProgress.total} recordings analyzed`,
-      },
-      {
-        key: "generating_report",
-        label: "Generating Combined Report",
-        subtitle: "Merging technical + communication scores",
-      },
-      {
-        key: "done",
-        label: "Preparing Your Dashboard",
-        subtitle: "Redirecting...",
-      },
-    ];
+    }[] = isTextOnlyInterview
+      ? [
+          {
+            key: "evaluating",
+            label: "Answer Evaluated",
+            subtitle: "Your response has been graded",
+          },
+          {
+            key: "generating_report",
+            label: "Generating Text Report",
+            subtitle: "Scoring your written interview answers",
+          },
+          {
+            key: "done",
+            label: "Preparing Your Dashboard",
+            subtitle: "Redirecting...",
+          },
+        ]
+      : [
+          {
+            key: "evaluating",
+            label: "Answer Evaluated",
+            subtitle: "Your response has been graded",
+          },
+          {
+            key: "analyzing_voice",
+            label: "Analyzing Recordings",
+            subtitle:
+              audioProgress.total > 0 || videoProgress.total > 0
+                ? "Processing your audio and video responses"
+                : "Waiting for recordings...",
+          },
+          {
+            key: "generating_report",
+            label: "Generating Combined Report",
+            subtitle: "Merging technical + communication scores",
+          },
+          {
+            key: "done",
+            label: "Preparing Your Dashboard",
+            subtitle: "Redirecting...",
+          },
+        ];
 
-    const stageOrder: ProcessingStage[] = [
-      "evaluating",
-      "analyzing_voice",
-      "generating_report",
-      "done",
-    ];
+    const stageOrder: ProcessingStage[] = stages.map((stage) => stage.key);
     const currentIdx = stageOrder.indexOf(processingStage);
     const overallPct = Math.min(
       100,
@@ -825,9 +837,11 @@ export default function InterviewPanel() {
             <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-2xl">
               Building your report
             </h2>
-            <p className="mt-1.5 text-xs tracking-wide text-slate-600 dark:text-slate-400">
-              Analyzing your full interview session
-            </p>
+             <p className="mt-1.5 text-xs tracking-wide text-slate-600 dark:text-slate-400">
+               {isTextOnlyInterview
+                 ? "Analyzing your written interview answers"
+                 : "Analyzing your full interview session"}
+             </p>
           </div>
 
           <div className="mb-7 h-1.5 w-full overflow-hidden rounded-full bg-slate-200/90 dark:bg-slate-800/90">
@@ -930,39 +944,91 @@ export default function InterviewPanel() {
                         </p>
                       )}
 
-                    {/* Voice analysis progress bar */}
+                    {/* Render audio/video progress only when those counts exist */}
                     {stage.key === "analyzing_voice" &&
-                      (isActive || isCompleted) && (
-                        <div className="mt-2.5 flex items-center gap-2.5">
-                          <div
-                            className="flex-1 h-1 rounded-full overflow-hidden"
-                            style={{
-                              background:
-                                "var(--md-sys-color-surface-container-high)",
-                            }}
-                          >
-                            <motion.div
-                              className="h-full rounded-full"
-                              style={{
-                                background: isCompleted
-                                  ? "#10B981"
-                                  : "linear-gradient(90deg, var(--md-sys-color-primary), var(--md-sys-color-tertiary))",
-                                boxShadow: isCompleted
-                                  ? "none"
-                                  : "0 0 8px color-mix(in srgb, var(--md-sys-color-primary) 50%, transparent)",
-                              }}
-                              initial={{ width: "0%" }}
-                              animate={{ width: `${isCompleted ? 100 : pct}%` }}
-                              transition={{ duration: 0.5, ease: "easeOut" }}
-                            />
-                          </div>
-                          <span
-                            className={`text-xs font-mono shrink-0 tabular-nums ${isCompleted ? "text-emerald-600" : "text-teal-700 dark:text-teal-400"}`}
-                          >
-                            {isCompleted ? "100" : pct}%
-                          </span>
+                      (isActive || isCompleted) &&
+                      (audioProgress.total > 0 || videoProgress.total > 0) && (
+                        <div className="mt-2.5 space-y-2.5">
+                          {audioProgress.total > 0 && (
+                            <div>
+                              <p className="mb-1 text-xs font-medium text-slate-800 dark:text-slate-200">
+                                {audioProgress.completed} of {audioProgress.total} audio processed
+                              </p>
+                              <div className="flex items-center gap-2.5">
+                                <div
+                                  className="flex-1 h-1 rounded-full overflow-hidden"
+                                  style={{
+                                    background:
+                                      "var(--md-sys-color-surface-container-high)",
+                                  }}
+                                >
+                                  <motion.div
+                                    className="h-full rounded-full"
+                                    style={{
+                                      background: isCompleted
+                                        ? "#10B981"
+                                        : "linear-gradient(90deg, var(--md-sys-color-primary), var(--md-sys-color-tertiary))",
+                                      boxShadow: isCompleted
+                                        ? "none"
+                                        : "0 0 8px color-mix(in srgb, var(--md-sys-color-primary) 50%, transparent)",
+                                    }}
+                                    initial={{ width: "0%" }}
+                                    animate={{
+                                      width: `${isCompleted ? 100 : audioPct}%`,
+                                    }}
+                                    transition={{ duration: 0.5, ease: "easeOut" }}
+                                  />
+                                </div>
+                                <span
+                                  className={`text-xs font-mono shrink-0 tabular-nums ${isCompleted ? "text-emerald-600" : "text-teal-700 dark:text-teal-400"}`}
+                                >
+                                  {isCompleted ? "100" : audioPct}%
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          {videoProgress.total > 0 && (
+                            <div>
+                              <p className="mb-1 text-xs font-medium text-slate-800 dark:text-slate-200">
+                                {videoProgress.completed} of {videoProgress.total} video processed
+                              </p>
+                              <div className="flex items-center gap-2.5">
+                                <div
+                                  className="flex-1 h-1 rounded-full overflow-hidden"
+                                  style={{
+                                    background:
+                                      "var(--md-sys-color-surface-container-high)",
+                                  }}
+                                >
+                                  <motion.div
+                                    className="h-full rounded-full"
+                                    style={{
+                                      background: isCompleted
+                                        ? "#10B981"
+                                        : "linear-gradient(90deg, #0EA5E9, #22C55E)",
+                                      boxShadow: isCompleted
+                                        ? "none"
+                                        : "0 0 8px rgba(14,165,233,0.25)",
+                                    }}
+                                    initial={{ width: "0%" }}
+                                    animate={{
+                                      width: `${isCompleted ? 100 : videoPct}%`,
+                                    }}
+                                    transition={{ duration: 0.5, ease: "easeOut" }}
+                                  />
+                                </div>
+                                <span
+                                  className={`text-xs font-mono shrink-0 tabular-nums ${isCompleted ? "text-emerald-600" : "text-sky-700 dark:text-sky-400"}`}
+                                >
+                                  {isCompleted ? "100" : videoPct}%
+                                </span>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
+
                     {stage.key === "generating_report" &&
                       (isActive || isCompleted) &&
                       finalizeReportProgress.total > 0 && (
@@ -1714,7 +1780,6 @@ export default function InterviewPanel() {
                 </p>
 
                 <div className="flex gap-3">
-                  {/* CONFLICT 3 RESOLVED: use incoming — no undefined clearPending() */}
                   <button
                     onClick={() => setShowExitModal(false)}
                     className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
