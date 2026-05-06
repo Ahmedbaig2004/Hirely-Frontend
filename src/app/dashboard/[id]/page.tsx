@@ -142,7 +142,6 @@ interface DeliveryFeedback {
   hedgingPhrases?: string[];
   structureFeedback?: string;
   topImprovement?: string;
-  relevanceScore?: number;
   topStrength?: string;
   fillerCount?: number;
   hedgingCount?: number;
@@ -196,8 +195,6 @@ interface InterviewFeedback {
   deliverySummary?: {
     totalFillers?: number;
     totalHedging?: number;
-    avgRelevance?: number;
-    avgSpecificity?: number;
     totalRestarts?: number;
   };
 }
@@ -1828,8 +1825,6 @@ export default function InterviewDetail() {
             );
           const totalHedging =
             feedback.deliverySummary?.totalHedging ?? allHedging.length;
-          const avgRelevance = feedback.deliverySummary?.avgRelevance ?? 0;
-          const avgSpecificity = feedback.deliverySummary?.avgSpecificity ?? 0;
           const totalRestarts = feedback.deliverySummary?.totalRestarts ?? 0;
 
           // Deduplicate improvements
@@ -1861,7 +1856,7 @@ export default function InterviewDetail() {
               </div>
 
               {/* Metric cards row */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-5">
                 <div className="rounded-lg bg-surface-container-low p-3 text-center">
                   <span className="mb-1 block text-xs text-slate-600 dark:text-slate-500">
                     Filler Words
@@ -1884,28 +1879,15 @@ export default function InterviewDetail() {
                 </div>
                 <div className="rounded-lg bg-surface-container-low p-3 text-center">
                   <span className="mb-1 block text-xs text-slate-600 dark:text-slate-500">
-                    Relevance
+                    Restarts
                   </span>
                   <span
-                    className={`text-lg font-bold ${getScoreTextColor(avgRelevance)}`}
+                    className={`text-lg font-bold ${totalRestarts <= 1 ? "text-emerald-700 dark:text-emerald-400" : totalRestarts <= 4 ? "text-amber-700 dark:text-amber-400" : "text-rose-700 dark:text-rose-400"}`}
                   >
-                    {Math.round(avgRelevance)}%
+                    {totalRestarts}
                   </span>
                   <span className="mt-1 block text-[10px] text-slate-500 dark:text-slate-500">
-                    How well answers addressed questions
-                  </span>
-                </div>
-                <div className="rounded-lg bg-surface-container-low p-3 text-center">
-                  <span className="mb-1 block text-xs text-slate-600 dark:text-slate-500">
-                    Specificity
-                  </span>
-                  <span
-                    className={`text-lg font-bold ${getScoreTextColor(avgSpecificity)}`}
-                  >
-                    {Math.round(avgSpecificity)}%
-                  </span>
-                  <span className="mt-1 block text-[10px] text-slate-500 dark:text-slate-500">
-                    Concrete examples vs vague statements
+                    Mid-sentence stop-and-restart moments
                   </span>
                 </div>
               </div>
@@ -2111,21 +2093,6 @@ export default function InterviewDetail() {
                       }`}
                     >
                       Pauses {(turn.voiceAnalysis.pauseRatio * 100).toFixed(0)}%
-                    </span>
-                  )}
-                  {/* Inline Relevance badge from delivery analysis */}
-                  {turn.deliveryFeedback?.relevanceScore != null && (
-                    <span
-                      className={`flex items-center text-xs font-bold px-2 py-1 rounded border ${
-                        turn.deliveryFeedback.relevanceScore >= 70
-                          ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400"
-                          : turn.deliveryFeedback.relevanceScore >= 50
-                            ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400"
-                            : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"
-                      }`}
-                    >
-                      Relevance{" "}
-                      {Math.round(turn.deliveryFeedback.relevanceScore)}%
                     </span>
                   )}
                 </div>

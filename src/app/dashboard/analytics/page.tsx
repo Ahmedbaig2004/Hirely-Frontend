@@ -60,8 +60,6 @@ interface AnalyticsResponse {
     avgFillers: number | null;
     avgHedging: number | null;
     avgRestarts: number | null;
-    avgRelevance: number | null;
-    avgSpecificity: number | null;
   };
   video: {
     avgConfidence: number | null;
