@@ -393,6 +393,28 @@ function voiceModalityStatusBadge(s: string) {
   };
 }
 
+function getVoiceTurnGroupMap(
+  voiceAnalysis: VoiceAnalysis | undefined,
+): Record<string, VoiceGroupResult> | null {
+  const raw =
+    voiceAnalysis?.groupResults ?? voiceAnalysis?.rawFeatures?.groupResults;
+  if (!raw || typeof raw !== "object") return null;
+
+  const cleaned: Record<string, VoiceGroupResult> = {};
+  for (const [k, v] of Object.entries(raw)) {
+    if (k === "_metadata") continue;
+    if (
+      v &&
+      typeof v === "object" &&
+      "impact_points" in (v as VoiceGroupResult)
+    ) {
+      cleaned[k] = v as VoiceGroupResult;
+    }
+  }
+
+  return Object.keys(cleaned).length ? cleaned : null;
+}
+
 export default function InterviewDetail() {
   const { id } = useParams();
   const router = useRouter();
@@ -2066,38 +2088,151 @@ export default function InterviewDetail() {
                       Chat Answer
                     </span>
                   )}
-                  {/* Inline Fluency badge */}
-                  {turn.voiceAnalysis?.speakingFluency != null && (
-                    <span
-                      className={`flex items-center text-xs font-bold px-2 py-1 rounded border ${
-                        turn.voiceAnalysis.speakingFluency >= 0.8
-                          ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400"
-                          : turn.voiceAnalysis.speakingFluency >= 0.5
-                            ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400"
-                            : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"
-                      }`}
-                    >
-                      Fluency{" "}
-                      {(turn.voiceAnalysis.speakingFluency * 100).toFixed(0)}%
-                    </span>
-                  )}
-                  {/* Inline Pause Ratio badge */}
-                  {turn.voiceAnalysis?.pauseRatio != null && (
-                    <span
-                      className={`flex items-center text-xs font-bold px-2 py-1 rounded border ${
-                        turn.voiceAnalysis.pauseRatio <= 0.2
-                          ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400"
-                          : turn.voiceAnalysis.pauseRatio <= 0.4
-                            ? "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-400"
-                            : "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-400"
-                      }`}
-                    >
-                      Pauses {(turn.voiceAnalysis.pauseRatio * 100).toFixed(0)}%
-                    </span>
-                  )}
                 </div>
 
                 {/* Per-question body language — readable in light/dark; watch-for vs strengths */}
+                {turn.voiceAnalysis &&
+                  (() => {
+                    const groups = getVoiceTurnGroupMap(turn.voiceAnalysis);
+                    if (!groups) return null;
+
+                    const groupEntries = sortVoiceGroupEntries(
+                      Object.entries(groups).map(([name, groupData]) => [
+                        name,
+                        {
+                          impact: groupData.impact_points,
+                          status: groupData.status,
+                          tips: groupData.tips || [],
+                          count: 1,
+                        },
+                      ]),
+                    );
+                    if (groupEntries.length === 0) return null;
+
+                    const statusDot: Record<string, string> = {
+                      green: "bg-emerald-500 dark:bg-emerald-400",
+                      yellow: "bg-amber-500 dark:bg-amber-400",
+                      red: "bg-rose-500 dark:bg-rose-400",
+                    };
+                    const groupShort: Record<string, string> = {
+                      "Loudness & Energy": "Energy",
+                      "Pitch & Expressiveness": "Pitch",
+                      "Voice Quality": "Clarity",
+                      "Fluency & Flow": "Flow",
+                    };
+
+                    const allTips = groupEntries.flatMap(
+                      ([, g]) => g.tips || [],
+                    );
+                    const watchFor = [
+                      allTips.find((t) => t.status === "yellow") ??
+                        allTips.find((t) => t.status === "red"),
+                    ].filter(Boolean) as VoiceGroupTip[];
+                    const strengths = allTips
+                      .filter((t) => t.status === "green")
+                      .slice(0, 1);
+                    const voicePct =
+                      turn.voiceAnalysis.confidenceLevel != null
+                        ? Math.round(
+                            Math.min(
+                              1,
+                              Math.max(0, turn.voiceAnalysis.confidenceLevel),
+                            ) * 100,
+                          )
+                        : null;
+
+                    return (
+                      <div className="mb-4 rounded-xl border border-slate-200/90 bg-surface-container-low p-4 dark:border-outline-variant">
+                        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                            Voice delivery (this answer)
+                          </span>
+                          {voicePct != null && (
+                            <span
+                              className={`rounded-full border px-2 py-0.5 text-[10px] font-bold tabular-nums ${
+                                voicePct >= 70
+                                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-400"
+                                  : voicePct >= 45
+                                    ? "border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-400"
+                                    : "border-rose-500/30 bg-rose-500/10 text-rose-800 dark:text-rose-400"
+                              }`}
+                            >
+                              Voice {voicePct}/100
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="mb-3 flex flex-wrap gap-2">
+                          {groupEntries.map(([name, g]) => (
+                            <span
+                              key={name}
+                              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/70 px-2.5 py-1 text-[11px] font-medium text-slate-800 dark:border-outline-variant dark:bg-surface-container-high dark:text-slate-200"
+                            >
+                              <span
+                                className={`inline-block h-2 w-2 rounded-full ${statusDot[g.status] || "bg-slate-400"}`}
+                              />
+                              {groupShort[name] || name}
+                            </span>
+                          ))}
+                        </div>
+
+                        {watchFor.length > 0 && (
+                          <div className="mb-2 rounded-lg border border-amber-500/20 bg-amber-500/[0.07] p-3 dark:bg-amber-500/10">
+                            <span className="mb-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-900 dark:text-amber-400/90">
+                              <AlertTriangle size={12} aria-hidden />
+                              Watch for
+                            </span>
+                            <ul className="space-y-2">
+                              {watchFor.map((t) => (
+                                <li
+                                  key={t.feature}
+                                  className="text-[11px] leading-snug text-slate-800 dark:text-slate-200"
+                                >
+                                  <span className="font-semibold text-slate-900 dark:text-slate-100">
+                                    {t.friendly}
+                                  </span>
+                                  {t.tip ? (
+                                    <span className="text-slate-700 dark:text-slate-300">
+                                      {" "}
+                                      - {t.tip}
+                                    </span>
+                                  ) : null}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {strengths.length > 0 && (
+                          <div className="mb-4 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] p-3 dark:bg-emerald-500/10">
+                            <span className="mb-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-900 dark:text-emerald-400/90">
+                              <CheckCircle size={12} aria-hidden />
+                              What went well
+                            </span>
+                            <ul className="space-y-1.5">
+                              {strengths.map((t) => (
+                                <li
+                                  key={t.feature}
+                                  className="text-[11px] leading-snug text-slate-800 dark:text-emerald-100/90"
+                                >
+                                  <span className="font-semibold">
+                                    {t.friendly}
+                                  </span>
+                                  {t.tip ? (
+                                    <span className="text-slate-700 dark:text-emerald-100/80">
+                                      {" "}
+                                      - {t.tip}
+                                    </span>
+                                  ) : null}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                 {turn.videoAnalysis &&
                   (turn.videoAnalysis.rawFeatures ??
                     turn.videoAnalysis.groupResults) &&
