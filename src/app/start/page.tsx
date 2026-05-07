@@ -429,6 +429,7 @@ export default function StartPage() {
     if (interviewType === "job-specific") {
       if (!jd.trim()) flag("jd", jdFieldRef);
       if (!file) flag("resume", resumeFieldRef);
+      if (config.questionCount == null || config.questionCount < 1) flag("questionCount", questionCountFieldRef);
     } else if (interviewType === "technical") {
       if (!config.stack?.trim()) flag("stack", stackFieldRef);
       if (!config.difficulty) flag("difficulty", difficultyFieldRef);
@@ -474,6 +475,7 @@ export default function StartPage() {
       formData.append("interviewType", "JOB_SPECIFIC");
       formData.append("resume", file!);
       formData.append("jobDescription", jd);
+      formData.append("questionCount", String(config.questionCount!));
     } else if (interviewType === "technical") {
       formData.append("interviewType", "TECHNICAL");
       formData.append("stack", config.stack!);
@@ -789,12 +791,43 @@ export default function StartPage() {
                                 </p>
                               )}
                             </div>
-                            <div className="mb-6" ref={resumeFieldRef}>
+                            <div className="mb-5" ref={resumeFieldRef}>
                               <label className="label-caps block mb-2">Resume (PDF)</label>
                               <div className="overflow-hidden rounded-xl">
                                 <FileUpload onChange={handleFileUpload} />
                               </div>
                               {inlineFieldErrors.resume && (
+                                <p className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">
+                                  {START_FIELD_REQUIRED}
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="mb-6" ref={questionCountFieldRef}>
+                              <label className="label-caps block mb-2">Number of Questions</label>
+                              <div className="flex gap-2 mb-2">
+                                {QUESTION_COUNTS.map((n) => (
+                                  <button
+                                    key={n}
+                                    type="button"
+                                    onClick={() => {
+                                      dismissFieldError("questionCount");
+                                      setConfig({ ...config, questionCount: n });
+                                    }}
+                                    className={config.questionCount === n ? START_PILL_SELECTED : START_PILL_IDLE}
+                                  >
+                                    {n}
+                                  </button>
+                                ))}
+                              </div>
+                              <CustomQuestionCountField
+                                value={config.questionCount}
+                                onChange={(n) => {
+                                  dismissFieldError("questionCount");
+                                  setConfig({ ...config, questionCount: n });
+                                }}
+                              />
+                              {inlineFieldErrors.questionCount && (
                                 <p className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">
                                   {START_FIELD_REQUIRED}
                                 </p>

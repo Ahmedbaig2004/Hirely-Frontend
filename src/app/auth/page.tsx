@@ -27,14 +27,8 @@ export default function AuthPage() {
     setMsg(null);
 
     if (!isLogin) {
-      if (!name.trim()) {
-        setError("Please enter your name");
-        return;
-      }
-      if (password !== confirmPassword) {
-        setError("Passwords do not match");
-        return;
-      }
+      setError("Signup paused due to FYDP Expo");
+      return;
     }
 
     setLoading(true);
@@ -158,6 +152,12 @@ export default function AuthPage() {
                 {isLogin ? "Sign in to continue your journey." : "Start your interview prep in minutes."}
               </p>
             </motion.div>
+
+            {!isLogin && (
+              <div className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-center text-sm text-amber-400">
+                Signup is currently paused due to FYDP Expo.
+              </div>
+            )}
 
             <div className="mt-8 grid grid-cols-2 gap-3">
               <button type="button" className="auth-social-btn" onClick={() => alert("Google Auth coming soon!")}>
@@ -292,7 +292,11 @@ export default function AuthPage() {
                 </LabelInputContainer>
               )}
 
-              <button className="auth-primary-btn" type="submit" disabled={loading}>
+              <button
+                className={cn("auth-primary-btn", !isLogin && "opacity-50 cursor-not-allowed")}
+                type="submit"
+                disabled={loading || !isLogin}
+              >
                 {loading ? (
                   <span className="inline-flex items-center justify-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
